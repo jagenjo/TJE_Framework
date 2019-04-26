@@ -12,6 +12,7 @@
 class Camera
 {
 public:
+	static Camera* last_enabled;
 
 	enum { PERSPECTIVE, ORTHOGRAPHIC }; //types of cameras available
 
@@ -31,13 +32,18 @@ public:
 	//for orthogonal projection
 	float left,right,top,bottom;
 
+	//planes
+	float frustum[6][4];
+
 	//matrices
 	Matrix44 view_matrix;
 	Matrix44 projection_matrix;
 	Matrix44 viewprojection_matrix;
 
 	Camera();
-	void set();
+
+	//set as current
+	void enable();
 
 	//translate and rotate the camera
 	void move(Vector3 delta);
@@ -48,12 +54,26 @@ public:
 
 	//set the info
 	void setPerspective(float fov, float aspect, float near_plane, float far_plane);
-	void setOrthographic(float left, float right, float top, float bottom, float near_plane, float far_plane);
+	void setOrthographic(float left, float right, float bottom, float top, float near_plane, float far_plane);
 	void lookAt(const Vector3& eye, const Vector3& center, const Vector3& up);
+
+	//used to extract frustum planes
+	void extractFrustum();
 
 	//compute the matrices
 	void updateViewMatrix();
 	void updateProjectionMatrix();
+
+	//to work between world and screen coordinates
+	Vector3 project(Vector3 pos3d, float window_width, float window_height); //to project 3D points to screen coordinates
+	Vector3 unproject( Vector3 coord2d, float window_width, float window_height ); //to project screen coordinates to world coordinates
+	float getProjectedScale(Vector3 pos3D, float radius); //used to know how big one unit will look at this distance
+	Vector3 getRayDirection(int mouse_x, int mouse_y, float window_width, float window_height);
+
+	//culling
+	bool testPointInFrustum( Vector3 v );
+	char testSphereInFrustum( const Vector3& v, float radius);
+	char testBoxInFrustum( const Vector3& center, const Vector3& halfsize);
 };
 
 
