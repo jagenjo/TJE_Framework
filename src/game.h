@@ -7,36 +7,43 @@
 
 #include "includes.h"
 #include "camera.h"
+#include "utils.h"
 
 class Game
 {
 public:
+	static Game* instance;
+
 	//window
 	SDL_Window* window;
-	float window_width;
-	float window_height;
+	int window_width;
+	int window_height;
 
-	//keyboard state
-	const Uint8* keystate;
+	//some globals
+	long frame;
+    float time;
+	float elapsed_time;
+	int fps;
+	bool must_exit;
 
-	//mouse state
-	int mouse_state; //tells which buttons are pressed
-	Vector2 mouse_position; //last mouse position
-	Vector2 mouse_delta; //mouse movement in the last frame
+	//some vars
+	Camera* camera; //our global camera
 	bool mouse_locked; //tells if the mouse is locked (not seen)
 
+	Game( int window_width, int window_height, SDL_Window* window );
 
-	Camera* camera; //our global camera
-
-	Game(SDL_Window* window);
-	void init( void );
+	//main functions
 	void render( void );
 	void update( double dt );
 
-	void onKeyPressed( SDL_KeyboardEvent event );
-	void onMouseButton( SDL_MouseButtonEvent event );
-
-	void setWindowSize(int width, int height);
+	//events
+	void onKeyDown( SDL_KeyboardEvent event );
+	void onKeyUp(SDL_KeyboardEvent event);
+	void onMouseButtonDown( SDL_MouseButtonEvent event );
+	void onMouseButtonUp(SDL_MouseButtonEvent event);
+	void onGamepadButtonDown(SDL_JoyButtonEvent event);
+	void onGamepadButtonUp(SDL_JoyButtonEvent event);
+	void onResize(int width, int height);
 
 };
 

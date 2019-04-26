@@ -6,43 +6,62 @@
 #ifndef INCLUDES_H
 #define INCLUDES_H
 
-//define the application window size
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
-#define WINDOW_FULLSCREEN false
-#define WINDOW_CAPTION "my game"
-
-
 //under windows we need this file to make opengl work
 #ifdef WIN32 
 	#include <windows.h>
 #endif
 
+#ifndef APIENTRY
+    #define APIENTRY
+#endif
+
+#ifdef WIN32
+	#define USE_GLEW
+	#define GLEW_STATIC
+	#include <GL/glew.h>
+	#pragma comment(lib, "glew32s.lib")
+#endif
+
 
 //SDL
-#pragma comment(lib, "SDL2.lib")
-#pragma comment(lib, "SDL2main.lib")
+//#pragma comment(lib, "SDL2.lib")
+//#pragma comment(lib, "SDL2main.lib")
+
+
+#define GL_GLEXT_PROTOTYPES
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
 
+#include <GL/glext.h>
+
 //GLUT
 #ifdef WIN32
-	#include <GL/glut.h>
+    #include "GL/GLU.h"
+	//#include <GL/glut.h>
 #endif
 
 #ifdef __APPLE__
-	#include <GLUT/glut.h>
+    #include "OpenGL/glu.h"
+	//#include <GLUT/glut.h>
 #endif
 
 #include <iostream>
 
-//OpenGL
-//#include <GL/glu.h> //including GLUT we include everything (opengl, glu and glut)
+//remove warnings
 
 //used to access opengl extensions
-//void* getGLProcAddress(const char*);
-#define REGISTER_GLEXT(RET, FUNCNAME, ...) typedef RET (APIENTRY * FUNCNAME ## _func)(__VA_ARGS__); FUNCNAME ## _func FUNCNAME = NULL; 
+#define REGISTER_GLEXT(RET, FUNCNAME, ...) typedef RET ( * FUNCNAME ## _func)(__VA_ARGS__); FUNCNAME ## _func FUNCNAME = NULL; 
 #define IMPORT_GLEXT(FUNCNAME) FUNCNAME = (FUNCNAME ## _func) SDL_GL_GetProcAddress(#FUNCNAME); if (FUNCNAME == NULL) { std::cout << "ERROR: This Graphics card doesnt support " << #FUNCNAME << std::endl; }
+
+
+//OPENGL EXTENSIONS
+
+
+
+
+
+
 
 #endif
