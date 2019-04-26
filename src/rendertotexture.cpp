@@ -2,40 +2,10 @@
 #include <iostream>
 
 //typedef void (APIENTRY * glGenFramebuffers_func)(GLsizei n, GLuint *framebuffers); glGenFramebuffers_func glGenFramebuffersEXT = NULL;
-
-REGISTER_GLEXT( void, glGenFramebuffersEXT, GLsizei n, GLuint *framebuffers )
-
-REGISTER_GLEXT( void, glDeleteFramebuffersEXT, GLsizei n, const GLuint *framebuffers );
-REGISTER_GLEXT( void, glDeleteRenderbuffersEXT, GLsizei n, const GLuint *renderbuffers );
-REGISTER_GLEXT( void, glBindFramebufferEXT, GLenum target, GLuint framebuffer);
-REGISTER_GLEXT( void, glGenRenderbuffersEXT, GLsizei n, GLuint *renderbuffers);
-REGISTER_GLEXT( void, glBindRenderbufferEXT, GLenum target, GLuint renderbuffer);
-REGISTER_GLEXT( void, glRenderbufferStorageEXT, GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-REGISTER_GLEXT( void, glFramebufferRenderbufferEXT, GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-
-REGISTER_GLEXT( void, glFramebufferTexture2DEXT, GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level );
-REGISTER_GLEXT( GLenum, glCheckFramebufferStatusEXT, GLenum target);
-
-
 bool RenderToTexture::init()
 {
 	static bool firsttime = true;
 
-	//avoid doing this more than once
-	if(firsttime)
-	{
-		IMPORT_GLEXT( glGenFramebuffersEXT );
-		IMPORT_GLEXT( glDeleteFramebuffersEXT );
-		IMPORT_GLEXT( glDeleteRenderbuffersEXT );
-		IMPORT_GLEXT( glBindFramebufferEXT );
-		IMPORT_GLEXT( glGenRenderbuffersEXT );
-		IMPORT_GLEXT( glBindRenderbufferEXT );
-		IMPORT_GLEXT( glRenderbufferStorageEXT );
-		IMPORT_GLEXT( glFramebufferRenderbufferEXT );
-		IMPORT_GLEXT( glFramebufferTexture2DEXT );
-		IMPORT_GLEXT( glCheckFramebufferStatusEXT );
-	}
-	
 	firsttime = false;
 	return true;
 }
@@ -63,8 +33,8 @@ RenderToTexture::~RenderToTexture()
 
 bool RenderToTexture::create(int width, int height, bool generate_mipmaps)
 {
-	this->width = width;
-	this->height = height;
+	this->width = (float)width;
+	this->height = (float)height;
 	this->generate_mipmaps = generate_mipmaps;
 
 	glGenFramebuffersEXT(1, &fbo);
@@ -101,9 +71,9 @@ bool RenderToTexture::create(int width, int height, bool generate_mipmaps)
 
 void RenderToTexture::enable()
 {
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo);
+	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo);
 	glPushAttrib(GL_VIEWPORT_BIT);
-	glViewport(0,0,width, height);
+	glViewport(0,0, (int)width, (int)height);
 
 }
 
@@ -111,7 +81,7 @@ void RenderToTexture::disable()
 {
 	// output goes to the FBO and it’s attached buffers
 	glPopAttrib();
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0);
 	if (generate_mipmaps)
 	{
 		glBindTexture(GL_TEXTURE_2D, texture_id);

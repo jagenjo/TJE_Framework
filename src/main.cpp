@@ -13,6 +13,7 @@
 #include "mesh.h"
 #include "camera.h"
 #include "utils.h"
+#include "input.h"
 #include "game.h"
 
 #include <iostream> //to output
@@ -22,13 +23,11 @@ long last_time = 0; //this is used to calcule the elapsed time between frames
 Game* game = NULL;
 
 // *********************************
-
 //create a window using SDL
 SDL_Window* createWindow(const char* caption, int width, int height, bool fullscreen = false)
 {
-	int bpp = 0;
-
-	SDL_Init(SDL_INIT_EVERYTHING);
+    int multisample = 8;
+    bool retina = true; //change this to use a retina display
 
 	//set attributes
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -40,13 +39,15 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 
 	//antialiasing (disable this lines if it goes too slow)
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8 ); //increase to have smoother polygons
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, multisample ); //increase to have smoother polygons
+
+	// Initialize the joystick subsystem
+	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 
 	//create the window
-	SDL_Window *window = SDL_CreateWindow(
-		caption, 100, 100, width, height, 
-		SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
-
+	SDL_Window *window = SDL_CreateWindow(caption, 100, 100, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|
+                                          (retina ? SDL_WINDOW_ALLOW_HIGHDPI:0) |
+                                          (fullscreen?SDL_WINDOW_FULLSCREEN_DESKTOP:0) );
 	if(!window)
 	{
 		fprintf(stderr, "Window creation error: %s\n", SDL_GetError());
@@ -56,11 +57,22 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 	// Create an OpenGL context associated with the window.
 	SDL_GLContext glcontext = SDL_GL_CreateContext(window);
 
-	//in case of exit...
+	//in case of exit, call SDL_Quit()
 	atexit(SDL_Quit);
 
 	//get events from the queue of unprocessed events
 	SDL_PumpEvents(); //without this line asserts could fail on windows
+
+	//launch glew to extract the opengl extensions functions from the DLL
+	#ifdef USE_GLEW
+		glewInit();
+	#endif
+
+	int window_width, window_height;
+	SDL_GetWindowSize(window, &window_width, &window_height);
+	std::cout << " * Window size: " << window_width << " x " << window_height << std::endl;
+	std::cout << " * Path: " << getPath() << std::endl;
+	std::cout << std::endl;
 
 	return window;
 }
@@ -70,15 +82,14 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 void mainLoop()
 {
 	SDL_Event sdlEvent;
-	int x,y;
 
-	SDL_GetMouseState(&x,&y);
-	game->mouse_position.set(x,y);
+	long start_time = SDL_GetTicks();
+	long now = start_time;
+	long frames_this_second = 0;
 
-	while (1)
+	while (!game->must_exit)
 	{
-		//read keyboard state and stored in keystate
-		game->keystate = SDL_GetKeyboardState(NULL);
+		Input::update();
 
 		//render frame
 		game->render();
@@ -86,35 +97,58 @@ void mainLoop()
 		//update events
 		while(SDL_PollEvent(&sdlEvent))
 		{
-			switch(sdlEvent.type)
-				{
-					case SDL_QUIT: return; break; //EVENT for when the user clicks the [x] in the corner
-					case SDL_MOUSEBUTTONDOWN: //EXAMPLE OF sync mouse input
-						game->onMouseButton( sdlEvent.button );
-						break;
-					case SDL_MOUSEBUTTONUP:
-						//...
-						break;
-					case SDL_KEYDOWN: //EXAMPLE OF sync keyboard input
-						game->onKeyPressed( sdlEvent.key );
-						break;
-					case SDL_WINDOWEVENT:
-						switch (sdlEvent.window.event) {
-							case SDL_WINDOWEVENT_RESIZED: //resize opengl context
-								game->setWindowSize( sdlEvent.window.data1, sdlEvent.window.data2 );
-								break;
-						}
+			switch (sdlEvent.type)
+			{
+			case SDL_QUIT: return; break; //EVENT for when the user clicks the [x] in the corner
+			case SDL_MOUSEBUTTONDOWN: //EXAMPLE OF sync mouse input
+				Input::mouse_state |= SDL_BUTTON(sdlEvent.button.button);
+				game->onMouseButtonDown(sdlEvent.button);
+				break;
+			case SDL_MOUSEBUTTONUP:
+				Input::mouse_state &= ~SDL_BUTTON(sdlEvent.button.button);
+				game->onMouseButtonUp(sdlEvent.button);
+				break;
+			case SDL_KEYDOWN:
+				game->onKeyDown(sdlEvent.key);
+				break;
+			case SDL_KEYUP:
+				game->onKeyUp(sdlEvent.key);
+				break;
+			case SDL_JOYBUTTONDOWN:
+				game->onGamepadButtonDown(sdlEvent.jbutton);
+				break;
+			case SDL_JOYBUTTONUP:
+				game->onGamepadButtonUp(sdlEvent.jbutton);
+				break;
+			case SDL_TEXTINPUT:
+				// you can read the ASCII character from sdlEvent.text.text 
+				break;
+			case SDL_WINDOWEVENT:
+				switch (sdlEvent.window.event) {
+				case SDL_WINDOWEVENT_RESIZED: //resize opengl context
+					game->onResize(sdlEvent.window.data1, sdlEvent.window.data2);
+					break;
 				}
+			}
 		}
 
-		//get mouse position and delta
-		game->mouse_state = SDL_GetMouseState(&x,&y);
-		game->mouse_delta.set( game->mouse_position.x - x, game->mouse_position.y - y );
-		game->mouse_position.set(x,y);
+        
+		//compute delta time
+		long last_time = now;
+		now = SDL_GetTicks();
+		double elapsed_time = (now - last_time) * 0.001; //0.001 converts from milliseconds to seconds
+		double last_time_seconds = game->time;
+        game->time = float(now * 0.001);
+		game->elapsed_time = elapsed_time;
+		game->frame++;
+		frames_this_second++;
+		if (int(last_time_seconds *2) != int(game->time*2)) //next half second
+		{
+			game->fps = frames_this_second*2;
+			frames_this_second = 0;
+		}
 
-		//update logic
-		double elapsed_time = (SDL_GetTicks() - last_time) * 0.001; //0.001 converts from milliseconds to seconds
-		last_time = SDL_GetTicks();
+		//update game logic
 		game->update(elapsed_time); 
 
 		//check errors in opengl only when working in debug
@@ -128,19 +162,33 @@ void mainLoop()
 
 int main(int argc, char **argv)
 {
-	//create the game window (WINDOW_WIDTH and WINDOW_HEIGHT are two macros defined in includes.h
-	SDL_Window* window = createWindow(WINDOW_CAPTION, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_FULLSCREEN );
+	std::cout << "Initiating game..." << std::endl;
+
+	//prepare SDL
+	SDL_Init(SDL_INIT_EVERYTHING);
+
+	bool fullscreen = false; //change this to go fullscreen
+	Vector2 size(800,600);
+
+	if(fullscreen)
+		size = getDesktopSize(0);
+
+	//create the game window (WINDOW_WIDTH and WINDOW_HEIGHT are two macros defined in includes.h)
+	SDL_Window* window = createWindow("TJE", (int)size.x, (int)size.y, fullscreen );
 	if (!window)
 		return 0;
+	int window_width, window_height;
+	SDL_GetWindowSize(window, &window_width, &window_height);
+
+	Input::init(window);
 
 	//launch the game (game is a global variable)
-	game = new Game(window);
-	game->init();
+	game = new Game(window_width, window_height, window);
 
+	//main loop, application gets inside here till user closes it
 	mainLoop();
 
-	//destroy everything and save
-	//...
+	//save state and free memory
 
 	return 0;
 }
