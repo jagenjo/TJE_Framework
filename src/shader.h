@@ -9,6 +9,7 @@
 #include <string>
 #include <map>
 #include "framework.h"
+#include <cassert>
 
 #ifdef _DEBUG
 	#define CHECK_SHADER_VAR(a,b) if (a == -1) return
@@ -17,6 +18,7 @@
 	#define CHECK_SHADER_VAR(a,b) if (a == -1) return
 #endif
 
+class Texture;
 
 class Shader
 {
@@ -25,6 +27,8 @@ class Shader
 	static bool s_ready; //used to initialize shader vars
 
 public:
+	static Shader* current;
+
 	Shader();
 	virtual ~Shader();
 
@@ -32,7 +36,7 @@ public:
 	virtual bool compile();
 	virtual bool recompile();
 
-	virtual bool load(const std::string& vsf, const std::string& psf);
+	virtual bool load(const std::string& vsf, const std::string& psf, const char* macros);
 
 	//internal functions
 	virtual bool compileFromMemory(const std::string& vsm, const std::string& psm);
@@ -43,10 +47,19 @@ public:
 	static void init();
 	static void disableShaders();
 
-	//uniform exist
-	virtual bool IsVar(const char* varname) { return (getUniformLocation(varname) != -1); }
+	//check
+	virtual bool IsUniform(const char* varname) { return (getUniformLocation(varname) != -1); } //uniform exist
+	virtual bool IsAttribute(const char* varname) { return (getAttribLocation(varname) != -1); } //attribute exist
 
 	//upload
+	void setUniform(const char* varname, float input) { assert(current == this); setUniform1(varname, input); }
+	void setUniform(const char* varname, const Vector2& input) { assert(current == this); setUniform2(varname, input.x, input.y ); }
+	void setUniform(const char* varname, const Vector3& input) { assert(current == this); setUniform3(varname, input.x, input.y, input.z); }
+	void setUniform(const char* varname, const Vector4& input) { assert(current == this); setUniform4(varname, input.x, input.y, input.z, input.w); }
+	void setUniform(const char* varname, const Matrix44& input) { assert(current == this); setMatrix44(varname, input); }
+	void setUniform(const char* varname, Texture* texture) { assert(current == this); setTexture(varname, texture); }
+
+
 	virtual void setFloat(const char* varname, const float& input) { setUniform1(varname, input); }
 	virtual void setVector3(const char* varname, const Vector3& input) { setUniform3(varname, input.x, input.y, input.z); }
 	virtual void setMatrix44(const char* varname, const float* m);
@@ -71,39 +84,50 @@ public:
 	virtual void setUniform1(const char* varname, const float input) ;
 	virtual void setUniform2(const char* varname, const float input1, const float input2) ;
 	virtual void setUniform3(const char* varname, const float input1, const float input2, const float input3) ;
+	virtual void setUniform4(const char* varname, const Vector4& input) { setUniform4(varname, input.x, input.y, input.z, input.w); }
 	virtual void setUniform4(const char* varname, const float input1, const float input2, const float input3, const float input4) ;
 
 	virtual void setTexture(const char* varname, const unsigned int tex) ;
+	virtual void setTexture(const char* varname, Texture* texture);
 
 	virtual int getAttribLocation(const char* varname);
 	virtual int getUniformLocation(const char* varname);
 
 	std::string getInfoLog() const;
 	bool hasInfoLog() const;
+	bool compiled;
 
-	static Shader* Load(const char* vsf, const char* psf);
+	static Shader* Get(const char* vsf, const char* psf = NULL, const char* macros = NULL);
 	static void ReloadAll();
 	static std::map<std::string,Shader*> s_Shaders;
 
-protected:
+	//this is a way to load a single file that contains all the shaders 
+	//to know more about the file format, it is based in this https://github.com/jagenjo/rendeer.js/tree/master/guides#the-shaders but with tiny differences
+	static bool LoadAtlas(const char* filename);
+	static std::string s_shader_atlas_filename;
+	static std::map<std::string, std::string> s_shaders_atlas;
 
-	bool readFile(const std::string& filename, std::string& content);
-	bool compiled;
+	static Shader* getDefaultShader(std::string name);
+
+protected:
 
 	std::string info_log;
 	std::string vs_filename;
 	std::string ps_filename;
+	std::string macros;
+	bool from_atlas;
 
 	bool createVertexShaderObject(const std::string& shader);
 	bool createFragmentShaderObject(const std::string& shader);
-	bool createShaderObject(unsigned int type, GLhandleARB& handle, const std::string& shader);
-	void saveInfoLog(GLhandleARB obj);
+	bool createShaderObject(unsigned int type, GLuint& handle, const std::string& shader);
+	void saveShaderInfoLog(GLuint obj);
+	void saveProgramInfoLog(GLuint obj);
 
 	bool validate();
 
-	GLhandleARB vs;
-	GLhandleARB fs;
-	GLhandleARB program;
+	GLuint vs;
+	GLuint fs;
+	GLuint program;
 	std::string log;
 
 //this is a hack to speed up shader usage (save info locally)
@@ -119,9 +143,8 @@ private:
 	typedef std::map<const char*, int, ltstr> loctable;
 
 public:
-	GLint getLocation(const char* varname, loctable* table);
+	GLint getLocation( const char* varname, loctable* table );
 	loctable locations;	
-
 };
 
 #endif
