@@ -557,7 +557,7 @@ void Shader::setTexture(const char* varname, Texture* tex)
 	glActiveTexture(GL_TEXTURE0 + last_slot);
 	glBindTexture(tex->texture_type, tex->texture_id);
 	setUniform1(varname, last_slot);
-	last_slot++;
+	last_slot = (last_slot+1)%8;
 	glActiveTexture(GL_TEXTURE0 + last_slot);
 }
 
@@ -566,7 +566,7 @@ void Shader::setTexture(const char* varname, unsigned int tex)
 	glActiveTexture(GL_TEXTURE0 + last_slot);
 	glBindTexture(GL_TEXTURE_2D,tex);
 	setUniform1(varname,last_slot);
-	last_slot++;
+	last_slot = (last_slot + 1) % 8;
 	glActiveTexture(GL_TEXTURE0 + last_slot);
 }
 

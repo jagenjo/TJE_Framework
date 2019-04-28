@@ -32,6 +32,12 @@ Texture::Texture(unsigned int width, unsigned int height, unsigned int format, u
 	create(width, height, format, type, mipmaps, data, data_format);
 }
 
+Texture::Texture(Image* img)
+{
+	texture_id = 0;
+	create(img->width, img->height, img->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data);
+}
+
 Texture::~Texture()
 {
 	glDeleteTextures(1, &texture_id);
@@ -126,7 +132,7 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap, bool upload_to
 	}
 
 	//upload to VRAM
-	upload( image->width, image->height, (image->bpp == 24 ? GL_RGB : GL_RGBA), GL_UNSIGNED_BYTE, mipmaps, image->data );
+	upload( image->width, image->height, (image->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA), GL_UNSIGNED_BYTE, mipmaps, image->data );
 
 	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, this->mipmaps && wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, this->mipmaps && wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE);
@@ -137,6 +143,11 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap, bool upload_to
 	std::cout << "[OK] Size: " << width << "x" << height << " Time: " << (getTime() - time) * 0.001 << "sec" << std::endl;
 	setName(filename);
 	return true;
+}
+
+void Texture::upload(Image* img)
+{
+	upload(img->width, img->height, img->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data);
 }
 
 //uploads the bytes of a texture to the VRAM
@@ -186,22 +197,22 @@ void Texture::uploadAsArray(unsigned int texture_size, bool mipmaps)
 
 	texture_type = GL_TEXTURE_2D_ARRAY;
 	type = GL_UNSIGNED_BYTE;
-	int dataFormat = (image.bpp == 24 ? GL_RGB : GL_RGBA);
-	format = (image.bpp == 24 ? GL_RGB8 : GL_RGBA8);
+	int dataFormat = (image.bytes_per_pixel == 3 ? GL_RGB : GL_RGBA);
+	format = (image.bytes_per_pixel == 3 ? GL_RGB8 : GL_RGBA8);
 	this->width = (float)width;
 	this->height = (float)height;
+	int bytes_per_pixel = image.bytes_per_pixel;
 	this->mipmaps = mipmaps && isPowerOfTwo((int)width) && isPowerOfTwo((int)height);
 	uint8* data = NULL;
-	int bytes = (image.bpp / 8);
 
 	//if texture is a grid, linearize the data so it can be uploaded in a single call
 	if (num_columns > 1)
 	{
-		data = new uint8[num_textures * width * height * bytes];
-		int offset = width * bytes;
-		int offset_row = width * bytes * num_columns;
-		int offset_image = width * height * bytes * num_columns;
-		int offset_image_linear = width * height * bytes;
+		data = new uint8[num_textures * width * height * bytes_per_pixel];
+		int offset = width * bytes_per_pixel;
+		int offset_row = width * bytes_per_pixel * num_columns;
+		int offset_image = width * height * bytes_per_pixel * num_columns;
+		int offset_image_linear = width * height * bytes_per_pixel;
 		for (int i = 0; i < num_rows; ++i)
 			for (int j = 0; j < num_columns; ++j)
 			{
@@ -321,14 +332,14 @@ bool Image::loadTGA(const char* filename)
 
     width = header[1] * 256 + header[0];
     height = header[3] * 256 + header[2];
-	bpp = header[4];
+	bytes_per_pixel = header[4] / 8;
 
 	bool error = false;
 
-	if (bpp != 24 && bpp != 32)
+	if (bytes_per_pixel != 3 && bytes_per_pixel != 4)
 	{
 		error = true;
-		std::cerr << "File format not supported: " << bpp << "bpps" << std::endl;
+		std::cerr << "File format not supported: " << bytes_per_pixel << " bytes per pixel" << std::endl;
 	}
     
     if (width <= 0 || height <= 0)
@@ -343,8 +354,7 @@ bool Image::loadTGA(const char* filename)
         return false;
     }
 
-    bytesPerPixel = bpp / 8;
-    imageSize = width * height * bytesPerPixel;
+    imageSize = width * height * bytes_per_pixel;
     
     data = new GLubyte[imageSize];
     if (data == NULL || fread(data, 1, imageSize, file) != imageSize)
@@ -360,7 +370,7 @@ bool Image::loadTGA(const char* filename)
     
 	//flip BGR to RGB pixels
 	#pragma omp simd
-    for (GLuint i = 0; i < int(imageSize); i += bytesPerPixel)
+    for (GLuint i = 0; i < int(imageSize); i += bytes_per_pixel)
     {
         uint8 temp = data[i];
         data[i] = data[i + 2];
@@ -404,7 +414,7 @@ bool Image::loadPNG(const char* filename, bool flip_y)
 
 	data = new Uint8[ out_image.size() ];
 	memcpy( data, &out_image[0], out_image.size() );
-	bpp = 32;
+	bytes_per_pixel = 4;
 
 	//flip pixels in Y
 	if (flip_y)
