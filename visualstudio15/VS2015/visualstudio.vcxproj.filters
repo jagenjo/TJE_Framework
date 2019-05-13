@@ -58,6 +58,9 @@
     <ClCompile Include="..\..\src\input.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\animation.cpp">
+      <Filter>gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -112,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\input.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\animation.h">
+      <Filter>gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
