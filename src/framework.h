@@ -2,7 +2,8 @@
 	Here we define all the mathematical classes like Vector3, Matrix44 and some extra useful geometrical functions
 */
 
-#ifndef FRAMEWORK //macros to ensure the code is included once
+//macros to ensure the code is included once
+#ifndef FRAMEWORK 
 #define FRAMEWORK
 
 #include <vector>
@@ -18,6 +19,9 @@ typedef unsigned short uint16;
 typedef short int16;
 typedef int int32;
 typedef unsigned int uint32;
+
+inline float clamp(float v, float a, float b) { return v < a ? a : (v > b ? b : v); }
+inline float lerp(float a, float b, float v ) { return a*(1.0-v) + b*v; }
 
 class Vector2
 {
@@ -65,6 +69,7 @@ public:
 	};
 	Vector3u() { x = y = z = 0; }
 	Vector3u(unsigned int x, unsigned int y, unsigned int z) { this->x = x; this->y = y; this->z = z; }
+	void set(unsigned int x, unsigned int y, unsigned int z) { this->x = x; this->y = y; this->z = z; }
 };
 
 //*********************************
@@ -131,6 +136,32 @@ public:
 	void set(float x, float y, float z, float w) { this->x = x; this->y = y; this->z = z; this->w = w; }
 };
 
+inline Vector4 operator * (const Vector4& a, float v) { return Vector4(a.x * v, a.y * v, a.z * v, a.w * v); }
+
+//can be used to store colors
+class Vector4ub
+{
+public:
+	union
+	{
+		struct {
+			unsigned char x;
+			unsigned char y;
+			unsigned char z;
+			unsigned char w;
+		};
+		struct {
+			unsigned char r;
+			unsigned char g;
+			unsigned char b;
+			unsigned char a;
+		};
+		unsigned char v[4];
+	};
+	Vector4ub() { x = y = z = 0; }
+	Vector4ub(unsigned int x, unsigned int y, unsigned int z, unsigned int w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	void set(unsigned int x, unsigned int y, unsigned int z, unsigned int w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+};
 
 //****************************
 //Matrix44 class
@@ -173,7 +204,7 @@ class Matrix44
 		Matrix44 getRotationOnly(); //used when having scale
 
 		//rotate only
-		Vector3 rotateVector( const Vector3& v);
+		Vector3 rotateVector( const Vector3& v) const;
 
 		//transform using local coordinates
 		void translate(float x, float y, float z);
@@ -314,7 +345,7 @@ float ComputeSignedAngle( Vector2 a, Vector2 b);
 Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal, const Vector3& ray_origin, const Vector3& ray_dir );
 
 
-
+//value between 0 and 1
 inline float random(float range = 1.0f, int offset = 0) { return ((rand() % 1000) / (1000.0f)) * range + offset; }
 
 
@@ -323,5 +354,6 @@ typedef Vector3 vec3;
 typedef Vector4 vec4;
 typedef Matrix44 mat4;
 typedef Quaternion quat;
+
 
 #endif

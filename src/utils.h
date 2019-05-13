@@ -33,4 +33,17 @@ std::vector<std::string> split(const std::string &s, char delim);
 std::string getGPUStats();
 void drawGrid();
 
+//Used in the MESH and ANIM parsers
+char* fetchWord(char* data, char* word);
+char* fetchFloat(char* data, float& f);
+char* fetchMatrix44(char* data, Matrix44& m);
+char* fetchEndLine(char* data);
+char* fetchBufferFloat(char* data, std::vector<float>& vector, int num = 0);
+char* fetchBufferVec3(char* data, std::vector<Vector3>& vector);
+char* fetchBufferVec2(char* data, std::vector<Vector2>& vector);
+char* fetchBufferVec3u(char* data, std::vector<Vector3u>& vector);
+char* fetchBufferVec4ub(char* data, std::vector<Vector4ub>& vector);
+char* fetchBufferVec4(char* data, std::vector<Vector4>& vector);
+
+
 #endif

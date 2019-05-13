@@ -30,12 +30,12 @@ public:
 	void flipY();
 
 	Vector4 getPixel(int x, int y) {
-		assert(x >= 0 && x < (int)width && y >= 0 && y < (int)height && "reading of memory");
+		assert(x >= 0 && x < (int)width && y >= 0 && y < (int)height && "reading out of memory");
 		int pos = y*width*bytes_per_pixel + x*bytes_per_pixel;
 		return Vector4((float)data[pos], (float)data[pos + 1], (float)data[pos + 2], bytes_per_pixel == 4 ? 255.0f : (float)data[pos + 3]);
 	};
 	void setPixel(int x, int y, Vector4 v) { 
-		assert(x >= 0 && x < (int)width && y >= 0 && y < (int)height && "writing of memory");
+		assert(x >= 0 && x < (int)width && y >= 0 && y < (int)height && "writing out of memory");
 		int pos = y*width*bytes_per_pixel + x*bytes_per_pixel;
 		data[pos] = (uint8)v.x; data[pos + 1] = (uint8)v.y; data[pos + 2] = (uint8)v.z; if (bytes_per_pixel == 4) data[pos + 3] = (uint8)v.w; };
 

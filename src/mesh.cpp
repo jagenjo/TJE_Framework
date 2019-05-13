@@ -11,6 +11,7 @@
 
 #include "camera.h"
 #include "texture.h"
+#include "animation.h"
 #include "extra/coldet/coldet.h"
 
 std::map<std::string, Mesh*> Mesh::sMeshesLoaded;
@@ -22,12 +23,13 @@ long Mesh::num_triangles_rendered = 0;
 
 #define FORMAT_ASE 1
 #define FORMAT_OBJ 2
-#define FORMAT_BIN 3
+#define FORMAT_MBIN 3
+#define FORMAT_MESH 4
 
 Mesh::Mesh()
 {
 	radius = 0;
-	vertices_vbo_id = uvs_vbo_id = normals_vbo_id = colors_vbo_id = interleaved_vbo_id = 0;
+	vertices_vbo_id = uvs_vbo_id = normals_vbo_id = colors_vbo_id = interleaved_vbo_id = indices_vbo_id = bones_vbo_id = weights_vbo_id = 0;
 	collision_model = NULL;
 	clear();
 }
@@ -51,9 +53,15 @@ void Mesh::clear()
 		glDeleteBuffersARB(1,&colors_vbo_id);
 	if (interleaved_vbo_id)
 		glDeleteBuffersARB(1, &interleaved_vbo_id);
+	if (indices_vbo_id)
+		glDeleteBuffersARB(1, &indices_vbo_id);
+	if (bones_vbo_id)
+		glDeleteBuffersARB(1, &bones_vbo_id);
+	if (weights_vbo_id)
+		glDeleteBuffersARB(1, &weights_vbo_id);
 
 	//VBOs ids
-	vertices_vbo_id = uvs_vbo_id = normals_vbo_id = colors_vbo_id = interleaved_vbo_id = 0;
+	vertices_vbo_id = uvs_vbo_id = normals_vbo_id = colors_vbo_id = interleaved_vbo_id = indices_vbo_id = weights_vbo_id = bones_vbo_id = 0;
 
 	//buffers
 	vertices.clear();
@@ -61,6 +69,9 @@ void Mesh::clear()
 	uvs.clear();
 	colors.clear();
 	interleaved.clear();
+	indices.clear();
+	bones.clear();
+	weights.clear();
 
 	if (collision_model)
 		delete collision_model;
@@ -70,6 +81,8 @@ int vertex_location = 1;
 int normal_location = 1;
 int uv_location = 1;
 int color_location = -1;
+int bones_location = -1;
+int weights_location = -1;
 
 void Mesh::enableBuffers(Shader* sh)
 {
@@ -98,7 +111,7 @@ void Mesh::enableBuffers(Shader* sh)
 		glVertexAttribPointer(vertex_location, 3, GL_FLOAT, GL_FALSE, spacing, 0);
 	}
 	else
-		glVertexAttribPointer(vertex_location, 3, GL_FLOAT, GL_FALSE, spacing, interleaved_vbo_id ? &interleaved[0].vertex : &vertices[0]);
+		glVertexAttribPointer(vertex_location, 3, GL_FLOAT, GL_FALSE, spacing, interleaved.size() ? &interleaved[0].vertex : &vertices[0]);
 
 	normal_location = -1;
 	if (normals.size() || spacing)
@@ -113,7 +126,7 @@ void Mesh::enableBuffers(Shader* sh)
 				glVertexAttribPointer(normal_location, 3, GL_FLOAT, GL_FALSE, spacing, (void*)offset_normal);
 			}
 			else
-				glVertexAttribPointer(normal_location, 3, GL_FLOAT, GL_FALSE, spacing, interleaved_vbo_id ? &interleaved[0].normal : &normals[0]);
+				glVertexAttribPointer(normal_location, 3, GL_FLOAT, GL_FALSE, spacing, interleaved.size() ? &interleaved[0].normal : &normals[0]);
 		}
 	}
 
@@ -130,7 +143,7 @@ void Mesh::enableBuffers(Shader* sh)
 				glVertexAttribPointer(uv_location, 2, GL_FLOAT, GL_FALSE, spacing, (void*)offset_uv);
 			}
 			else
-				glVertexAttribPointer(uv_location, 2, GL_FLOAT, GL_FALSE, spacing, interleaved_vbo_id ? &interleaved[0].uv : &uvs[0]);
+				glVertexAttribPointer(uv_location, 2, GL_FLOAT, GL_FALSE, spacing, interleaved.size() ? &interleaved[0].uv : &uvs[0]);
 		}
 	}
 
@@ -151,6 +164,39 @@ void Mesh::enableBuffers(Shader* sh)
 		}
 	}
 
+	bones_location = -1;
+	if (bones.size())
+	{
+		bones_location = sh->getAttribLocation("a_bones");
+		if (bones_location != -1)
+		{
+			glEnableVertexAttribArray(bones_location);
+			if (bones_vbo_id)
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, bones_vbo_id);
+				glVertexAttribPointer(bones_location, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, NULL);
+			}
+			else
+				glVertexAttribPointer(bones_location, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, &bones[0]);
+		}
+	}
+	weights_location = -1;
+	if (weights.size())
+	{
+		weights_location = sh->getAttribLocation("a_weights");
+		if (weights_location != -1)
+		{
+			glEnableVertexAttribArray(weights_location);
+			if (weights_vbo_id)
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, weights_vbo_id);
+				glVertexAttribPointer(weights_location, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+			}
+			else
+				glVertexAttribPointer(weights_location, 4, GL_FLOAT, GL_FALSE, 0, &weights[0]);
+		}
+	}
+
 }
 
 void Mesh::render(unsigned int primitive, int submesh_id, int num_instances)
@@ -166,9 +212,20 @@ void Mesh::render(unsigned int primitive, int submesh_id, int num_instances)
 	//bind buffers to attribute locations
 	enableBuffers(shader);
 
+	//draw call
+	drawCall(primitive, submesh_id, num_instances);
+
+	//unbind them
+	disableBuffers(shader);
+}
+
+void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
+{
 	int start = 0;
 	int size = vertices.size();
-	if (interleaved.size())
+	if (indices.size())
+		size = indices.size();
+	else if (interleaved.size())
 		size = interleaved.size();
 
 	if (submesh_id > 0)
@@ -180,16 +237,37 @@ void Mesh::render(unsigned int primitive, int submesh_id, int num_instances)
 	}
 
 	//DRAW
-	if (num_instances > 0)
-		glDrawArraysInstanced(primitive, start, size, num_instances);
+	if (indices.size())
+	{
+		if (num_instances > 0)
+		{
+			assert(indices_vbo_id && "indices must be uploaded to the GPU");
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo_id);
+			glDrawElementsInstanced(primitive, size * 3, GL_UNSIGNED_INT, (void*)(start + sizeof(Vector3)), num_instances);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		}
+		else
+		{
+			if (indices_vbo_id)
+			{
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo_id);
+				glDrawElements(primitive, size * 3, GL_UNSIGNED_INT, (void*)(start * sizeof(Vector3)));
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			}
+			else
+				glDrawElements(primitive, size * 3, GL_UNSIGNED_INT, (void*)(&indices[0] + start)); //no multiply, its a vector3u pointer)
+		}
+	}
 	else
-		glDrawArrays(primitive, start, size);
+	{
+		if (num_instances > 0)
+			glDrawArraysInstanced(primitive, start, size, num_instances);
+		else
+			glDrawArrays(primitive, start, size);
+	}
 
 	num_triangles_rendered += (size / 3) * (num_instances ? num_instances : 1);
 	num_meshes_rendered++;
-
-	//unbind them
-	disableBuffers(shader);
 }
 
 void Mesh::disableBuffers(Shader* shader)
@@ -198,6 +276,8 @@ void Mesh::disableBuffers(Shader* shader)
 	if (normal_location != -1) glDisableVertexAttribArray(normal_location);
 	if (uv_location != -1) glDisableVertexAttribArray(uv_location);
 	if (color_location != -1) glDisableVertexAttribArray(color_location);
+	if (bones_location != -1) glDisableVertexAttribArray(bones_location);
+	if (weights_location != -1) glDisableVertexAttribArray(weights_location);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);    //if crashes here, COMMENT THIS LINE ****************************
 }
 
@@ -313,6 +393,21 @@ void Mesh::renderFixedPipeline(int primitive)
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //if it crashes, comment this line
 }
 
+void Mesh::renderAnimated( unsigned int primitive, Animation* anim )
+{
+	Shader* shader = Shader::current;
+	std::vector<Matrix44> bone_matrices;
+	assert(bones.size());
+	int bones_loc = shader->getUniformLocation("u_bones");
+	if (bones_loc != -1)
+	{
+		anim->skeleton.computeFinalBoneMatrices(bone_matrices, this);
+		shader->setMatrix44Array("u_bones", &bone_matrices[0], bone_matrices.size() );
+	}
+
+	render(primitive);
+}
+
 void Mesh::uploadToVRAM()
 {
 	assert(vertices.size() || interleaved.size());
@@ -367,7 +462,34 @@ void Mesh::uploadToVRAM()
 		glBufferDataARB(GL_ARRAY_BUFFER_ARB, colors.size() * sizeof(Vector4), &colors[0], GL_STATIC_DRAW_ARB);
 	}
 
+	if (bones.size())
+	{
+		if (bones_vbo_id == 0)
+			glGenBuffersARB(1, &bones_vbo_id);
+		glBindBufferARB(GL_ARRAY_BUFFER_ARB, bones_vbo_id);
+		glBufferDataARB(GL_ARRAY_BUFFER_ARB, bones.size() * sizeof(Vector4ub), &bones[0], GL_STATIC_DRAW_ARB);
+	}
+	if (weights.size())
+	{
+		if (weights_vbo_id == 0)
+			glGenBuffersARB(1, &weights_vbo_id);
+		glBindBufferARB(GL_ARRAY_BUFFER_ARB, weights_vbo_id);
+		glBufferDataARB(GL_ARRAY_BUFFER_ARB, weights.size() * sizeof(Vector4), &weights[0], GL_STATIC_DRAW_ARB);
+	}
+
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
+	// Indices
+	if (indices.size())
+	{
+		if (indices_vbo_id == 0)
+			glGenBuffersARB(1, &indices_vbo_id);
+		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER, indices_vbo_id);
+		glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(Vector3u), &indices[0], GL_STATIC_DRAW_ARB);
+	}
+	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+
 
 	checkGLErrors();
 
@@ -381,7 +503,28 @@ bool Mesh::createCollisionModel(bool is_static)
 
 	CollisionModel3D* collision_model = newCollisionModel3D(is_static);
 
-	if (interleaved.size()) //is interleaved
+	if (indices.size()) 
+	{
+		collision_model->setTriangleNumber(indices.size());
+
+		if (interleaved.size())
+			for (unsigned int i = 0; i < indices.size(); ++i)
+			{
+				auto v1 = interleaved[indices[i].x];
+				auto v2 = interleaved[indices[i].y];
+				auto v3 = interleaved[indices[i].z];
+				collision_model->addTriangle(v1.vertex.v, v2.vertex.v, v3.vertex.v);
+			}
+		else
+			for (unsigned int i = 0; i < indices.size(); ++i)
+			{
+				auto v1 = vertices[indices[i].x];
+				auto v2 = vertices[indices[i].y];
+				auto v3 = vertices[indices[i].z];
+				collision_model->addTriangle(v1.v, v2.v, v3.v);
+			}
+	}
+	else if (interleaved.size()) //is interleaved
 	{
 		collision_model->setTriangleNumber(interleaved.size() / 3);
 		for (unsigned int i = 0; i < interleaved.size(); i+=3)
@@ -468,14 +611,20 @@ bool Mesh::interleaveBuffers()
 
 typedef struct 
 {
+	int version;
+	int header_bytes;
 	int size;
+	int num_indices;
 	Vector3 aabb_min;
 	Vector3	aabb_max;
 	Vector3	center;
 	Vector3	halfsize;
 	float radius;
+	int num_bones;
 	int material_range[4];
-	char streams[4]; //Normal|Uvs|Color|Extra
+	Matrix44 bind_pose;
+	char streams[8]; //Normal|Uvs|Color|Indices|Bones|Weights|Extra
+	char extra[32]; //unused
 } sMeshInfo;
 
 bool Mesh::readBin(const char* filename)
@@ -506,6 +655,12 @@ bool Mesh::readBin(const char* filename)
 	sMeshInfo info;
 	memcpy(&info,pos,sizeof(sMeshInfo));
 	pos += sizeof(sMeshInfo);
+
+	if(info.version != MESH_BIN_VERSION || info.header_bytes != sizeof(sMeshInfo) )
+	{
+		std::cout << "[WARN] loading BIN: old version: " << filename << std::endl;
+		return false;
+	}
 
 	if (info.streams[0] == 'I')
 	{
@@ -542,11 +697,40 @@ bool Mesh::readBin(const char* filename)
 		pos += sizeof(Vector4) * info.size;
 	}
 
+	if (info.streams[4] == 'I')
+	{
+		indices.resize(info.num_indices);
+		memcpy((void*)&indices[0], pos, sizeof(Vector3u) * info.num_indices);
+		pos += sizeof(Vector3u) * info.num_indices;
+	}
+
+	if (info.streams[5] == 'B')
+	{
+		bones.resize(info.size);
+		memcpy((void*)&bones[0], pos, sizeof(Vector4) * info.size);
+		pos += sizeof(Vector4) * info.size;
+	}
+
+	if (info.streams[6] == 'W')
+	{
+		weights.resize(info.size);
+		memcpy((void*)&weights[0], pos, sizeof(Vector4ub) * info.size);
+		pos += sizeof(Vector4ub) * info.size;
+	}
+
+	if (info.num_bones)
+	{
+		bones_info.resize(info.num_bones);
+		memcpy((void*)&bones_info[0], pos, sizeof(BoneInfo) * info.num_bones);
+		pos += sizeof(BoneInfo) * info.num_bones;
+	}
+
 	aabb_max = info.aabb_max;
 	aabb_min = info.aabb_min;
 	box.center = info.center;
 	box.halfsize = info.halfsize;
 	radius = info.radius;
+	bind_pose = info.bind_pose;
 
 	for (int i = 0; i < 4; i++)
 		if (info.material_range[i] != -1)
@@ -564,7 +748,7 @@ bool Mesh::writeBin(const char* filename)
 {
 	assert( vertices.size() || interleaved.size() );
 	std::string s_filename = filename;
-	s_filename += ".bin";
+	s_filename += ".mbin";
 
 	FILE* f = fopen(s_filename.c_str(),"wb");
 	if (f == NULL)
@@ -577,17 +761,25 @@ bool Mesh::writeBin(const char* filename)
 	fwrite("MBIN",sizeof(char),4,f);
 
 	sMeshInfo info;
+	info.version = MESH_BIN_VERSION;
+	info.header_bytes = sizeof(sMeshInfo);
 	info.size = interleaved.size() ? interleaved.size() : vertices.size();
+	info.num_indices = indices.size();
 	info.aabb_max = aabb_max;
 	info.aabb_min = aabb_min;
 	info.center = box.center;
 	info.halfsize = box.halfsize;
 	info.radius = radius;
+	info.num_bones = bones_info.size();
+	info.bind_pose = bind_pose;
 
 	info.streams[0] = interleaved.size() ? 'I' : 'V';
 	info.streams[1] = normals.size() ? 'N' : ' ';
 	info.streams[2] = uvs.size() ? 'U' : ' ';
 	info.streams[3] = colors.size() ? 'C' : ' ';
+	info.streams[4] = indices.size() ? 'I' : ' ';
+	info.streams[5] = bones.size() ? 'B' : ' ';
+	info.streams[6] = weights.size() ? 'W' : ' ';
 
 	for (unsigned int i = 0; i < 4; i++)
 		info.material_range[i] = material_range.size() > i ? material_range[i] : -1;
@@ -609,6 +801,16 @@ bool Mesh::writeBin(const char* filename)
 
 	if (colors.size())
 		fwrite((void*)&colors[0], colors.size() * sizeof(Vector4), 1, f);
+
+	if (indices.size())
+		fwrite((void*)&indices[0], indices.size() * sizeof(Vector3u), 1, f);
+
+	if (bones.size())
+		fwrite((void*)&bones[0], bones.size() * sizeof(Vector4), 1, f);
+	if (weights.size())
+		fwrite((void*)&weights[0], weights.size() * sizeof(Vector4ub), 1, f);
+	if (bones_info.size())
+		fwrite((void*)&bones_info[0], bones_info.size() * sizeof(BoneInfo), 1, f);
 
 	fclose(f);
 	return true;
@@ -857,6 +1059,83 @@ bool Mesh::loadOBJ(const char* filename)
 	return true;
 }
 
+bool Mesh::loadMESH(const char* filename)
+{
+	struct stat stbuffer;
+
+	FILE* f = fopen(filename, "rb");
+	if (f == NULL)
+	{
+		std::cerr << "File not found: " << filename << std::endl;
+		return false;
+	}
+	stat(filename, &stbuffer);
+
+	unsigned int size = stbuffer.st_size;
+	char* data = new char[size + 1];
+	fread(data, size, 1, f);
+	fclose(f);
+	data[size] = 0;
+	char* pos = data;
+	char word[255];
+
+	while (*pos)
+	{
+		char type = *pos;
+		pos++;
+		if (type == '-') //buffer
+		{
+			pos = fetchWord(pos, word);
+			std::string str(word);
+			if (str == "vertices")
+				pos = fetchBufferVec3(pos, vertices);
+			else if (str == "normals")
+				pos = fetchBufferVec3(pos, normals);
+			else if (str == "coords")
+				pos = fetchBufferVec2(pos, uvs);
+			else if (str == "colors")
+				pos = fetchBufferVec4(pos, colors);
+			else if (str == "bone_indices")
+				pos = fetchBufferVec4ub(pos, bones);
+			else if (str == "weights")
+				pos = fetchBufferVec4(pos, weights);
+			else
+				pos = fetchEndLine(pos);
+		}
+		else if (type == '*') //buffer
+		{
+			pos = fetchWord(pos, word);
+			pos = fetchBufferVec3u(pos, indices);
+		}
+		else if (type == '@') //info
+		{
+			pos = fetchWord(pos, word);
+			std::string str(word);
+			if (str == "bones")
+			{
+				pos = fetchWord(pos, word);
+				bones_info.resize(atof(word));
+				for (int j = 0; j < bones_info.size(); ++j)
+				{
+					pos = fetchWord(pos, word);
+					strcpy_s(bones_info[j].name, 32, word);
+					pos = fetchMatrix44(pos, bones_info[j].bind_pose);
+				}
+			}
+			else if (str == "bind_pose")
+				pos = fetchMatrix44( pos, bind_pose );
+			else
+				pos = fetchEndLine(pos);
+		}
+		else
+			pos = fetchEndLine(pos);
+	}
+
+	delete[] data;
+
+	return true;
+}
+
 void Mesh::createCube()
 {
 	const float _verts[] = { -1, 1, -1, -1, -1, +1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, +1, 1, 1, -1, 1, 1, 1, 1, -1, +1, 1, 1, -1, 1, -1, +1, 1, -1, -1, -1, 1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, -1, -1, 1, -1, -1, 1, 1, 1, 1, 1, -1, -1, -1, 1, -1, -1, 1, -1, 1, -1, -1, -1, 1, -1, 1, -1, -1, 1 };
@@ -1100,13 +1379,15 @@ Mesh* Mesh::Get(const char* filename)
 
 	//detect format
 	char file_format = 0;
-	std::string ext = name.substr(name.size() - 4, 4);
-	if (ext == ".ase" || ext == ".ASE")
+	std::string ext = name.substr(name.find_last_of(".")+1);
+	if (ext == "ase" || ext == "ASE")
 		file_format = FORMAT_ASE;
-	else if (ext == ".obj" || ext == ".OBJ")
+	else if (ext == "obj" || ext == "OBJ")
 		file_format = FORMAT_OBJ;
-	else if (ext == ".bin" || ext == ".BIN")
-		file_format = FORMAT_BIN;
+	else if (ext == "mbin" || ext == "MBIN")
+		file_format = FORMAT_MBIN;
+	else if (ext == "mesh" || ext == "MESH")
+		file_format = FORMAT_MESH;
 	else
 	{
 		std::cerr << "Unknown mesh format: " << filename << std::endl;
@@ -1118,8 +1399,8 @@ Mesh* Mesh::Get(const char* filename)
 	std::cout << " + Mesh loading: " << filename << " ... ";
 	std::string binfilename = filename;
 
-	if (file_format != FORMAT_BIN)
-		binfilename = binfilename + ".bin";
+	if (file_format != FORMAT_MBIN)
+		binfilename = binfilename + ".mbin";
 
 	//try loading the binary version
 	if ( m->readBin(binfilename.c_str()) && use_binary )
@@ -1147,6 +1428,8 @@ Mesh* Mesh::Get(const char* filename)
 		loaded = m->loadOBJ(filename);
 	else if (file_format == FORMAT_ASE)
 		loaded = m->loadASE(filename);
+	else if (file_format == FORMAT_MESH)
+		loaded = m->loadMESH(filename);
 
 	if (!loaded)
 	{
@@ -1170,7 +1453,7 @@ Mesh* Mesh::Get(const char* filename)
 	}
 
 	std::cout << "[OK]  Faces: " << m->vertices.size() / 3 << " Time: " << (getTime() - time) * 0.001 << "sec" << std::endl;
-	if (use_binary)
+	if (use_binary && file_format != FORMAT_MESH)
 	{
 		std::cout << "\t\t Writing .BIN ... ";
 		m->writeBin(filename);

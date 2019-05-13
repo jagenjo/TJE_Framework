@@ -168,6 +168,10 @@ void Game::onMouseButtonUp(SDL_MouseButtonEvent event)
 {
 }
 
+void Game::onMouseWheel(SDL_MouseWheelEvent event)
+{
+}
+
 void Game::onResize(int width, int height)
 {
     std::cout << "window resized: " << width << "," << height << std::endl;

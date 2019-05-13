@@ -21,6 +21,7 @@
 long last_time = 0; //this is used to calcule the elapsed time between frames
 
 Game* game = NULL;
+SDL_GLContext glcontext;
 
 // *********************************
 //create a window using SDL
@@ -37,6 +38,10 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
 	//antialiasing (disable this lines if it goes too slow)
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, multisample ); //increase to have smoother polygons
@@ -45,7 +50,7 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 
 	//create the window
-	SDL_Window *window = SDL_CreateWindow(caption, 100, 100, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|
+	SDL_Window *window = SDL_CreateWindow(caption, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|
                                           (retina ? SDL_WINDOW_ALLOW_HIGHDPI:0) |
                                           (fullscreen?SDL_WINDOW_FULLSCREEN_DESKTOP:0) );
 	if(!window)
@@ -55,7 +60,7 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 	}
   
 	// Create an OpenGL context associated with the window.
-	SDL_GLContext glcontext = SDL_GL_CreateContext(window);
+	glcontext = SDL_GL_CreateContext(window);
 
 	//in case of exit, call SDL_Quit()
 	atexit(SDL_Quit);
@@ -108,6 +113,11 @@ void mainLoop()
 				Input::mouse_state &= ~SDL_BUTTON(sdlEvent.button.button);
 				game->onMouseButtonUp(sdlEvent.button);
 				break;
+			case SDL_MOUSEWHEEL:
+				Input::mouse_wheel += sdlEvent.wheel.y;
+				Input::mouse_wheel_delta = sdlEvent.wheel.y;
+				game->onMouseWheel(sdlEvent.wheel);
+				break;
 			case SDL_KEYDOWN:
 				game->onKeyDown(sdlEvent.key);
 				break;
@@ -156,6 +166,10 @@ void mainLoop()
 			checkGLErrors();
 		#endif
 	}
+
+	SDL_GL_DeleteContext(glcontext);
+	SDL_DestroyWindow(game->window);
+	SDL_Quit();
 
 	return;
 }

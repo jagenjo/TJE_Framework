@@ -9,6 +9,14 @@
 
 class Shader; //for binding
 class Texture; //for displace
+class Animation; //for skinned meshes
+
+#define MESH_BIN_VERSION 6 //this is used to regenerate bins if the format changes
+
+struct BoneInfo {
+	char name[32]; //max 32 chars per bone name
+	Matrix44 bind_pose;
+};
 
 class Mesh
 {
@@ -38,6 +46,14 @@ public:
 
 	std::vector< tInterleaved > interleaved; //to render interleaved
 
+	std::vector< Vector3u > indices; //for indexed meshes
+
+	//for animated meshes
+	std::vector< Vector4ub > bones; //tells which bones afect the vertex (4 max)
+	std::vector< Vector4 > weights; //tells how much affect every bone
+	std::vector< BoneInfo > bones_info; //tells 
+	Matrix44 bind_pose;
+
 	Vector3 aabb_min;
 	Vector3	aabb_max;
 	BoundingBox box;
@@ -49,7 +65,10 @@ public:
 	unsigned int normals_vbo_id;
 	unsigned int colors_vbo_id;
 
+	unsigned int indices_vbo_id;
 	unsigned int interleaved_vbo_id;
+	unsigned int bones_vbo_id;
+	unsigned int weights_vbo_id;
 
 	Mesh();
 	~Mesh();
@@ -60,8 +79,10 @@ public:
 	void renderInstanced(unsigned int primitive, const Matrix44* instanced_models, int number);
 	void renderBounding( const Matrix44& model, bool world_bounding = true );
 	void renderFixedPipeline(int primitive); //sloooooooow
+	void renderAnimated( unsigned int primitive, Animation* anim );
 
 	void enableBuffers(Shader* shader);
+	void drawCall(unsigned int primitive, int submesh_id, int num_instances);
 	void disableBuffers(Shader* shader);
 
 	bool readBin(const char* filename);
@@ -99,6 +120,7 @@ public:
 private:
 	bool loadASE(const char* filename);
 	bool loadOBJ(const char* filename);
+	bool loadMESH(const char* filename); //personal format used for animations
 };
 
 #endif

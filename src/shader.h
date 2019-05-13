@@ -64,6 +64,7 @@ public:
 	virtual void setVector3(const char* varname, const Vector3& input) { setUniform3(varname, input.x, input.y, input.z); }
 	virtual void setMatrix44(const char* varname, const float* m);
 	virtual void setMatrix44(const char* varname, const Matrix44 &m);
+	virtual void setMatrix44Array(const char* varname, Matrix44* m_array, int num);
 
 	virtual void setUniform1Array(const char* varname, const float* input, const int count) ;
 	virtual void setUniform2Array(const char* varname, const float* input, const int count) ;

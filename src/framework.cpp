@@ -220,7 +220,7 @@ void Matrix44::transpose()
    std::swap(m[6],m[9]); std::swap(m[7],m[13]); std::swap(m[11],m[14]);
 }
 
-Vector3 Matrix44::rotateVector(const Vector3& v)
+Vector3 Matrix44::rotateVector(const Vector3& v) const
 {
 	return (*this * Vector4(v,0.0)).xyz;
 }

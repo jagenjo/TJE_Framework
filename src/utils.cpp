@@ -254,7 +254,7 @@ std::string getGPUStats()
 		nCurAvailMemoryInKB = 0;
 	}
 
-	std::string str = "FPS: " + std::to_string(Game::instance->fps) + " DCS: " + std::to_string(Mesh::num_meshes_rendered) + " Tris: " + std::to_string(long(Mesh::num_triangles_rendered * 0.001)) + "Ks  VRAM: " + std::to_string(int(nCurAvailMemoryInKB * 0.001)) + "MBs / " + std::to_string(int(nTotalMemoryInKB * 0.001)) + "MBs";
+	std::string str = "FPS: " + std::to_string(Game::instance->fps) + " DCS: " + std::to_string(Mesh::num_meshes_rendered) + " Tris: " + std::to_string(long(Mesh::num_triangles_rendered * 0.001)) + "Ks  VRAM: " + std::to_string(int((nTotalMemoryInKB-nCurAvailMemoryInKB) * 0.001)) + "MBs / " + std::to_string(int(nTotalMemoryInKB * 0.001)) + "MBs";
 	Mesh::num_meshes_rendered = 0;
 	Mesh::num_triangles_rendered = 0;
 	return str;
@@ -270,6 +270,7 @@ void drawGrid()
 		grid->createGrid(10);
 	}
 
+	glLineWidth(1);
 	glEnable(GL_BLEND);
 	glDepthMask(false);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -285,4 +286,141 @@ void drawGrid()
 	glDisable(GL_BLEND);
 	glDepthMask(true);
 	grid_shader->disable();
+}
+
+
+char* fetchWord(char* data, char* word)
+{
+	int pos = 0;
+	while (*data != ',' && *data != '\n' && pos < 254) { word[pos++] = *data; data++; }
+	word[pos] = 0;
+	if (pos < 254)
+		data++; //skip ',' or '\n'
+	return data;
+}
+
+char* fetchFloat(char* data, float& v)
+{
+	char w[255];
+	data = fetchWord(data,w);
+	v = atof(w);
+	return data;
+}
+
+char* fetchMatrix44(char* data, Matrix44& m)
+{
+	char word[255];
+	for (int i = 0; i < 16; ++i)
+	{
+		data = fetchWord(data, word);
+		m.m[i] = atof(word);
+	}
+	return data;
+}
+
+char* fetchEndLine(char* data)
+{
+	while (*data && *data != '\n') { data++; }
+	if (*data == '\n')
+		data++;
+	return data;
+}
+
+char* fetchBufferFloat(char* data, std::vector<float>& vector, int num )
+{
+	int pos = 0;
+	char word[255];
+	if (num)
+		vector.resize(num);
+	else //read size with the first number
+	{
+		data = fetchWord(data, word);
+		float v = atof(word);
+		assert(v);
+		vector.resize(v);
+	}
+
+	int index = 0;
+	while (*data != 0) {
+		if (*data == ',' || *data == '\n')
+		{
+			if (pos == 0)
+			{
+				data++;
+				continue;
+			}
+			word[pos] = 0;
+			float v = atof(word);
+			vector[index++] = v;
+			if (*data == '\n' || *data == 0)
+			{
+				if (*data == '\n')
+					data++;
+				return data;
+			}
+			data++;
+			if (index >= vector.size())
+				return data;
+			pos = 0;
+		}
+		else
+		{
+			word[pos++] = *data;
+			data++;
+		}
+	}
+
+	return data;
+}
+
+char* fetchBufferVec3(char* data, std::vector<Vector3>& vector)
+{
+	int pos = 0;
+	std::vector<float> floats;
+	data = fetchBufferFloat(data, floats);
+	vector.resize(floats.size() / 3);
+	memcpy(&vector[0], &floats[0], sizeof(float)*floats.size());
+	return data;
+}
+
+char* fetchBufferVec2(char* data, std::vector<Vector2>& vector)
+{
+	int pos = 0;
+	std::vector<float> floats;
+	data = fetchBufferFloat(data, floats);
+	vector.resize(floats.size() / 2);
+	memcpy(&vector[0], &floats[0], sizeof(float)*floats.size());
+	return data;
+}
+
+char* fetchBufferVec3u(char* data, std::vector<Vector3u>& vector)
+{
+	int pos = 0;
+	std::vector<float> floats;
+	data = fetchBufferFloat(data, floats);
+	vector.resize(floats.size() / 3);
+	for (int i = 0; i < floats.size(); i += 3)
+		vector[i / 3].set(floats[i], floats[i + 1], floats[i + 2]);
+	return data;
+}
+
+char* fetchBufferVec4ub(char* data, std::vector<Vector4ub>& vector)
+{
+	int pos = 0;
+	std::vector<float> floats;
+	data = fetchBufferFloat(data, floats);
+	vector.resize(floats.size() / 4);
+	for (int i = 0; i < floats.size(); i += 4)
+		vector[i / 4].set(floats[i], floats[i + 1], floats[i + 2], floats[i + 3]);
+	return data;
+}
+
+char* fetchBufferVec4(char* data, std::vector<Vector4>& vector)
+{
+	int pos = 0;
+	std::vector<float> floats;
+	data = fetchBufferFloat(data, floats);
+	vector.resize(floats.size() / 4);
+	memcpy(&vector[0], &floats[0], sizeof(float)*floats.size());
+	return data;
 }
