@@ -58,7 +58,7 @@ public:
 	void setUniform(const char* varname, const Vector4& input) { assert(current == this); setUniform4(varname, input.x, input.y, input.z, input.w); }
 	void setUniform(const char* varname, const Matrix44& input) { assert(current == this); setMatrix44(varname, input); }
 	void setUniform(const char* varname, Texture* texture) { assert(current == this); setTexture(varname, texture); }
-
+	void setUniform(const char* varname, std::vector<Matrix44>& m_vector) { assert(current == this && m_vector.size()); setMatrix44Array(varname, &m_vector[0], m_vector.size()); }
 
 	virtual void setFloat(const char* varname, const float& input) { setUniform1(varname, input); }
 	virtual void setVector3(const char* varname, const Vector3& input) { setUniform3(varname, input.x, input.y, input.z); }

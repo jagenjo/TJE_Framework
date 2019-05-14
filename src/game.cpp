@@ -5,6 +5,7 @@
 #include "fbo.h"
 #include "shader.h"
 #include "input.h"
+#include "animation.h"
 
 #include <cmath>
 
@@ -12,6 +13,7 @@
 Mesh* mesh = NULL;
 Texture* texture = NULL;
 Shader* shader = NULL;
+Animation* anim = NULL;
 float angle = 0;
 
 Game* Game::instance = NULL;
@@ -39,12 +41,12 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	camera->lookAt(Vector3(0.f,100.f, 100.f),Vector3(0.f,0.f,0.f), Vector3(0.f,1.f,0.f)); //position the camera and point to 0,0,0
 	camera->setPerspective(70.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
 
-	//create a plane mesh
-	mesh = Mesh::Get("data/box.ASE");
-
 	//load one texture
 	texture = new Texture();
  	texture->load("data/texture.tga");
+
+	// example of loading Mesh from Mesh Manager
+	mesh = Mesh::Get("data/box.ASE");
 
 	// example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
@@ -72,27 +74,24 @@ void Game::render(void)
    
 	//create model matrix for cube
 	Matrix44 m;
-	m.rotate( (float)(angle * DEG2RAD), Vector3(0.0f,1.0f, 0.0f) ); //build a rotation matrix
+	m.rotate(time, Vector3(0, 1, 0));
 
-	Shader* current_shader = shader;
-
-	if(current_shader)
+	if(shader)
 	{
 		//enable shader
-		current_shader->enable();
+		shader->enable();
 
 		//upload uniforms
-		current_shader->setUniform("u_color", Vector4(1,1,1,1));
-		current_shader->setUniform("u_viewprojection", camera->viewprojection_matrix );
-		current_shader->setUniform("u_texture", texture);
-		current_shader->setUniform("u_model", m);
-		current_shader->setUniform("u_time", time);
+		shader->setUniform("u_color", Vector4(1,1,1,1));
+		shader->setUniform("u_viewprojection", camera->viewprojection_matrix );
+		shader->setUniform("u_texture", texture);
+		shader->setUniform("u_model", m);
+		shader->setUniform("u_time", time);
 
-		//current_shader->setUniform("u_model", m);
 		mesh->render(GL_TRIANGLES);
 
 		//disable shader
-		current_shader->disable();
+		shader->disable();
 	}
 
 	//Draw the floor grid
