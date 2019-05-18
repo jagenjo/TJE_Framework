@@ -72,7 +72,12 @@ SDL_Joystick* Input::openGamepad(int index)
 		return NULL;
 
 	SDL_Joystick* j = SDL_JoystickOpen(index);
-	std::cout << " * Gamepad found: " << SDL_JoystickName(j) << " Axis: " << SDL_JoystickNumAxes(j) << "  Buttons: " << SDL_JoystickNumButtons(j) << std::endl;
+	if (!j)
+		return NULL;
+
+	const char* name = SDL_JoystickName(j);
+	if(name)
+		std::cout << " * Gamepad found: " << name << " Axis: " << SDL_JoystickNumAxes(j) << "  Buttons: " << SDL_JoystickNumButtons(j) << std::endl;
 
 	// Open joystick and return it
 	return j;
@@ -87,11 +92,13 @@ void Input::updateGamepadState(SDL_Joystick* joystick, GamepadState& state)
 
 	//reset all gamepad state
 	memset(&state, 0, sizeof(GamepadState));
+	state.connected = false;
 
 	if (joystick == NULL)
 		return;
 
-	const char* name = SDL_JoystickName((::SDL_Joystick*) joystick);
+	state.connected = true;
+	state.model = SDL_JoystickName((::SDL_Joystick*) joystick);
 
 	//state.axis_translator = strcmp(name, "XInput Controller #1") == 0 ? XInput : NULL;
 
