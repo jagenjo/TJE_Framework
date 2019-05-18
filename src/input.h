@@ -51,16 +51,14 @@ const char buttons_15[] = { PAD_LEFT, PAD_UP, PAD_RIGHT, PAD_DOWN, START_BUTTON,
 
 struct GamepadState
 {
-	bool connected;		//true if connected
-	const char* model;	//string with info about the model
-	int num_axis;		//num analog sticks
-	int num_buttons;	//num buttons
-	float axis[8];		//analog sticks and triggers
-	char button[16];	//buttons
+	int num_axis;	//num analog sticks
+	int num_buttons; //num buttons
+	float axis[8]; //analog sticks and triggers
+	char button[16]; //buttons
 	char prev_button[16]; //buttons in the previous frame
-	char direction;		//which direction is the left stick pointing at
+	char direction; //which direction is the left stick pointing at
 	char prev_direction; //which direction was the left stick before
-	HATState hat;		//digital pad
+	HATState hat; //digital pad
 
 	bool isButtonPressed(int num) { return button[num] != 0; }
 	bool wasButtonPressed(int num) { return (button[num] & !prev_button[num]) != 0; }

@@ -393,7 +393,7 @@ void Mesh::renderFixedPipeline(int primitive)
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //if it crashes, comment this line
 }
 
-void Mesh::renderAnimated( unsigned int primitive, Skeleton* skeleton )
+void Mesh::renderAnimated( unsigned int primitive, Animation* anim )
 {
 	Shader* shader = Shader::current;
 	std::vector<Matrix44> bone_matrices;
@@ -401,8 +401,8 @@ void Mesh::renderAnimated( unsigned int primitive, Skeleton* skeleton )
 	int bones_loc = shader->getUniformLocation("u_bones");
 	if (bones_loc != -1)
 	{
-		skeleton->computeFinalBoneMatrices(bone_matrices, this);
-		shader->setUniform("u_bones", bone_matrices );
+		anim->skeleton.computeFinalBoneMatrices(bone_matrices, this);
+		shader->setMatrix44Array("u_bones", &bone_matrices[0], bone_matrices.size() );
 	}
 
 	render(primitive);
@@ -707,15 +707,15 @@ bool Mesh::readBin(const char* filename)
 	if (info.streams[5] == 'B')
 	{
 		bones.resize(info.size);
-		memcpy((void*)&bones[0], pos, sizeof(Vector4ub) * info.size);
-		pos += sizeof(Vector4ub) * info.size;
+		memcpy((void*)&bones[0], pos, sizeof(Vector4) * info.size);
+		pos += sizeof(Vector4) * info.size;
 	}
 
 	if (info.streams[6] == 'W')
 	{
 		weights.resize(info.size);
-		memcpy((void*)&weights[0], pos, sizeof(Vector4) * info.size);
-		pos += sizeof(Vector4) * info.size;
+		memcpy((void*)&weights[0], pos, sizeof(Vector4ub) * info.size);
+		pos += sizeof(Vector4ub) * info.size;
 	}
 
 	if (info.num_bones)
@@ -761,7 +761,6 @@ bool Mesh::writeBin(const char* filename)
 	fwrite("MBIN",sizeof(char),4,f);
 
 	sMeshInfo info;
-	memset(&info, 0, sizeof(info));
 	info.version = MESH_BIN_VERSION;
 	info.header_bytes = sizeof(sMeshInfo);
 	info.size = interleaved.size() ? interleaved.size() : vertices.size();
@@ -807,9 +806,9 @@ bool Mesh::writeBin(const char* filename)
 		fwrite((void*)&indices[0], indices.size() * sizeof(Vector3u), 1, f);
 
 	if (bones.size())
-		fwrite((void*)&bones[0], bones.size() * sizeof(Vector4ub), 1, f);
+		fwrite((void*)&bones[0], bones.size() * sizeof(Vector4), 1, f);
 	if (weights.size())
-		fwrite((void*)&weights[0], weights.size() * sizeof(Vector4), 1, f);
+		fwrite((void*)&weights[0], weights.size() * sizeof(Vector4ub), 1, f);
 	if (bones_info.size())
 		fwrite((void*)&bones_info[0], bones_info.size() * sizeof(BoneInfo), 1, f);
 
@@ -1454,7 +1453,7 @@ Mesh* Mesh::Get(const char* filename)
 	}
 
 	std::cout << "[OK]  Faces: " << m->vertices.size() / 3 << " Time: " << (getTime() - time) * 0.001 << "sec" << std::endl;
-	if (use_binary)
+	if (use_binary && file_format != FORMAT_MESH)
 	{
 		std::cout << "\t\t Writing .BIN ... ";
 		m->writeBin(filename);

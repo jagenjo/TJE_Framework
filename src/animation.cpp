@@ -34,61 +34,44 @@ Matrix44& Skeleton::getBoneMatrix(const char* name, bool local )
 void Skeleton::computeFinalBoneMatrices( std::vector<Matrix44>& bone_matrices, Mesh* mesh )
 {
 	assert(mesh);
-
-	updateGlobalMatrices();
-
 	bone_matrices.resize(mesh->bones_info.size());
 	#pragma omp for  
 	for (int i = 0; i < mesh->bones_info.size(); ++i)
 	{
 		BoneInfo& bone_info = mesh->bones_info[i];
-		bone_matrices[i] = bone_info.bind_pose * getBoneMatrix( bone_info.name, false ); //use globals
+		bone_matrices[i] = bone_info.bind_pose * getBoneMatrix( bone_info.name );
 	}
 }
 
-void blendSkeleton(Skeleton* a, Skeleton* b, float w, Skeleton* result, uint8 layer)
+void Skeleton::blend(Skeleton* sk, float w, uint8 layer)
 {
-	assert(a && b && result && "skeleton cannot be NULL");
-	assert(a->num_bones == b->num_bones && "skeleton must contain the same number of bones");
-
-	w = clamp(w, 0.0f, 1.0f);//safety
+	assert(sk->num_bones == num_bones); //skeletons must have same num of bones
 
 	if (layer == 0xFF)
 	{
-		if (w == 0.0f)
-		{
-			if(result == a) //nothing to do
-				return;
-			*result = *a; //copy A in Result
+		if (w <= 0)
 			return;
-		}
-		if (w == 1.0f) //copy B in result
+		if (w >= 1)
 		{
-			*result = *b;
+			memcpy(bones, sk->bones, sizeof(bones));
 			return;
 		}
 	}
 
-	if (result != a) //copy bone names
-	{
-		memcpy(result->bones, a->bones, sizeof(result->bones)); //copy skeleton structure
-		result->bones_by_name = a->bones_by_name;
-		result->num_bones = a->num_bones;
-	}
+	w = clamp(w, 0.0, 1.0);//safety
 
-	//blend bones locally
 	#pragma omp for  
-	for (int i = 0; i < result->num_bones; ++i)
+	for (int i = 0; i < num_bones; ++i)
 	{
-		Skeleton::Bone& bone = result->bones[i];
-		Skeleton::Bone& boneA = a->bones[i];
-		Skeleton::Bone& boneB = b->bones[i];
+		Bone& bone2 = sk->bones[i];
+		Bone& bone = bones[i];
 		if ( layer != 0xFF && !(bone.layer & layer) ) //not in the same layer
 			continue;
-		#pragma omp for  
 		for (int j = 0; j < 16; ++j)
-			bone.model.m[j] = lerp( boneA.model.m[j], boneB.model.m[j], w);
+			bone.model.m[j] = lerp(bone.model.m[j], bone2.model.m[j], w);
 	}
+
+	updateGlobalMatrices();
 }
 
 void Skeleton::renderSkeleton(Camera* camera, Matrix44 model, Vector4 color, bool render_points)
@@ -130,6 +113,7 @@ void Skeleton::applyTransformToBones(const char* root, Matrix44 transform)
 	if (!bone)
 		return;
 	bone->model = bone->model * transform;
+	updateGlobalMatrices();
 }
 
 void Skeleton::updateGlobalMatrices()
@@ -178,13 +162,9 @@ void Animation::assignTime(float t, bool loop, bool interpolate, uint8 layers)
 	assert(keyframes && skeleton.num_bones);
 
 	if (loop)
-	{
 		t = fmod(t, duration);
-		if (t < 0)
-			t = duration + t;
-	}
 	else
-		t = clamp( t, 0.0f, duration - (1.0/samples_per_second) );
+		t = clamp(t, 0.0f, 1.0f);
 	float v = samples_per_second * t;
 	int index = clamp(floor(v), 0, num_keyframes - 1);
 	int index2 = index + 1;
@@ -465,8 +445,6 @@ bool Animation::loadSKANIM(const char* filename)
 		skeleton.assignLayer(skeleton.getBone("mixamorig_RightShoulder"), RIGHT_ARM);
 		skeleton.assignLayer(skeleton.getBone("mixamorig_LeftShoulder"), LEFT_ARM);
 	}
-
-	assignTime(0); //reset pose
 
 	delete[] data;
 	return true;

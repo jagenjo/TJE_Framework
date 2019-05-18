@@ -9,9 +9,9 @@
 
 class Shader; //for binding
 class Texture; //for displace
-class Skeleton; //for skinned meshes
+class Animation; //for skinned meshes
 
-#define MESH_BIN_VERSION 7 //this is used to regenerate bins if the format changes
+#define MESH_BIN_VERSION 6 //this is used to regenerate bins if the format changes
 
 struct BoneInfo {
 	char name[32]; //max 32 chars per bone name
@@ -79,7 +79,7 @@ public:
 	void renderInstanced(unsigned int primitive, const Matrix44* instanced_models, int number);
 	void renderBounding( const Matrix44& model, bool world_bounding = true );
 	void renderFixedPipeline(int primitive); //sloooooooow
-	void renderAnimated(unsigned int primitive, Skeleton *sk);
+	void renderAnimated( unsigned int primitive, Animation* anim );
 
 	void enableBuffers(Shader* shader);
 	void drawCall(unsigned int primitive, int submesh_id, int num_instances);
