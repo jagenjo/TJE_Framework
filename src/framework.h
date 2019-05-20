@@ -343,7 +343,7 @@ float signedDistanceToPlane(const Vector4& plane, const Vector3& point);
 int planeBoxOverlap( const Vector4& plane, const Vector3& center, const Vector3& halfsize );
 float ComputeSignedAngle( Vector2 a, Vector2 b);
 Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal, const Vector3& ray_origin, const Vector3& ray_dir );
-
+Vector3 reflect(const Vector3& I, const Vector3& N);
 
 //value between 0 and 1
 inline float random(float range = 1.0f, int offset = 0) { return ((rand() % 1000) / (1000.0f)) * range + offset; }

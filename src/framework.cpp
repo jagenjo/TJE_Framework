@@ -1200,6 +1200,11 @@ Vector3 RayPlaneCollision(const Vector3& plane_pos, const Vector3& plane_normal,
 	return ray_origin + ray_dir * t;
 }
 
+Vector3 reflect(const Vector3& I, const Vector3& N)
+{
+	return I - 2.0 * dot(N, I) * N;
+}
+
 Vector3 normalize(Vector3 n)
 {
 	return n.normalize();
