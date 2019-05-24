@@ -28,6 +28,8 @@ long Mesh::num_triangles_rendered = 0;
 
 Mesh::Mesh()
 {
+	memset(&submeshes, 0, sizeof(submeshes));
+	num_submeshes = 0;
 	radius = 0;
 	vertices_vbo_id = uvs_vbo_id = normals_vbo_id = colors_vbo_id = interleaved_vbo_id = indices_vbo_id = bones_vbo_id = weights_vbo_id = 0;
 	collision_model = NULL;
@@ -42,6 +44,9 @@ Mesh::~Mesh()
 
 void Mesh::clear()
 {
+	num_submeshes = 0;
+	memset(&submeshes, 0, sizeof(submeshes));
+
 	//Free VBOs
 	if (vertices_vbo_id) 
 		glDeleteBuffersARB(1,&vertices_vbo_id);
@@ -221,20 +226,21 @@ void Mesh::render(unsigned int primitive, int submesh_id, int num_instances)
 
 void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 {
-	int start = 0;
-	int size = vertices.size();
+	int start = 0; //num triangles 
+	int size = vertices.size(); //num primitives (so for a triangle it should be 3)
 	if (indices.size())
-		size = indices.size();
+		size = indices.size()*3; 
 	else if (interleaved.size())
 		size = interleaved.size();
 
-	if (submesh_id > 0)
+	if (submesh_id  >= 0 && submesh_id < num_submeshes)
 	{
-		submesh_id -= 1;
-		start = submesh_id == 0 ? 0 : material_range[submesh_id - 1] * 3;
-		if (!material_range.empty())
-			size = material_range[submesh_id] * 3 - start;
+		sSubmeshInfo& s = submeshes[submesh_id];
+		start = s.start;
+		size = s.length;
 	}
+
+	assert(size && "Mesh with 0 vertices?");
 
 	//DRAW
 	if (indices.size())
@@ -243,7 +249,7 @@ void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 		{
 			assert(indices_vbo_id && "indices must be uploaded to the GPU");
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo_id);
-			glDrawElementsInstanced(primitive, size * 3, GL_UNSIGNED_INT, (void*)(start + sizeof(Vector3)), num_instances);
+			glDrawElementsInstanced(primitive, size, GL_UNSIGNED_INT, (void*)(start * sizeof(uint32)), num_instances);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
 		else
@@ -251,11 +257,11 @@ void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 			if (indices_vbo_id)
 			{
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo_id);
-				glDrawElements(primitive, size * 3, GL_UNSIGNED_INT, (void*)(start * sizeof(Vector3)));
+				glDrawElements(primitive, size, GL_UNSIGNED_INT, (void*)(start * sizeof(uint32))); //uint32 because size is in primitives, no triangles
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			}
 			else
-				glDrawElements(primitive, size * 3, GL_UNSIGNED_INT, (void*)(&indices[0] + start)); //no multiply, its a vector3u pointer)
+				glDrawElements(primitive, size, GL_UNSIGNED_INT, (void*)(&indices[0] + start/3)); //no multiply, its a vector3u pointer)
 		}
 	}
 	else
@@ -650,7 +656,8 @@ typedef struct
 	Vector3	halfsize;
 	float radius;
 	int num_bones;
-	int material_range[4];
+	int num_submeshes;
+	Mesh::sSubmeshInfo submeshes[8];
 	Matrix44 bind_pose;
 	char streams[8]; //Normal|Uvs|Color|Indices|Bones|Weights|Extra
 	char extra[32]; //unused
@@ -760,12 +767,8 @@ bool Mesh::readBin(const char* filename)
 	box.halfsize = info.halfsize;
 	radius = info.radius;
 	bind_pose = info.bind_pose;
-
-	for (int i = 0; i < 4; i++)
-		if (info.material_range[i] != -1)
-			material_range.push_back( info.material_range[i] );
-		else
-			break;
+	num_submeshes = info.num_submeshes;
+	memcpy( &submeshes, &info.submeshes, sizeof(submeshes));
 
 	delete[] data;
 
@@ -811,8 +814,8 @@ bool Mesh::writeBin(const char* filename)
 	info.streams[5] = bones.size() ? 'B' : ' ';
 	info.streams[6] = weights.size() ? 'W' : ' ';
 
-	for (unsigned int i = 0; i < 4; i++)
-		info.material_range[i] = material_range.size() > i ? material_range[i] : -1;
+	info.num_submeshes = num_submeshes;
+	memcpy( &info.submeshes, &submeshes, sizeof(submeshes) );
 
 	//write info
 	fwrite((void*)&info, sizeof(sMeshInfo),1, f);
@@ -873,6 +876,7 @@ bool Mesh::loadASE(const char* filename)
 	const float min_float = -10000000;
 	aabb_min.set(max_float,max_float,max_float);
 	aabb_max.set(min_float,min_float,min_float);
+	submeshes[0].start = 0;
 
 	//load unique vertices
 	for(count=0;count<nVtx;count++)
@@ -909,14 +913,17 @@ bool Mesh::loadASE(const char* filename)
 
 		t.seek("*MESH_MTLID");
 		int current_mat = t.getint();
-		if (current_mat != prev_mat)
+		if (current_mat != prev_mat && num_submeshes<8)
 		{
-			material_range.push_back( count );
 			prev_mat = current_mat;
+			submeshes[num_submeshes].length = count*3 - submeshes[num_submeshes].start;
+			num_submeshes++;
+			submeshes[num_submeshes].start = count*3;
 		}
 	}
 
-	material_range.push_back(nFcs);
+	submeshes[num_submeshes].length = count * 3 - submeshes[num_submeshes].start;
+	num_submeshes++;
 
 	t.seek("*MESH_NUMTVERTEX");
 	nVtx = t.getint();
@@ -1002,6 +1009,8 @@ bool Mesh::loadOBJ(const char* filename)
 	aabb_max.set(min_float,min_float,min_float);
 
 	unsigned int vertex_i = 0;
+	unsigned int last_index = 0;
+	submeshes[0].start = 0;
 
 	//parse file
 	while(*pos != 0)
@@ -1048,6 +1057,18 @@ bool Mesh::loadOBJ(const char* filename)
 			if (uvs.size() == 0 && indexed_uvs.size() )
 				uvs.resize(1);
 		}
+		else if (tokens[0] == "usemtl" || tokens[0] == "g")
+		{
+			unsigned int index = vertices.size() / 3; //because we are decompressing it
+			if (last_index != index && num_submeshes < 8)
+			{
+				last_index = index;
+				submeshes[ num_submeshes ].length = index*3 - submeshes[num_submeshes].start;
+				num_submeshes++;
+				submeshes[num_submeshes].start = index*3;
+				strcpy_s( submeshes[num_submeshes].name, 32, tokens[1].c_str());
+			}
+		}
 		else if (tokens[0] == "f" && tokens.size() >= 4)
 		{
 			Vector3 v1,v2,v3;
@@ -1085,7 +1106,8 @@ bool Mesh::loadOBJ(const char* filename)
 	box.halfsize = (aabb_max - box.center);
 	radius = (float)fmax( aabb_max.length(), aabb_min.length() );
 
-	material_range.push_back( (unsigned int)(vertices.size() / 3.0) );
+	submeshes[num_submeshes].length = (unsigned int)(vertices.size() - submeshes[num_submeshes].start);
+	num_submeshes++;
 	return true;
 }
 
@@ -1154,6 +1176,23 @@ bool Mesh::loadMESH(const char* filename)
 			}
 			else if (str == "bind_pose")
 				pos = fetchMatrix44( pos, bind_pose );
+			else if (str == "groups")
+			{
+				pos = fetchWord(pos, word);
+				num_submeshes = atof(word);
+				for (int j = 0; j < num_submeshes; ++j)
+				{
+					pos = fetchWord(pos, word);
+					strcpy_s(submeshes[j].name, 32, word);
+					pos = fetchWord(pos, word);
+					strcpy_s(submeshes[j].material, 32, word);
+					pos = fetchWord(pos, word);
+					submeshes[j].start = atof(word);
+					pos = fetchWord(pos, word);
+					submeshes[j].length = atof(word);
+				}
+				pos = fetchEndLine(pos);
+			}
 			else
 				pos = fetchEndLine(pos);
 		}
