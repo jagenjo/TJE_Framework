@@ -1307,7 +1307,7 @@ void Mesh::createSubdividedPlane(float size, int subdivisions, bool centered )
 
 void Mesh::displace(Image* heightmap, float altitude)
 {
-	assert(heightmap && heightmap->data && "texture without data, remember to set false to upload_to_vram");
+	assert(heightmap && heightmap->data && "image without data");
 	assert(uvs.size() && "cannot displace without uvs");
 
 	bool is_interleaved = interleaved.size() != 0;
