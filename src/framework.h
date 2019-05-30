@@ -2,13 +2,15 @@
 	Here we define all the mathematical classes like Vector3, Matrix44 and some extra useful geometrical functions
 */
 
-//macros to ensure the code is included once
-#ifndef FRAMEWORK 
+#ifndef FRAMEWORK //macros to ensure the code is included once
 #define FRAMEWORK
 
 #include <vector>
 #include <cmath>
 
+#ifndef PI
+	#define PI 3.14159265359
+#endif
 #define DEG2RAD 0.0174532925
 #define RAD2DEG 57.295779513
 
@@ -56,6 +58,8 @@ Vector2 operator * (const Vector2& a, float v);
 Vector2 operator + (const Vector2& a, const Vector2& b);
 Vector2 operator - (const Vector2& a, const Vector2& b);
 
+Vector2 normalize(Vector2 n);
+inline Vector2 lerp(const Vector2& a, const Vector2& b, float v) { return a*(1.0 - v) + b*v; }
 
 class Vector3u
 {
@@ -112,6 +116,7 @@ public:
 Vector3 normalize(Vector3 n);
 float dot( const Vector3& a, const Vector3& b);
 Vector3 cross(const Vector3&a, const Vector3& b);
+Vector3 lerp(const Vector3& a, const Vector3& b, float v);
 
 inline Vector3 operator + (const Vector3& a, const Vector3& b) { return Vector3(a.x + b.x, a.y + b.y, a.z + b.z); }
 inline Vector3 operator - (const Vector3& a, const Vector3& b) { return Vector3(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -159,9 +164,16 @@ public:
 		unsigned char v[4];
 	};
 	Vector4ub() { x = y = z = 0; }
-	Vector4ub(unsigned int x, unsigned int y, unsigned int z, unsigned int w) { this->x = x; this->y = y; this->z = z; this->w = w; }
-	void set(unsigned int x, unsigned int y, unsigned int z, unsigned int w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	Vector4ub(unsigned char x, unsigned char y, unsigned char z, unsigned char w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	void set(unsigned char x, unsigned char y, unsigned char z, unsigned char w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	Vector4ub operator = (const Vector4& a) { x = (unsigned char)a.x; y = (unsigned char)a.y; z = (unsigned char)a.z; w = (unsigned char)a.w; }
 };
+
+inline Vector4ub operator + (const Vector4ub& a, const Vector4ub& b) { return Vector4ub(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w ); }
+inline Vector4ub operator * (const Vector4ub& a, float v) { return Vector4ub(a.x * v, a.y * v, a.z * v, a.w * v); }
+inline Vector4ub lerp(const Vector4ub& a, const Vector4ub& b, float v) { return a*(1.0 - v) + b*v; }
+
+typedef Vector4ub Color;
 
 //****************************
 //Matrix44 class
@@ -191,6 +203,7 @@ class Matrix44
 		void clear();
 		void setIdentity();
 		void transpose();
+		void normalizeAxis();
 
 		//get base vectors
 		Vector3 rightVector() { return Vector3(m[0],m[1],m[2]); }
@@ -341,7 +354,8 @@ enum {
 
 float signedDistanceToPlane(const Vector4& plane, const Vector3& point);
 int planeBoxOverlap( const Vector4& plane, const Vector3& center, const Vector3& halfsize );
-float ComputeSignedAngle( Vector2 a, Vector2 b);
+float ComputeSignedAngle( Vector2 a, Vector2 b); //returns the angle between both vectors in radians
+inline float ease(float f) { return f*f*f*(f*(f*6.0f - 15.0f) + 10.0f); }
 Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal, const Vector3& ray_origin, const Vector3& ray_dir );
 Vector3 reflect(const Vector3& I, const Vector3& N);
 
@@ -354,6 +368,5 @@ typedef Vector3 vec3;
 typedef Vector4 vec4;
 typedef Matrix44 mat4;
 typedef Quaternion quat;
-
 
 #endif

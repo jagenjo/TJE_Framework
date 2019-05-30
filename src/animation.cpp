@@ -33,7 +33,7 @@ Matrix44& Skeleton::getBoneMatrix(const char* name, bool local )
 
 void Skeleton::computeFinalBoneMatrices( std::vector<Matrix44>& bone_matrices, Mesh* mesh )
 {
-	assert(mesh);
+	assert(mesh && mesh->bones_info.size());
 
 	updateGlobalMatrices();
 
@@ -42,27 +42,25 @@ void Skeleton::computeFinalBoneMatrices( std::vector<Matrix44>& bone_matrices, M
 	for (int i = 0; i < mesh->bones_info.size(); ++i)
 	{
 		BoneInfo& bone_info = mesh->bones_info[i];
-		bone_matrices[i] = bone_info.bind_pose * getBoneMatrix( bone_info.name, false ); //use globals
+		bone_matrices[i] = bone_info.bind_pose * getBoneMatrix( bone_info.name, false );
 	}
 }
 
-void blendSkeleton(Skeleton* a, Skeleton* b, float w, Skeleton* result, uint8 layer)
+void blendSkeleton(Skeleton* a, Skeleton* b, float w, Skeleton* result, uint8 layer, bool normalize )
 {
 	assert(a && b && result && "skeleton cannot be NULL");
 	assert(a->num_bones == b->num_bones && "skeleton must contain the same number of bones");
 
-	w = clamp(w, 0.0f, 1.0f);//safety
-
 	if (layer == 0xFF)
 	{
-		if (w == 0.0f)
+		if (w <= 0)
 		{
 			if(result == a) //nothing to do
 				return;
 			*result = *a; //copy A in Result
 			return;
 		}
-		if (w == 1.0f) //copy B in result
+		if (w >= 1) //copy B in result
 		{
 			*result = *b;
 			return;
@@ -70,24 +68,24 @@ void blendSkeleton(Skeleton* a, Skeleton* b, float w, Skeleton* result, uint8 la
 	}
 
 	if (result != a) //copy bone names
-	{
-		memcpy(result->bones, a->bones, sizeof(result->bones)); //copy skeleton structure
 		result->bones_by_name = a->bones_by_name;
-		result->num_bones = a->num_bones;
-	}
 
-	//blend bones locally
+	w = clamp(w, 0.0, 1.0);//safety
+
 	#pragma omp for  
-	for (int i = 0; i < result->num_bones; ++i)
+	for (int i = 0; i < a->num_bones; ++i)
 	{
 		Skeleton::Bone& bone = result->bones[i];
-		Skeleton::Bone& boneA = a->bones[i];
-		Skeleton::Bone& boneB = b->bones[i];
-		if ( layer != 0xFF && !(bone.layer & layer) ) //not in the same layer
+		if (layer != 0xFF && !(bone.layer & layer)) //not in the same layer
 			continue;
-		#pragma omp for  
+		Matrix44& boneM = bone.model;
+		Matrix44& boneA = a->bones[i].model;
+		Matrix44& boneB = b->bones[i].model;
 		for (int j = 0; j < 16; ++j)
-			bone.model.m[j] = lerp( boneA.model.m[j], boneB.model.m[j], w);
+			boneM.m[j] = lerp( boneA.m[j], boneB.m[j], w);
+
+		if (normalize) 
+			boneM.normalizeAxis();
 	}
 }
 
@@ -248,6 +246,8 @@ bool Animation::load(const char* filename)
 			writeABIN( filename );
 		}
 	}
+
+	this->name = filename;
 
 	std::cout << "[OK] Num. Bones: " << skeleton.num_bones << " Time: " << (getTime() - time) * 0.001 << "sec" << std::endl;
 	return true;

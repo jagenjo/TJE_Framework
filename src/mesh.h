@@ -8,10 +8,10 @@
 #include <string>
 
 class Shader; //for binding
-class Texture; //for displace
+class Image; //for displace
 class Skeleton; //for skinned meshes
 
-#define MESH_BIN_VERSION 9 //this is used to regenerate bins if the format changes
+#define MESH_BIN_VERSION 7 //this is used to regenerate bins if the format changes
 
 struct BoneInfo {
 	char name[32]; //max 32 chars per bone name
@@ -30,6 +30,9 @@ public:
 
 	std::string name;
 
+	std::vector<std::string> material_name; 
+	std::vector<unsigned int> material_range; 
+
 	std::vector< Vector3 > vertices; //here we store the vertices
 	std::vector< Vector3 > normals;	 //here we store the normals
 	std::vector< Vector2 > uvs;	 //here we store the texture coordinates
@@ -44,18 +47,6 @@ public:
 	std::vector< tInterleaved > interleaved; //to render interleaved
 
 	std::vector< Vector3u > indices; //for indexed meshes
-
-	//for submeshes
-	struct sSubmeshInfo
-	{
-		char name[32];
-		char material[32];
-		unsigned int start; //primitive start
-		unsigned int length; //num primitives
-	};
-	int num_submeshes;
-	sSubmeshInfo submeshes[8]; //max 8
-
 
 	//for animated meshes
 	std::vector< Vector4ub > bones; //tells which bones afect the vertex (4 max)
@@ -84,7 +75,7 @@ public:
 
 	void clear();
 
-	void render( unsigned int primitive, int submesh_id = -1, int num_instances = 0 );
+	void render( unsigned int primitive, int submesh_id = 0, int num_instances = 0 );
 	void renderInstanced(unsigned int primitive, const Matrix44* instanced_models, int number);
 	void renderBounding( const Matrix44& model, bool world_bounding = true );
 	void renderFixedPipeline(int primitive); //sloooooooow
@@ -97,6 +88,8 @@ public:
 	bool readBin(const char* filename);
 	bool writeBin(const char* filename);
 
+	unsigned int getNumSubmaterials() { return material_name.size(); }
+	unsigned int getNumSubmeshes() { return material_range.size(); }
 	unsigned int getNumVertices() { return interleaved.size() ? interleaved.size() : vertices.size(); }
 
 	//collision testing
@@ -117,7 +110,7 @@ public:
 	void createCube();
 	void createWireBox();
 	void createGrid(float dist);
-	void displace(Texture* texture, float altitude);
+	void displace(Image* heightmap, float altitude);
 	static Mesh* getQuad(); //get global quad
 
 

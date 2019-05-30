@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "shader.h"
 #include "includes.h"
+#include "framework.h"
 
 #include <cassert>
 #include <iostream>
@@ -28,8 +29,6 @@ long Mesh::num_triangles_rendered = 0;
 
 Mesh::Mesh()
 {
-	memset(&submeshes, 0, sizeof(submeshes));
-	num_submeshes = 0;
 	radius = 0;
 	vertices_vbo_id = uvs_vbo_id = normals_vbo_id = colors_vbo_id = interleaved_vbo_id = indices_vbo_id = bones_vbo_id = weights_vbo_id = 0;
 	collision_model = NULL;
@@ -44,9 +43,6 @@ Mesh::~Mesh()
 
 void Mesh::clear()
 {
-	num_submeshes = 0;
-	memset(&submeshes, 0, sizeof(submeshes));
-
 	//Free VBOs
 	if (vertices_vbo_id) 
 		glDeleteBuffersARB(1,&vertices_vbo_id);
@@ -226,21 +222,20 @@ void Mesh::render(unsigned int primitive, int submesh_id, int num_instances)
 
 void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 {
-	int start = 0; //num triangles 
-	int size = vertices.size(); //num primitives (so for a triangle it should be 3)
+	int start = 0;
+	int size = vertices.size();
 	if (indices.size())
-		size = indices.size()*3; 
+		size = indices.size();
 	else if (interleaved.size())
 		size = interleaved.size();
 
-	if (submesh_id  >= 0 && submesh_id < num_submeshes)
+	if (submesh_id > 0)
 	{
-		sSubmeshInfo& s = submeshes[submesh_id];
-		start = s.start;
-		size = s.length;
+		submesh_id -= 1;
+		start = submesh_id == 0 ? 0 : material_range[submesh_id - 1] * 3;
+		if (!material_range.empty())
+			size = material_range[submesh_id] * 3 - start;
 	}
-
-	assert(size && "Mesh with 0 vertices?");
 
 	//DRAW
 	if (indices.size())
@@ -249,7 +244,7 @@ void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 		{
 			assert(indices_vbo_id && "indices must be uploaded to the GPU");
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo_id);
-			glDrawElementsInstanced(primitive, size, GL_UNSIGNED_INT, (void*)(start * sizeof(uint32)), num_instances);
+			glDrawElementsInstanced(primitive, size * 3, GL_UNSIGNED_INT, (void*)(start + sizeof(Vector3)), num_instances);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
 		else
@@ -257,11 +252,11 @@ void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 			if (indices_vbo_id)
 			{
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo_id);
-				glDrawElements(primitive, size, GL_UNSIGNED_INT, (void*)(start * sizeof(uint32))); //uint32 because size is in primitives, no triangles
+				glDrawElements(primitive, size * 3, GL_UNSIGNED_INT, (void*)(start * sizeof(Vector3)));
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			}
 			else
-				glDrawElements(primitive, size, GL_UNSIGNED_INT, (void*)(&indices[0] + start/3)); //no multiply, its a vector3u pointer)
+				glDrawElements(primitive, size * 3, GL_UNSIGNED_INT, (void*)(&indices[0] + start)); //no multiply, its a vector3u pointer)
 		}
 	}
 	else
@@ -509,7 +504,7 @@ bool Mesh::createCollisionModel(bool is_static)
 
 	CollisionModel3D* collision_model = newCollisionModel3D(is_static);
 
-	if (indices.size()) 
+	if (indices.size()) //indexed
 	{
 		collision_model->setTriangleNumber(indices.size());
 
@@ -656,8 +651,7 @@ typedef struct
 	Vector3	halfsize;
 	float radius;
 	int num_bones;
-	int num_submeshes;
-	Mesh::sSubmeshInfo submeshes[8];
+	int material_range[4];
 	Matrix44 bind_pose;
 	char streams[8]; //Normal|Uvs|Color|Indices|Bones|Weights|Extra
 	char extra[32]; //unused
@@ -767,8 +761,12 @@ bool Mesh::readBin(const char* filename)
 	box.halfsize = info.halfsize;
 	radius = info.radius;
 	bind_pose = info.bind_pose;
-	num_submeshes = info.num_submeshes;
-	memcpy( &submeshes, &info.submeshes, sizeof(submeshes));
+
+	for (int i = 0; i < 4; i++)
+		if (info.material_range[i] != -1)
+			material_range.push_back( info.material_range[i] );
+		else
+			break;
 
 	delete[] data;
 
@@ -814,8 +812,8 @@ bool Mesh::writeBin(const char* filename)
 	info.streams[5] = bones.size() ? 'B' : ' ';
 	info.streams[6] = weights.size() ? 'W' : ' ';
 
-	info.num_submeshes = num_submeshes;
-	memcpy( &info.submeshes, &submeshes, sizeof(submeshes) );
+	for (unsigned int i = 0; i < 4; i++)
+		info.material_range[i] = material_range.size() > i ? material_range[i] : -1;
 
 	//write info
 	fwrite((void*)&info, sizeof(sMeshInfo),1, f);
@@ -876,7 +874,6 @@ bool Mesh::loadASE(const char* filename)
 	const float min_float = -10000000;
 	aabb_min.set(max_float,max_float,max_float);
 	aabb_max.set(min_float,min_float,min_float);
-	submeshes[0].start = 0;
 
 	//load unique vertices
 	for(count=0;count<nVtx;count++)
@@ -913,17 +910,14 @@ bool Mesh::loadASE(const char* filename)
 
 		t.seek("*MESH_MTLID");
 		int current_mat = t.getint();
-		if (current_mat != prev_mat && num_submeshes<8)
+		if (current_mat != prev_mat)
 		{
+			material_range.push_back( count );
 			prev_mat = current_mat;
-			submeshes[num_submeshes].length = count*3 - submeshes[num_submeshes].start;
-			num_submeshes++;
-			submeshes[num_submeshes].start = count*3;
 		}
 	}
 
-	submeshes[num_submeshes].length = count * 3 - submeshes[num_submeshes].start;
-	num_submeshes++;
+	material_range.push_back(nFcs);
 
 	t.seek("*MESH_NUMTVERTEX");
 	nVtx = t.getint();
@@ -1009,8 +1003,6 @@ bool Mesh::loadOBJ(const char* filename)
 	aabb_max.set(min_float,min_float,min_float);
 
 	unsigned int vertex_i = 0;
-	unsigned int last_index = 0;
-	submeshes[0].start = 0;
 
 	//parse file
 	while(*pos != 0)
@@ -1057,18 +1049,6 @@ bool Mesh::loadOBJ(const char* filename)
 			if (uvs.size() == 0 && indexed_uvs.size() )
 				uvs.resize(1);
 		}
-		else if (tokens[0] == "usemtl" || tokens[0] == "g")
-		{
-			unsigned int index = vertices.size() / 3; //because we are decompressing it
-			if (last_index != index && num_submeshes < 8)
-			{
-				last_index = index;
-				submeshes[ num_submeshes ].length = index*3 - submeshes[num_submeshes].start;
-				num_submeshes++;
-				submeshes[num_submeshes].start = index*3;
-				strcpy_s( submeshes[num_submeshes].name, 32, tokens[1].c_str());
-			}
-		}
 		else if (tokens[0] == "f" && tokens.size() >= 4)
 		{
 			Vector3 v1,v2,v3;
@@ -1106,8 +1086,7 @@ bool Mesh::loadOBJ(const char* filename)
 	box.halfsize = (aabb_max - box.center);
 	radius = (float)fmax( aabb_max.length(), aabb_min.length() );
 
-	submeshes[num_submeshes].length = (unsigned int)(vertices.size() - submeshes[num_submeshes].start);
-	num_submeshes++;
+	material_range.push_back( (unsigned int)(vertices.size() / 3.0) );
 	return true;
 }
 
@@ -1176,23 +1155,6 @@ bool Mesh::loadMESH(const char* filename)
 			}
 			else if (str == "bind_pose")
 				pos = fetchMatrix44( pos, bind_pose );
-			else if (str == "groups")
-			{
-				pos = fetchWord(pos, word);
-				num_submeshes = atof(word);
-				for (int j = 0; j < num_submeshes; ++j)
-				{
-					pos = fetchWord(pos, word);
-					strcpy_s(submeshes[j].name, 32, word);
-					pos = fetchWord(pos, word);
-					strcpy_s(submeshes[j].material, 32, word);
-					pos = fetchWord(pos, word);
-					submeshes[j].start = atof(word);
-					pos = fetchWord(pos, word);
-					submeshes[j].length = atof(word);
-				}
-				pos = fetchEndLine(pos);
-			}
 			else
 				pos = fetchEndLine(pos);
 		}
@@ -1343,21 +1305,23 @@ void Mesh::createSubdividedPlane(float size, int subdivisions, bool centered )
 	radius = box.halfsize.length();
 }
 
-void Mesh::displace(Texture* texture, float altitude)
+void Mesh::displace(Image* heightmap, float altitude)
 {
-	assert(texture && texture->image.data && "texture without data, remember to set false to upload_to_vram");
+	assert(heightmap && heightmap->data && "texture without data, remember to set false to upload_to_vram");
 	assert(uvs.size() && "cannot displace without uvs");
 
-	Image info = texture->image;
+	bool is_interleaved = interleaved.size() != 0;
+	int num = is_interleaved ? interleaved.size() : vertices.size();
+	assert(num && "no vertices found");
 
-	for (int i = 0; i < vertices.size(); ++i)
+	for (int i = 0; i < num; ++i)
 	{
-		Vector3& vertex = vertices[i];
 		Vector2& uv = uvs[i];
-		float x = fmod( uv.x * info.width, info.width);
-		float y = fmod( uv.y * info.height, info.height);
-		float h = info.data[ int(y) * info.width * 4 + int(x) * 4] / 255.0f;
-		vertex.y = h * altitude;
+		Color c = heightmap->getPixelInterpolated(uv.x * heightmap->width, uv.y * heightmap->height);
+		if (is_interleaved)
+			interleaved[i].vertex.y = (c.x / 255.0f) * altitude;
+		else
+			vertices[i].y = (c.x / 255.0f) * altitude;
 	}
 	box.center.y += altitude*0.5f;
 	box.halfsize.y += altitude*0.5f;

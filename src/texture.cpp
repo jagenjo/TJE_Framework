@@ -10,6 +10,22 @@
 #include "extra/picopng.h"
 #include <cassert>
 
+//bilinear interpolation
+Color Image::getPixelInterpolated(float x, float y, bool repeat) {
+	int ix = repeat ? fmod(x,width) : clamp(x,0,width-1);
+	int iy = repeat ? fmod(y,height) : clamp(y, 0, height - 1);
+	if (ix < 0) ix += width;
+	if (iy < 0) iy += height;
+	float fx = (x - (int)x);
+	float fy = (y - (int)y);
+	int ix2 = ix < width - 1 ? ix + 1 : 0;
+	int iy2 = iy < height - 1 ? iy + 1 : 0;
+	Color top = lerp( getPixel(ix, iy), getPixel(ix2, iy), fx );
+	Color bottom = lerp( getPixel(ix, iy2), getPixel(ix2, iy2), fx);
+	return lerp(top, bottom, fy);
+};
+
+
 std::map<std::string, Texture*> Texture::sTexturesLoaded;
 int Texture::default_mag_filter = GL_LINEAR;
 int Texture::default_min_filter = GL_LINEAR_MIPMAP_LINEAR;
@@ -75,7 +91,7 @@ void Texture::create(unsigned int width, unsigned int height, unsigned int forma
 	assert(glGetError() == GL_NO_ERROR && "Error creating texture");
 }
 
-Texture* Texture::Get(const char* filename, bool mipmaps, bool wrap, bool upload_to_vram)
+Texture* Texture::Get(const char* filename, bool mipmaps, bool wrap)
 {
 	assert(filename);
 
@@ -86,7 +102,7 @@ Texture* Texture::Get(const char* filename, bool mipmaps, bool wrap, bool upload
 
 	//load it
 	Texture* texture = new Texture();
-	if (!texture->load(filename, mipmaps,wrap, upload_to_vram))
+	if (!texture->load(filename, mipmaps,wrap))
 	{
 		delete texture;
 		return NULL;
@@ -95,7 +111,7 @@ Texture* Texture::Get(const char* filename, bool mipmaps, bool wrap, bool upload
 	return texture;
 }
 
-bool Texture::load(const char* filename, bool mipmaps, bool wrap, bool upload_to_vram)
+bool Texture::load(const char* filename, bool mipmaps, bool wrap)
 {
 	std::string str = filename;
 	std::string ext = str.substr(str.size() - 4, 4);
@@ -110,7 +126,7 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap, bool upload_to
 	if (ext == ".tga" || ext == ".TGA")
 		found = image->loadTGA(filename);
 	else if (ext == ".png" || ext == ".PNG")
-		found = image->loadPNG(filename, upload_to_vram);
+		found = image->loadPNG(filename, true);
 	else
 	{
 		std::cout << "[ERROR]: unsupported format" << std::endl;
@@ -124,12 +140,6 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap, bool upload_to
 	}
 
 	this->filename = filename;
-
-	if (!upload_to_vram) //used to load images without uploading them
-	{
-		std::cout << " [TO RAM]" << std::endl;
-		return true;
-	}
 
 	//upload to VRAM
 	upload( image->width, image->height, (image->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA), GL_UNSIGNED_BYTE, mipmaps, image->data );
@@ -295,6 +305,16 @@ FBO* Texture::getGlobalFBO(Texture* texture)
 		global_fbo = new FBO();
 	global_fbo->createFromTextures(texture);
 	return global_fbo;
+}
+
+Texture* Texture::getBlackTexture()
+{
+	static Texture* black = NULL;
+	if (black)
+		return black;
+	const Uint8 data[3] = { 0,0,0 };
+	black = new Texture(1, 1, GL_RGB, GL_UNSIGNED_BYTE, true, (Uint8*)data);
+	return black;
 }
 
 void Texture::blit(Texture* destination, Shader* shader)

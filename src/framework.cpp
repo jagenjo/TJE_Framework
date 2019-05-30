@@ -65,6 +65,11 @@ Vector2 operator * (const Vector2& a, float v) { return Vector2(a.x * v, a.y * v
 Vector2 operator + (const Vector2& a, const Vector2& b) { return Vector2(a.x + b.x, a.y + b.y); }
 Vector2 operator - (const Vector2& a, const Vector2& b) { return Vector2(a.x - b.x, a.y - b.y); }
 
+Vector2 normalize(Vector2 n)
+{
+	return n.normalize();
+}
+
 
 // **************************************
 
@@ -175,6 +180,10 @@ Vector3 cross(const Vector3& a, const Vector3& b)
 	return Vector3(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x);
 }
 
+Vector3 lerp(const Vector3& a, const Vector3& b, float v)
+{
+	return a*(1.0 - v) + b*v;
+}
 
 //*********************************
 const Matrix44 Matrix44::IDENTITY;
@@ -218,6 +227,19 @@ void Matrix44::transpose()
 {
    std::swap(m[1],m[4]); std::swap(m[2],m[8]); std::swap(m[3],m[12]);
    std::swap(m[6],m[9]); std::swap(m[7],m[13]); std::swap(m[11],m[14]);
+}
+
+void Matrix44::normalizeAxis()
+{
+	Vector3 AXIS(m[0], m[1], m[2]);
+	AXIS.normalize();
+	m[0] = AXIS.x; m[1] = AXIS.y; m[2] = AXIS.z;
+	AXIS.set(m[4], m[5], m[6]);
+	AXIS.normalize();
+	m[4] = AXIS.x; m[5] = AXIS.y; m[6] = AXIS.z;
+	AXIS.set(m[8], m[9], m[10]);
+	AXIS.normalize();
+	m[8] = AXIS.x; m[9] = AXIS.y; m[10] = AXIS.z;
 }
 
 Vector3 Matrix44::rotateVector(const Vector3& v) const
