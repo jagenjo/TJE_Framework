@@ -12,8 +12,9 @@
 
 class Shader;
 class FBO;
+class Texture;
 
-//Simple class to handle images
+//Simple class to handle images (stores RGBA always)
 class Image
 {
 public:
@@ -42,8 +43,12 @@ public:
 
 	Color getPixelInterpolated(float x, float y, bool repeat = false);
 
+	void fromTexture(Texture* texture);
+	void fromScreen(int width, int height);
+
 	bool loadTGA(const char* filename);
 	bool loadPNG(const char* filename, bool flip_y = true);
+	bool saveTGA(const char* filename, bool flip_y = true);
 };
 
 

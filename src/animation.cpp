@@ -71,6 +71,8 @@ void blendSkeleton(Skeleton* a, Skeleton* b, float w, Skeleton* result, uint8 la
 		result->bones_by_name = a->bones_by_name;
 
 	w = clamp(w, 0.0, 1.0);//safety
+	memcpy(result->bones, a->bones, sizeof(Skeleton::Bone) * a->num_bones);
+	result->num_bones = a->num_bones;
 
 	#pragma omp for  
 	for (int i = 0; i < a->num_bones; ++i)
@@ -84,7 +86,7 @@ void blendSkeleton(Skeleton* a, Skeleton* b, float w, Skeleton* result, uint8 la
 		for (int j = 0; j < 16; ++j)
 			boneM.m[j] = lerp( boneA.m[j], boneB.m[j], w);
 
-		if (normalize) 
+		if (normalize && 0) 
 			boneM.normalizeAxis();
 	}
 }

@@ -325,6 +325,38 @@ void Texture::blit(Texture* destination, Shader* shader)
 	fbo->unbind();
 }
 
+void Image::fromScreen(int width, int height)
+{
+	if (data && (width != this->width || height != this->height))
+		clear();
+
+	if (!data)
+	{
+		this->width = width;
+		this->height = height;
+		data = new uint8[width * height * 4];
+	}
+
+	glReadPixels(0,0,width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+}
+
+void Image::fromTexture(Texture* texture)
+{
+	assert(texture);
+
+	if(data && (width != texture->width || height != texture->height ))
+		clear();
+
+	if (!data)
+	{
+		width = texture->width;
+		height = texture->height;
+		data = new uint8[width * height * 4];
+	}
+	
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+}
+
 //TGA format from: http://www.paulbourke.net/dataformats/tga/
 bool Image::loadTGA(const char* filename)
 {
@@ -440,6 +472,48 @@ bool Image::loadPNG(const char* filename, bool flip_y)
 	if (flip_y)
 		flipY();
 
+	return true;
+}
+
+// Saves the image to a TGA file
+bool Image::saveTGA(const char* filename, bool flip_y)
+{
+	unsigned char TGAheader[12] = { 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	FILE *file = fopen(filename, "wb");
+	if (file == NULL)
+	{
+		fclose(file);
+		return false;
+	}
+
+	unsigned short header_short[3];
+	header_short[0] = width;
+	header_short[1] = height;
+	unsigned char* header = (unsigned char*)header_short;
+	header[4] = 32; //bitsperpixel
+	header[5] = 0;
+
+	fwrite(TGAheader, 1, sizeof(TGAheader), file);
+	fwrite(header, 1, 6, file);
+
+	//convert pixels to unsigned char
+	unsigned char* bytes = new unsigned char[width*height * 4];
+	for (unsigned int y = 0; y < height; ++y)
+		for (unsigned int x = 0; x < width; ++x)
+		{
+			Uint8* p = data + (height - y - 1)*width*4 + x*4;
+			unsigned int pos = (y*width + x) * 4;
+			if(flip_y)
+				pos = ((height - y - 1)*width + x) * 4;
+			bytes[pos + 2] = *p;
+			bytes[pos + 1] = *(p+1);
+			bytes[pos] = *(p+2);
+			bytes[pos + 3] = *(p+3);
+		}
+
+	fwrite(bytes, 1, width*height * 4, file);
+	fclose(file);
 	return true;
 }
 
