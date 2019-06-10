@@ -164,13 +164,14 @@ public:
 		unsigned char v[4];
 	};
 	Vector4ub() { x = y = z = 0; }
-	Vector4ub(unsigned char x, unsigned char y, unsigned char z, unsigned char w) { this->x = x; this->y = y; this->z = z; this->w = w; }
-	void set(unsigned char x, unsigned char y, unsigned char z, unsigned char w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	Vector4ub(unsigned char x, unsigned char y, unsigned char z, unsigned char w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	void set(unsigned char x, unsigned char y, unsigned char z, unsigned char w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
 	Vector4ub operator = (const Vector4& a) { x = (unsigned char)a.x; y = (unsigned char)a.y; z = (unsigned char)a.z; w = (unsigned char)a.w; }
 };
 
 inline Vector4ub operator + (const Vector4ub& a, const Vector4ub& b) { return Vector4ub(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w ); }
 inline Vector4ub operator * (const Vector4ub& a, float v) { return Vector4ub(a.x * v, a.y * v, a.z * v, a.w * v); }
+inline bool operator == (const Vector4ub& a, const Vector4ub& b) { return a.x == b.x && a.y == b.y && a.z == b.z; } //only colors, no alpha
 inline Vector4ub lerp(const Vector4ub& a, const Vector4ub& b, float v) { return a*(1.0 - v) + b*v; }
 
 typedef Vector4ub Color;

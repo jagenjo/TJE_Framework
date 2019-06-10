@@ -25,8 +25,10 @@ public:
 	Uint8* data; //bytes with the pixel information
 
 	Image() { width = height = 0; data = NULL; bytes_per_pixel = 3; }
-	Image(int w, int h, int bytes_per_pixel = 3) { width = w; height = h; this->bytes_per_pixel = bytes_per_pixel; data = new uint8[w*h*bytes_per_pixel]; memset(data, 0, w*h*bytes_per_pixel);  }
+	Image(int w, int h, int bytes_per_pixel = 3) { data = NULL; resize(w, h, bytes_per_pixel); }
+	void resize(int w, int h, int bytes_per_pixel = 3) { if (data) delete[] data; width = w; height = h; this->bytes_per_pixel = bytes_per_pixel; data = new uint8[w*h*bytes_per_pixel]; memset(data, 0, w*h*bytes_per_pixel); }
 	~Image() { if (data) delete []data; data = NULL; }
+
 	void clear() { if (data) delete[]data; data = NULL; width = height = 0; }
 	void flipY();
 
