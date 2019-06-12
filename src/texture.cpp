@@ -25,6 +25,20 @@ Color Image::getPixelInterpolated(float x, float y, bool repeat) {
 	return lerp(top, bottom, fy);
 };
 
+Vector4 Image::getPixelInterpolatedHigh(float x, float y, bool repeat) {
+	int ix = repeat ? fmod(x, width) : clamp(x, 0, width - 1);
+	int iy = repeat ? fmod(y, height) : clamp(y, 0, height - 1);
+	if (ix < 0) ix += width;
+	if (iy < 0) iy += height;
+	float fx = (x - (int)x);
+	float fy = (y - (int)y);
+	int ix2 = ix < width - 1 ? ix + 1 : 0;
+	int iy2 = iy < height - 1 ? iy + 1 : 0;
+	Vector4 top = lerp( getPixel(ix, iy).toVector4(), getPixel(ix2, iy).toVector4(), fx);
+	Vector4 bottom = lerp(getPixel(ix, iy2).toVector4(), getPixel(ix2, iy2).toVector4(), fx);
+	return lerp(top, bottom, fy);
+};
+
 
 std::map<std::string, Texture*> Texture::sTexturesLoaded;
 int Texture::default_mag_filter = GL_LINEAR;
