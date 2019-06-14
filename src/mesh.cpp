@@ -652,7 +652,7 @@ typedef struct
 	float radius;
 	int num_bones;
 	int material_range[4];
-	Matrix44 bind_pose;
+	Matrix44 bind_matrix;
 	char streams[8]; //Normal|Uvs|Color|Indices|Bones|Weights|Extra
 	char extra[32]; //unused
 } sMeshInfo;
@@ -760,7 +760,7 @@ bool Mesh::readBin(const char* filename)
 	box.center = info.center;
 	box.halfsize = info.halfsize;
 	radius = info.radius;
-	bind_pose = info.bind_pose;
+	bind_matrix = info.bind_matrix;
 
 	for (int i = 0; i < 4; i++)
 		if (info.material_range[i] != -1)
@@ -802,7 +802,7 @@ bool Mesh::writeBin(const char* filename)
 	info.halfsize = box.halfsize;
 	info.radius = radius;
 	info.num_bones = bones_info.size();
-	info.bind_pose = bind_pose;
+	info.bind_matrix = bind_matrix;
 
 	info.streams[0] = interleaved.size() ? 'I' : 'V';
 	info.streams[1] = normals.size() ? 'N' : ' ';
@@ -1153,8 +1153,8 @@ bool Mesh::loadMESH(const char* filename)
 					pos = fetchMatrix44(pos, bones_info[j].bind_pose);
 				}
 			}
-			else if (str == "bind_pose")
-				pos = fetchMatrix44( pos, bind_pose );
+			else if (str == "bind_matrix")
+				pos = fetchMatrix44( pos, bind_matrix);
 			else
 				pos = fetchEndLine(pos);
 		}

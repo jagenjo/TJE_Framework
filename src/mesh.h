@@ -52,7 +52,7 @@ public:
 	std::vector< Vector4ub > bones; //tells which bones afect the vertex (4 max)
 	std::vector< Vector4 > weights; //tells how much affect every bone
 	std::vector< BoneInfo > bones_info; //tells 
-	Matrix44 bind_pose;
+	Matrix44 bind_matrix;
 
 	Vector3 aabb_min;
 	Vector3	aabb_max;
