@@ -12,7 +12,7 @@
 class Camera
 {
 public:
-	static Camera* last_enabled;
+	static Camera* current;
 
 	enum { PERSPECTIVE, ORTHOGRAPHIC }; //types of cameras available
 
@@ -39,6 +39,8 @@ public:
 	Matrix44 view_matrix;
 	Matrix44 projection_matrix;
 	Matrix44 viewprojection_matrix;
+
+	Matrix44 iview_matrix; //model
 
 	Camera();
 

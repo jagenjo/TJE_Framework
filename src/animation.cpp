@@ -7,6 +7,8 @@
 #include "shader.h"
 #include "mesh.h"
 
+#include <sys/stat.h>
+
 Skeleton::Skeleton()
 {
 	num_bones = 0;
@@ -39,7 +41,7 @@ void Skeleton::computeFinalBoneMatrices( std::vector<Matrix44>& bone_matrices, M
 
 	bone_matrices.resize(mesh->bones_info.size());
 	#pragma omp for  
-	for (int i = 0; i < mesh->bones_info.size(); ++i)
+	for (int i = 0; i < (int)mesh->bones_info.size(); ++i)
 	{
 		BoneInfo& bone_info = mesh->bones_info[i];
 		bone_matrices[i] = mesh->bind_matrix * bone_info.bind_pose * getBoneMatrix( bone_info.name, false ); //use globals
@@ -184,7 +186,7 @@ void Animation::assignTime(float t, bool loop, bool interpolate, uint8 layers)
 			t = duration + t;
 	}
 	else
-		t = clamp( t, 0.0f, duration - (1.0/samples_per_second) );
+		t = clamp( t, 0.0f, duration - (1.0f/samples_per_second) );
 	float v = samples_per_second * t;
 	int index = clamp(floor(v), 0, num_keyframes - 1);
 	int index2 = index + 1;
@@ -219,12 +221,12 @@ void Animation::operator = (Animation* anim)
 
 bool Animation::load(const char* filename)
 {
-	struct stat stbuffer;
+	//struct stat stbuffer;
 
 	std::cout << " + Animation loading: " << filename << " ... ";
 	long time = getTime();
 
-	char file_format = 0;
+	//char file_format = 0;
 	std::string name = filename;
 	std::string ext = name.substr(name.find_last_of(".") + 1);
 	if (ext == "abin" || ext == "ABIN")
@@ -315,7 +317,7 @@ bool Animation::loadABIN(const char* filename)
 	if (f == NULL)
 		return false;
 
-	unsigned int size = stbuffer.st_size;
+	unsigned int size = (unsigned int)stbuffer.st_size;
 	char* data = new char[size];
 	fread(data, size, 1, f);
 	fclose(f);
@@ -374,7 +376,7 @@ bool Animation::loadSKANIM(const char* filename)
 		return false;
 	stat(filename, &stbuffer);
 
-	unsigned int size = stbuffer.st_size;
+	unsigned int size = (unsigned int)stbuffer.st_size;
 	char* data = new char[size + 1];
 	fread(data, size, 1, f);
 	fclose(f);
@@ -427,16 +429,16 @@ bool Animation::loadSKANIM(const char* filename)
 		{
 			std::vector<float> bones_map_info;
 			pos = fetchBufferFloat(pos, bones_map_info);
-			for (int j = 0; j < bones_map_info.size(); ++j)
+			for (int j = 0; j < (int)bones_map_info.size(); ++j)
 				bones_map[j] = bones_map_info[j];
-			num_animated_bones = bones_map_info.size();
+			num_animated_bones = (int)bones_map_info.size();
 			assert(keyframes == NULL);
 			keyframes = new Matrix44[num_animated_bones * num_keyframes];
 		}
 		else if (type == 'K')
 		{
 			pos = fetchWord(pos, word);
-			float time = atof(word);
+			//float time = atof(word);
 			Matrix44* k = keyframes + current_keyframe * num_animated_bones;
 			current_keyframe++;
 			for (int j = 0; j < num_animated_bones; ++j)

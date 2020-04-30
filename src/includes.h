@@ -34,17 +34,16 @@
 #include <SDL2/SDL_opengl.h>
 
 
-#include <GL/glext.h>
 
 //GLUT
 #ifdef WIN32
+    #include <GL/glext.h>
     #include "GL/GLU.h"
-	//#include <GL/glut.h>
 #endif
 
 #ifdef __APPLE__
+    #include <OpenGL/glext.h>
     #include "OpenGL/glu.h"
-	//#include <GLUT/glut.h>
 #endif
 
 #include <iostream>

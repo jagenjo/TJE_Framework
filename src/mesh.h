@@ -11,7 +11,7 @@ class Shader; //for binding
 class Image; //for displace
 class Skeleton; //for skinned meshes
 
-#define MESH_BIN_VERSION 7 //this is used to regenerate bins if the format changes
+#define MESH_BIN_VERSION 8 //this is used to regenerate bins if the format changes
 
 struct BoneInfo {
 	char name[32]; //max 32 chars per bone name
@@ -88,9 +88,9 @@ public:
 	bool readBin(const char* filename);
 	bool writeBin(const char* filename);
 
-	unsigned int getNumSubmaterials() { return material_name.size(); }
-	unsigned int getNumSubmeshes() { return material_range.size(); }
-	unsigned int getNumVertices() { return interleaved.size() ? interleaved.size() : vertices.size(); }
+	unsigned int getNumSubmaterials() { return (unsigned int)material_name.size(); }
+	unsigned int getNumSubmeshes() { return (unsigned int)material_range.size(); }
+	unsigned int getNumVertices() { return (unsigned int)interleaved.size() ? (unsigned int)interleaved.size() : (unsigned int)vertices.size(); }
 
 	//collision testing
 	void* collision_model;

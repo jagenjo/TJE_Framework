@@ -29,6 +29,7 @@ Vector2 getDesktopSize( int display_index = 0 );
 std::vector<std::string> tokenize(const std::string& source, const char* delimiters, bool process_strings = false);
 std::vector<std::string>& split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
+std::string join(std::vector<std::string>& strings, const char* delim);
 
 std::string getGPUStats();
 void drawGrid();

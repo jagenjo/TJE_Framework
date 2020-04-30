@@ -10,13 +10,16 @@
 #include <cmath>
 
 //some globals
-Mesh* mesh = NULL;
-Texture* texture = NULL;
 Shader* shader = NULL;
 Animation* anim = NULL;
 float angle = 0;
+Matrix44 plane_model;
+Matrix44 torpedo_model;
+bool attached_torpedo = true;
 
+bool free_cam = false;
 Game* Game::instance = NULL;
+
 
 Game::Game(int window_width, int window_height, SDL_Window* window)
 {
@@ -38,26 +41,50 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 	//create our camera
 	camera = new Camera();
-	camera->lookAt(Vector3(0.f,100.f, 100.f),Vector3(0.f,0.f,0.f), Vector3(0.f,1.f,0.f)); //position the camera and point to 0,0,0
-	camera->setPerspective(70.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
-
-	//load one texture
-	texture = new Texture();
- 	texture->load("data/texture.tga");
-
-	// example of loading Mesh from Mesh Manager
-	mesh = Mesh::Get("data/box.ASE");
+	camera->lookAt(Vector3(0.f,10.f, 10.f),Vector3(0.f,0.f,0.f), Vector3(0.f,1.f,0.f)); //position the camera and point to 0,0,0
+	camera->setPerspective(70.f,window_width/(float)window_height,0.1f,100000.f); //set the projection, we want to be perspective
 
 	// example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+
+	torpedo_model.setTranslation(0, -5, 0);
 
 	//hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse
 }
 
+
+void renderMesh(Matrix44 m, Mesh* mesh, Texture* texture, int submesh = 0)
+{
+	if (!shader)
+		return;
+
+	Camera* camera = Camera::current;
+
+	//enable shader
+	shader->enable();
+
+	//upload uniforms
+	shader->setUniform("u_color", Vector4(1, 1, 1, 1));
+	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+	shader->setUniform("u_texture", texture);
+	shader->setUniform("u_model", m);
+	//shader->setUniform("u_time", time);
+	mesh->render(GL_TRIANGLES,1);
+
+	//disable shader
+	shader->disable();
+}
+
 //what to do when the image has to be draw
 void Game::render(void)
 {
+	Vector3 eye = plane_model * Vector3(0,10,30);
+	Vector3 center = plane_model * Vector3();
+	Vector3 up = plane_model.rotateVector(Vector3(0, 1, 0));
+	if(!free_cam)
+		camera->lookAt( eye , center, up); //position the camera and point to 0,0,0
+
 	//set the clear color (the background color)
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -70,30 +97,27 @@ void Game::render(void)
 	//set flags
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
    
 	//create model matrix for cube
 	Matrix44 m;
-	m.rotate(time, Vector3(0, 1, 0));
 
-	if(shader)
-	{
-		//enable shader
-		shader->enable();
+	//isla
+	Texture* texture = Texture::Get("data/island/island_color_luz.tga");
+	Mesh* mesh = Mesh::Get("data/island/island.ASE");
+	renderMesh(m, mesh, texture);
 
-		//upload uniforms
-		shader->setUniform("u_color", Vector4(1,1,1,1));
-		shader->setUniform("u_viewprojection", camera->viewprojection_matrix );
-		shader->setUniform("u_texture", texture);
-		shader->setUniform("u_model", m);
-		shader->setUniform("u_time", time);
+	//avion
+	texture = Texture::Get("data/spitfire/spitfire_color_spec.tga");
+	//mesh = Mesh::Get("data/spitfire/spitfire.ASE");
+	mesh = Mesh::Get("data/export (1).obj");
+	renderMesh(plane_model, mesh, texture, 1);
 
-		//do the draw call
-		mesh->render( GL_TRIANGLES );
+	//torpedo
+	texture = Texture::Get("data/torpedo.tga");
+	mesh = Mesh::Get("data/torpedo.ASE");
 
-		//disable shader
-		shader->disable();
-	}
+	renderMesh(attached_torpedo ? torpedo_model * plane_model : torpedo_model, mesh, texture);
 
 	//Draw the floor grid
 	drawGrid();
@@ -112,6 +136,8 @@ void Game::update(double seconds_elapsed)
 	//example
 	angle += (float)seconds_elapsed * 10.0f;
 
+
+
 	//mouse input to rotate the cam
 	if ((Input::mouse_state & SDL_BUTTON_LEFT) || mouse_locked ) //is left button pressed?
 	{
@@ -119,12 +145,35 @@ void Game::update(double seconds_elapsed)
 		camera->rotate(Input::mouse_delta.y * 0.005f, camera->getLocalVector( Vector3(-1.0f,0.0f,0.0f)));
 	}
 
-	//async input to move the camera around
-	if(Input::isKeyPressed(SDL_SCANCODE_LSHIFT) ) speed *= 10; //move faster with left shift
-	if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) camera->move(Vector3(0.0f, 0.0f, 1.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) camera->move(Vector3(0.0f, 0.0f,-1.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) camera->move(Vector3(1.0f, 0.0f, 0.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) camera->move(Vector3(-1.0f,0.0f, 0.0f) * speed);
+	if (free_cam == false)
+	{
+		if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) plane_model.rotate(90 * seconds_elapsed * DEG2RAD, Vector3(1, 0, 0));
+		if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) plane_model.rotate(-90 * seconds_elapsed * DEG2RAD, Vector3(1, 0, 0));
+		if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) plane_model.rotate(-90 * seconds_elapsed * DEG2RAD, Vector3(0, 1, 0));
+		if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) plane_model.rotate(90 * seconds_elapsed * DEG2RAD, Vector3(0, 1, 0));
+		if (Input::isKeyPressed(SDL_SCANCODE_Q)) plane_model.rotate(40 * seconds_elapsed * DEG2RAD, Vector3(0, 0, -1));
+		if (Input::isKeyPressed(SDL_SCANCODE_E)) plane_model.rotate(-40 * seconds_elapsed * DEG2RAD, Vector3(0, 0, -1));
+	}
+	else
+	{
+		//async input to move the camera around
+		if (Input::isKeyPressed(SDL_SCANCODE_LSHIFT)) speed *= 10; //move faster with left shift
+		if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) camera->move(Vector3(0.0f, 0.0f, 1.0f) * speed);
+		if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) camera->move(Vector3(0.0f, 0.0f, -1.0f) * speed);
+		if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) camera->move(Vector3(1.0f, 0.0f, 0.0f) * speed);
+		if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) camera->move(Vector3(-1.0f, 0.0f, 0.0f) * speed);
+	}
+
+	if (Input::isKeyPressed(SDL_SCANCODE_F) && attached_torpedo)
+	{
+		attached_torpedo = false;
+		torpedo_model = torpedo_model * plane_model;
+	}
+
+	if (!free_cam)
+	{
+		plane_model.translate(0, 0, seconds_elapsed * -10);
+	}
 
 	//to navigate with the mouse fixed in the middle
 	if (mouse_locked)
@@ -137,6 +186,7 @@ void Game::onKeyDown( SDL_KeyboardEvent event )
 	switch(event.keysym.sym)
 	{
 		case SDLK_ESCAPE: must_exit = true; break; //ESC key, kill the app
+		case SDLK_TAB: free_cam = !free_cam; break;
 		case SDLK_F1: Shader::ReloadAll(); break; 
 	}
 }

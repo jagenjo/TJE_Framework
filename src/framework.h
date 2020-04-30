@@ -23,7 +23,7 @@ typedef int int32;
 typedef unsigned int uint32;
 
 inline float clamp(float v, float a, float b) { return v < a ? a : (v > b ? b : v); }
-inline float lerp(float a, float b, float v ) { return a*(1.0-v) + b*v; }
+inline float lerp(float a, float b, float v ) { return a*(1.0f-v) + b*v; }
 
 class Vector2
 {
@@ -59,7 +59,7 @@ Vector2 operator + (const Vector2& a, const Vector2& b);
 Vector2 operator - (const Vector2& a, const Vector2& b);
 
 Vector2 normalize(Vector2 n);
-inline Vector2 lerp(const Vector2& a, const Vector2& b, float v) { return a*(1.0 - v) + b*v; }
+inline Vector2 lerp(const Vector2& a, const Vector2& b, float v) { return a*(1.0f - v) + b*v; }
 
 class Vector3u
 {
@@ -131,19 +131,19 @@ public:
 	{
 		struct { float x,y,z,w; };
 		float v[4];
-		struct { Vector3 xyz; float w; };
+		struct { Vector3 xyz; };
 	};
 
-	Vector4() { x = y = z = w = 0.0; }
+	Vector4() { x = y = z = w = 0.0f; }
 	Vector4(float x, float y, float z, float w) { this->x = x; this->y = y; this->z = z; this->w = w; }
 	Vector4(const Vector3& v, float w) { x = v.x; y = v.y; z = v.z; this->w = w; }
 	Vector4(const float* v) { x = v[0]; x = v[1]; x = v[2]; x = v[3]; }
-	void set(float x, float y, float z, float w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+    void set(float x, float y, float z, float w) { this->x = x; this->y = y; this->z = z; this->w = w; }
 };
 
 inline Vector4 operator * (const Vector4& a, float v) { return Vector4(a.x * v, a.y * v, a.z * v, a.w * v); }
 inline Vector4 operator + (const Vector4& a, const Vector4& b) { return Vector4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w); }
-inline Vector4 lerp(const Vector4& a, const Vector4& b, float v) { return a*(1.0 - v) + b*v; }
+inline Vector4 lerp(const Vector4& a, const Vector4& b, float v) { return a*(1.0f - v) + b*v; }
 
 //can be used to store colors
 class Vector4ub
@@ -152,30 +152,30 @@ public:
 	union
 	{
 		struct {
-			unsigned char x;
-			unsigned char y;
-			unsigned char z;
-			unsigned char w;
+			uint8 x;
+			uint8 y;
+			uint8 z;
+			uint8 w;
 		};
 		struct {
-			unsigned char r;
-			unsigned char g;
-			unsigned char b;
-			unsigned char a;
+			uint8 r;
+			uint8 g;
+			uint8 b;
+			uint8 a;
 		};
-		unsigned char v[4];
+		uint8 v[4];
 	};
 	Vector4ub() { x = y = z = 0; }
-	Vector4ub(unsigned char x, unsigned char y, unsigned char z, unsigned char w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
-	void set(unsigned char x, unsigned char y, unsigned char z, unsigned char w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
-	Vector4ub operator = (const Vector4& a) { x = (unsigned char)a.x; y = (unsigned char)a.y; z = (unsigned char)a.z; w = (unsigned char)a.w; }
+	Vector4ub(uint8 x, uint8 y, uint8 z, uint8 w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	void set(uint8 x, uint8 y, uint8 z, uint8 w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	Vector4ub operator = (const Vector4& a) { x = (uint8)a.x; y = (uint8)a.y; z = (uint8)a.z; w = (uint8)a.w; return *this; }
 	Vector4 toVector4() { return Vector4(x, y, z, w); }
 };
 
 inline Vector4ub operator + (const Vector4ub& a, const Vector4ub& b) { return Vector4ub(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w ); }
-inline Vector4ub operator * (const Vector4ub& a, float v) { return Vector4ub(a.x * v, a.y * v, a.z * v, a.w * v); }
+inline Vector4ub operator * (const Vector4ub& a, float v) { return Vector4ub((uint8)(a.x * v), (uint8)(a.y * v), (uint8)(a.z * v), (uint8)(a.w * v)); }
 inline bool operator == (const Vector4ub& a, const Vector4ub& b) { return a.x == b.x && a.y == b.y && a.z == b.z; } //only colors, no alpha
-inline Vector4ub lerp(const Vector4ub& a, const Vector4ub& b, float v) { return a*(1.0 - v) + b*v; }
+inline Vector4ub lerp(const Vector4ub& a, const Vector4ub& b, float v) { return a*(1.0f - v) + b*v; }
 
 typedef Vector4ub Color;
 
@@ -207,7 +207,7 @@ class Matrix44
 		void clear();
 		void setIdentity();
 		void transpose();
-		void normalizeAxis();
+		void normalizeAxis();	
 
 		//get base vectors
 		Vector3 rightVector() { return Vector3(m[0],m[1],m[2]); }

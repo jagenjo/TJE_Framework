@@ -180,7 +180,7 @@ bool Shader::LoadAtlas(const char* filename)
 		}
 		else if (line_trimmed[0] == '#')
 		{
-			int pos = line_trimmed.find_first_of(' ');
+			int pos = (int)line_trimmed.find_first_of(' ');
 			if (pos != std::string::npos)
 			{
 				std::string cmd = line_trimmed.substr(1, pos - 1);
@@ -212,11 +212,11 @@ bool Shader::LoadAtlas(const char* filename)
 		line = trim(line);
 		if(line.size() == 0 || line.substr(0,2) == "//")
 			continue;
-		int pos = line.find_first_of(' ');
-		int pos2 = line.find_first_of(' ',pos+1);
-		int pos3 = line.find_first_of(' ',pos2+1);
+		int pos = (int)line.find_first_of(' ');
+		int pos2 = (int)line.find_first_of(' ',pos+1);
+		int pos3 = (int)line.find_first_of(' ',pos2+1);
 		if(pos3 == -1)
-			pos3 = std::string::npos;
+			pos3 = (int)std::string::npos;
 		std::string name = line.substr(0,pos);
 		std::string vs_filename = trim(line.substr(pos+1,pos2 - pos));
 		std::string fs_filename = trim(line.substr(pos2+1,pos3 - pos2));

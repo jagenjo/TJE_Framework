@@ -154,7 +154,7 @@ void mainLoop()
 		frames_this_second++;
 		if (int(last_time_seconds *2) != int(game->time*2)) //next half second
 		{
-			game->fps = frames_this_second*2;
+			game->fps = (int)frames_this_second*2;
 			frames_this_second = 0;
 		}
 

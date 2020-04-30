@@ -52,16 +52,14 @@ public:
 	void assignLayer(Bone* bone, uint8 layer); //assigns a layer to a node and all its children
 };
 
-//this function takes skeleton A and blends it with skeleton B and stores the result in result (layer to mask some bones, normalize to renormalize matrices)
-void blendSkeleton(Skeleton* a, Skeleton* b, float w, Skeleton* result, uint8 layer = 0xFF, bool normalize = true);
+//this function takes skeleton A and blends it with skeleton B and stores the result in result
+void blendSkeleton(Skeleton* a, Skeleton* b, float w, Skeleton* result, uint8 layer = 0xFF);
 
 //This class contains one animation loaded from a file (it also uses a skeleton to store the current snapshot)
 class Animation {
 public:
 
 	Skeleton skeleton;
-
-	std::string name;
 
 	float duration;
 	float samples_per_second;
@@ -74,7 +72,7 @@ public:
 	Animation();
 	~Animation();	//we need the dtor to remove the keyframes memory
 
-	//change the skeleton to the given pose according to time and the internal keyframes
+	//change the skeleton to the given pose according to time
 	void assignTime(float time, bool loop = true, bool interpolate = true, uint8 layers = 0xFF);
 
 	//storage

@@ -132,6 +132,13 @@ std::vector<std::string> split(const std::string &s, char delim) {
     return elems;
 }
 
+std::string join(std::vector<std::string>& strings, const char* delim)
+{
+	std::string str;
+	for (int i = 0; i < strings.size(); ++i)
+		str += strings[i] + (i < strings.size() - 1 ? std::string(delim) : "");
+	return str;
+}
 
 Vector2 getDesktopSize( int display_index )
 {
@@ -277,11 +284,11 @@ void drawGrid()
 	Shader* grid_shader = Shader::getDefaultShader("grid");
 	grid_shader->enable();
 	Matrix44 m;
-	m.translate(floor(Camera::last_enabled->eye.x / 100.0)*100.0f, 0.0f, floor(Camera::last_enabled->eye.z / 100.0f)*100.0f);
+	m.translate(floor(Camera::current->eye.x / 100.0)*100.0f, 0.0f, floor(Camera::current->eye.z / 100.0f)*100.0f);
 	grid_shader->setUniform("u_color", Vector4(0.7, 0.7, 0.7, 0.7));
 	grid_shader->setUniform("u_model", m);
-	grid_shader->setUniform("u_camera_position", Camera::last_enabled->eye);
-	grid_shader->setUniform("u_viewprojection", Camera::last_enabled->viewprojection_matrix);
+	grid_shader->setUniform("u_camera_position", Camera::current->eye);
+	grid_shader->setUniform("u_viewprojection", Camera::current->viewprojection_matrix);
 	grid->render(GL_LINES); //background grid
 	glDisable(GL_BLEND);
 	glDepthMask(true);
@@ -375,7 +382,7 @@ char* fetchBufferFloat(char* data, std::vector<float>& vector, int num )
 
 char* fetchBufferVec3(char* data, std::vector<Vector3>& vector)
 {
-	int pos = 0;
+	//int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 3);
@@ -385,7 +392,7 @@ char* fetchBufferVec3(char* data, std::vector<Vector3>& vector)
 
 char* fetchBufferVec2(char* data, std::vector<Vector2>& vector)
 {
-	int pos = 0;
+	//int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 2);
@@ -395,7 +402,7 @@ char* fetchBufferVec2(char* data, std::vector<Vector2>& vector)
 
 char* fetchBufferVec3u(char* data, std::vector<Vector3u>& vector)
 {
-	int pos = 0;
+	//int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 3);
@@ -406,7 +413,7 @@ char* fetchBufferVec3u(char* data, std::vector<Vector3u>& vector)
 
 char* fetchBufferVec4ub(char* data, std::vector<Vector4ub>& vector)
 {
-	int pos = 0;
+	//int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 4);
@@ -417,7 +424,7 @@ char* fetchBufferVec4ub(char* data, std::vector<Vector4ub>& vector)
 
 char* fetchBufferVec4(char* data, std::vector<Vector4>& vector)
 {
-	int pos = 0;
+	//int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 4);

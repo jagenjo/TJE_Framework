@@ -72,12 +72,7 @@ SDL_Joystick* Input::openGamepad(int index)
 		return NULL;
 
 	SDL_Joystick* j = SDL_JoystickOpen(index);
-	if (!j)
-		return NULL;
-
-	const char* name = SDL_JoystickName(j);
-	if(name)
-		std::cout << " * Gamepad found: " << name << " Axis: " << SDL_JoystickNumAxes(j) << "  Buttons: " << SDL_JoystickNumButtons(j) << std::endl;
+	std::cout << " * Gamepad found: " << SDL_JoystickName(j) << " Axis: " << SDL_JoystickNumAxes(j) << "  Buttons: " << SDL_JoystickNumButtons(j) << std::endl;
 
 	// Open joystick and return it
 	return j;

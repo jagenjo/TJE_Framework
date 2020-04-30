@@ -121,7 +121,7 @@ Texture* Texture::Get(const char* filename, bool mipmaps, bool wrap)
 		delete texture;
 		return NULL;
 	}
-
+	texture->setName(filename);
 	return texture;
 }
 
@@ -165,7 +165,6 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap)
 
 	this->image.clear();
 	std::cout << "[OK] Size: " << width << "x" << height << " Time: " << (getTime() - time) * 0.001 << "sec" << std::endl;
-	setName(filename);
 	return true;
 }
 
@@ -377,7 +376,7 @@ bool Image::loadTGA(const char* filename)
     GLubyte TGAheader[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     GLubyte TGAcompare[12];
     GLubyte header[6];
-    GLuint bytesPerPixel;
+    //GLuint bytesPerPixel;
     GLuint imageSize;
     //GLuint type = GL_RGBA;
 
@@ -431,7 +430,7 @@ bool Image::loadTGA(const char* filename)
         return NULL;
     }
 
-	if (header[5] & (1 << 4)) //flip
+	if (header[5] & (1 << 5)) //flip?
 		origin_topleft = true;
     
 	//flip BGR to RGB pixels

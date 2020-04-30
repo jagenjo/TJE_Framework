@@ -75,7 +75,7 @@ void Mesh::clear()
 	weights.clear();
 
 	if (collision_model)
-		delete collision_model;
+		delete (CollisionModel3D*)collision_model;
 }
 
 int vertex_location = 1;
@@ -223,11 +223,11 @@ void Mesh::render(unsigned int primitive, int submesh_id, int num_instances)
 void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 {
 	int start = 0;
-	int size = vertices.size();
+	int size = (int)vertices.size();
 	if (indices.size())
-		size = indices.size();
+		size = (int)indices.size();
 	else if (interleaved.size())
-		size = interleaved.size();
+		size = (int)interleaved.size();
 
 	if (submesh_id > 0)
 	{
@@ -379,9 +379,9 @@ void Mesh::renderFixedPipeline(int primitive)
 			glColorPointer(4, GL_FLOAT, 0, &colors[0]);
 	}
 
-	int size = vertices.size();
+	int size = (int)vertices.size();
 	if (!size)
-		size = interleaved.size();
+		size = (int)interleaved.size();
 
 	glDrawArrays(primitive, 0, (GLsizei)size);
 	glDisableClientState(GL_VERTEX_ARRAY);
@@ -506,7 +506,7 @@ bool Mesh::createCollisionModel(bool is_static)
 
 	if (indices.size()) //indexed
 	{
-		collision_model->setTriangleNumber(indices.size());
+		collision_model->setTriangleNumber((int)indices.size());
 
 		if (interleaved.size())
 			for (unsigned int i = 0; i < indices.size(); ++i)
@@ -538,8 +538,8 @@ bool Mesh::createCollisionModel(bool is_static)
 	}
 	else if (vertices.size()) //non interleaved
 	{
-		collision_model->setTriangleNumber(vertices.size() / 3);
-		for (unsigned int i = 0; i < vertices.size(); i+=3)
+		collision_model->setTriangleNumber((int)vertices.size() / 3);
+		for (unsigned int i = 0; i < (int)vertices.size(); i+=3)
 		{
 			auto v1 = vertices[i];
 			auto v2 = vertices[i + 1];
@@ -652,6 +652,7 @@ typedef struct
 	float radius;
 	int num_bones;
 	int material_range[4];
+	char material_names[256];
 	Matrix44 bind_matrix;
 	char streams[8]; //Normal|Uvs|Color|Indices|Bones|Weights|Extra
 	char extra[32]; //unused
@@ -669,7 +670,7 @@ bool Mesh::readBin(const char* filename)
 	if (f == NULL)
 		return false;
 
-	unsigned int size = stbuffer.st_size;
+	unsigned int size = (unsigned int)stbuffer.st_size;
 	char* data = new char[size];
 	fread(data,size,1,f);
 	fclose(f);
@@ -761,6 +762,11 @@ bool Mesh::readBin(const char* filename)
 	box.halfsize = info.halfsize;
 	radius = info.radius;
 	bind_matrix = info.bind_matrix;
+	if (info.material_names[0])
+	{
+		std::string names = info.material_names;
+		material_name = split(names, '|');
+	}
 
 	for (int i = 0; i < 4; i++)
 		if (info.material_range[i] != -1)
@@ -803,7 +809,10 @@ bool Mesh::writeBin(const char* filename)
 	info.radius = radius;
 	info.num_bones = bones_info.size();
 	info.bind_matrix = bind_matrix;
-
+	std::string names = join(material_name, "|");
+	memset(info.material_names, 0, 255);
+	memcpy(info.material_names, names.c_str(), min( names.size(),255) );
+	info.material_names[255] = 0;
 	info.streams[0] = interleaved.size() ? 'I' : 'V';
 	info.streams[1] = normals.size() ? 'N' : ' ';
 	info.streams[2] = uvs.size() ? 'U' : ' ';
@@ -1045,9 +1054,18 @@ bool Mesh::loadOBJ(const char* filename)
 		}
 		else if (tokens[0] == "s") //surface? it appears one time before the faces
 		{
-			//process mesh
-			if (uvs.size() == 0 && indexed_uvs.size() )
-				uvs.resize(1);
+			//process mesh: ????
+			//if (uvs.size() == 0 && indexed_uvs.size() )
+			//	uvs.resize(1);
+		}
+		else if (tokens[0] == "usemtl") //surface? it appears one time before the faces
+		{
+			material_name.push_back(tokens[1]);
+		}
+		else if (tokens[0] == "g") //surface? it appears one time before the faces
+		{
+			if(vertices.size())
+				material_range.push_back((unsigned int)(vertices.size() / 3.0));
 		}
 		else if (tokens[0] == "f" && tokens.size() >= 4)
 		{
@@ -1149,8 +1167,12 @@ bool Mesh::loadMESH(const char* filename)
 				for (int j = 0; j < bones_info.size(); ++j)
 				{
 					pos = fetchWord(pos, word);
-					strcpy_s(bones_info[j].name, 32, word);
-					pos = fetchMatrix44(pos, bones_info[j].bind_pose);
+                    #ifdef __APPLE__
+                        strcpy(bones_info[j].name, word);
+                    #else
+                        strcpy_s(bones_info[j].name, 32, word);
+                    #endif
+                    pos = fetchMatrix44(pos, bones_info[j].bind_pose);
 				}
 			}
 			else if (str == "bind_matrix")
@@ -1267,7 +1289,7 @@ void Mesh::createPlane(float size)
 void Mesh::createSubdividedPlane(float size, int subdivisions, bool centered )
 {
 	double isize = size / (double)(subdivisions);
-	float hsize = centered ? size * -0.5f : 0.0f;
+	//float hsize = centered ? size * -0.5f : 0.0f;
 	double iuv = 1 / (double)(subdivisions * size);
 	float sub_size = 1.0f / subdivisions;
 	vertices.clear();
@@ -1363,7 +1385,7 @@ void Mesh::renderBounding( const Matrix44& model, bool world_bounding )
 
 	Shader* sh = Shader::getDefaultShader("flat");
 	sh->enable();
-	sh->setUniform("u_viewprojection", Camera::last_enabled->viewprojection_matrix);
+	sh->setUniform("u_viewprojection", Camera::current->viewprojection_matrix);
 
 	Matrix44 matrix;
 	matrix.translate(box.center.x, box.center.y, box.center.z);
