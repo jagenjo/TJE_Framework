@@ -85,7 +85,9 @@ bool Shader::load(const std::string& vsf, const std::string& psf, const char* ma
 	ps_filename = psf;
 	from_atlas = false;
 
-    std::cout << " + Shader: Vertex: " << vsf << "  Pixel: " << psf << "  " << (macros ? macros : "") << std::endl;
+	bool printMacros = false;
+
+    std::cout << " + Shader: Vertex: " << vsf << "  Pixel: " << psf << "  " << (macros && printMacros ? macros : "") << std::endl;
 	std::string vsm,psm;
 	if (!readFile(vsf,vsm) || !readFile(psf,psm))
 		return false;
@@ -151,6 +153,11 @@ static inline std::string trim(std::string str) {
 	return str;
 }
 
+void Shader::setMacros(const char* macros)
+{
+	this->macros = macros;
+	this->recompile();
+}
 
 bool Shader::LoadAtlas(const char* filename)
 {
@@ -180,7 +187,7 @@ bool Shader::LoadAtlas(const char* filename)
 		}
 		else if (line_trimmed[0] == '#')
 		{
-			int pos = (int)line_trimmed.find_first_of(' ');
+			int pos = line_trimmed.find_first_of(' ');
 			if (pos != std::string::npos)
 			{
 				std::string cmd = line_trimmed.substr(1, pos - 1);
@@ -212,11 +219,11 @@ bool Shader::LoadAtlas(const char* filename)
 		line = trim(line);
 		if(line.size() == 0 || line.substr(0,2) == "//")
 			continue;
-		int pos = (int)line.find_first_of(' ');
-		int pos2 = (int)line.find_first_of(' ',pos+1);
-		int pos3 = (int)line.find_first_of(' ',pos2+1);
+		int pos = line.find_first_of(' ');
+		int pos2 = line.find_first_of(' ',pos+1);
+		int pos3 = line.find_first_of(' ',pos2+1);
 		if(pos3 == -1)
-			pos3 = (int)std::string::npos;
+			pos3 = std::string::npos;
 		std::string name = line.substr(0,pos);
 		std::string vs_filename = trim(line.substr(pos+1,pos2 - pos));
 		std::string fs_filename = trim(line.substr(pos2+1,pos3 - pos2));
@@ -227,7 +234,7 @@ bool Shader::LoadAtlas(const char* filename)
 		std::string fs_code = s_shaders_atlas[fs_filename];
 		if(!vs_code.size() || !fs_code.size())
 		{
-			std::cout << " * Error in shader atlas, could find files for " << name << std::endl;
+			std::cout << " * Error in shader atlas, couldnt find files for " << name << std::endl;
 			continue;
 		}
 
@@ -248,6 +255,7 @@ bool Shader::LoadAtlas(const char* filename)
 		{
 			delete shader;
 			std::cout << " * Compilation error in shader at atlas: " << name << std::endl;
+            return false; //stop here
 			continue;
 		}
 
@@ -367,7 +375,7 @@ bool Shader::createShaderObject(unsigned int type, GLuint& handle, const std::st
 	handle = glCreateShader(type);
 	assert( glGetError() == GL_NO_ERROR );
     
-    std::string prefix = "#define DESKTOP\n";
+	std::string prefix = "";//"#define DESKTOP\n";
 
     std::string fullcode = prefix + code;
 	const char* ptr = fullcode.c_str();
@@ -437,7 +445,8 @@ void Shader::enable()
 	current = this;
 
 	glUseProgram(program);
-	assert (glGetError() == GL_NO_ERROR);
+    GLuint err = glGetError();
+	assert (err == GL_NO_ERROR);
 
 	last_slot = 0;
 }
@@ -448,7 +457,7 @@ void Shader::disable()
 	current = NULL;
 
 	glUseProgram(0);
-	glActiveTexture(GL_TEXTURE0);
+	//glActiveTexture(GL_TEXTURE0);
 	assert (glGetError() == GL_NO_ERROR);
 }
 
@@ -552,15 +561,15 @@ int Shader::getUniformLocation(const char* varname)
 	return loc;
 }
 
-void Shader::setTexture(const char* varname, Texture* tex)
+void Shader::setTexture(const char* varname, Texture* tex, int slot)
 {
-	glActiveTexture(GL_TEXTURE0 + last_slot);
+	glActiveTexture(GL_TEXTURE0 + slot);
 	glBindTexture(tex->texture_type, tex->texture_id);
-	setUniform1(varname, last_slot);
-	last_slot = (last_slot+1)%8;
-	glActiveTexture(GL_TEXTURE0 + last_slot);
+	setUniform1(varname, slot);
+	glActiveTexture(GL_TEXTURE0 + slot);
 }
 
+/*
 void Shader::setTexture(const char* varname, unsigned int tex)
 {
 	glActiveTexture(GL_TEXTURE0 + last_slot);
@@ -568,6 +577,15 @@ void Shader::setTexture(const char* varname, unsigned int tex)
 	setUniform1(varname,last_slot);
 	last_slot = (last_slot + 1) % 8;
 	glActiveTexture(GL_TEXTURE0 + last_slot);
+}
+*/
+
+void Shader::setUniform1(const char* varname, bool input1)
+{
+	GLint loc = getLocation(varname, &locations);
+	CHECK_SHADER_VAR(loc, varname);
+	glUniform1i(loc, input1);
+	assert(glGetError() == GL_NO_ERROR);
 }
 
 void Shader::setUniform1(const char* varname, int input1)
@@ -848,6 +866,44 @@ Shader* Shader::getDefaultShader(std::string name)
 			uniform sampler2D u_texture;\n\
 			void main() {\n\
 				gl_FragColor = texture2D( u_texture, v_uv );\n\
+			}";
+	}
+	else if (name == "linear_depth")
+	{
+		vs = "attribute vec3 a_vertex; \
+			varying vec2 v_uv;\n\
+			void main()\n\
+			{\n\
+				v_uv = a_vertex.xy * 0.5 + vec2(0.5);\n\
+				gl_Position = vec4(a_vertex.xy,0.0,1.0);\n\
+			}";
+		fs = "uniform vec2 u_camera_nearfar;\n\
+		uniform sampler2D u_texture; //depth map\n\
+		varying vec2 v_uv;\n\
+		void main()\n\
+		{\n\
+			float n = u_camera_nearfar.x;\n\
+			float f = u_camera_nearfar.y;\n\
+			float z = texture2D(u_texture, v_uv).x;\n\
+			float color = n * (z + 1.0) / (f + n - z * (f - n));\n\
+			gl_FragColor = vec4(color);\n\
+		}";
+	}
+	else if (name == "screen_depth") //draws a quad fullscreen and clones its depth
+	{
+		vs = "attribute vec3 a_vertex; \
+			varying vec2 v_uv;\n\
+			void main()\n\
+			{\n\
+				v_uv = a_vertex.xy * 0.5 + vec2(0.5);\n\
+				gl_Position = vec4(a_vertex.xy,0.0,1.0);\n\
+			}";
+		fs = "varying vec2 v_uv;\n\
+			uniform sampler2D u_texture;\n\
+			void main() {\n\
+				vec4 color = texture2D( u_texture, v_uv );\n\
+				gl_FragColor = color;\n\
+				gl_FragDepth = color.r * 2.0 - 1.0;\n\
 			}";
 	}
 	else if (name == "quad" || name == "textured_quad") //draws a quad

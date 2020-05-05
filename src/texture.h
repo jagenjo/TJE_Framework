@@ -50,7 +50,7 @@ public:
 	void fromScreen(int width, int height);
 
 	bool loadTGA(const char* filename);
-	bool loadPNG(const char* filename, bool flip_y = true);
+	bool loadPNG(const char* filename, bool flip_y = false);
 	bool saveTGA(const char* filename, bool flip_y = true);
 };
 
@@ -71,33 +71,49 @@ public:
 	GLuint texture_id; // GL id to identify the texture in opengl, every texture must have its own id
 	float width;
 	float height;
+	float depth;	//Optional for 3dTexture or 2dTexture array
 	std::string filename;
 
 	unsigned int format; //GL_RGB, GL_RGBA
 	unsigned int type; //GL_UNSIGNED_INT, GL_FLOAT
+	unsigned int internal_format;
 	unsigned int texture_type; //GL_TEXTURE_2D, GL_TEXTURE_CUBE, GL_TEXTURE_2D_ARRAY
 	bool mipmaps;
+
+	unsigned int wrapS;
+	unsigned int wrapT;
 
 	//original data info
 	Image image;
 
 	Texture();
-	Texture(unsigned int width, unsigned int height, unsigned int format = GL_RGB, unsigned int type = GL_UNSIGNED_BYTE, bool mipmaps = true, Uint8* data = NULL, unsigned int data_format = 0);
+	Texture(unsigned int width, unsigned int height, unsigned int format = GL_RGB, unsigned int type = GL_UNSIGNED_BYTE, bool mipmaps = true, Uint8* data = NULL, unsigned int internal_format = 0);
 	Texture(Image* img);
 	~Texture();
 
-	void create(unsigned int width, unsigned int height, unsigned int format = GL_RGB, unsigned int type = GL_UNSIGNED_BYTE, bool mipmaps = true, Uint8* data = NULL, unsigned int data_format = 0);
+	void clear();
+
+	void create(unsigned int width, unsigned int height, unsigned int format = GL_RGB, unsigned int type = GL_UNSIGNED_BYTE, bool mipmaps = true, Uint8* data = NULL, unsigned int internal_format = 0);
+	void create3D(unsigned int width, unsigned int height, unsigned int depth, unsigned int format = GL_RED, unsigned int type = GL_UNSIGNED_BYTE, bool mipmaps = true, Uint8* data = NULL, unsigned int internal_format = 0);
+	void createCubemap(unsigned int width, unsigned int height, Uint8** data = NULL, unsigned int format = GL_RGBA, unsigned int type = GL_FLOAT, bool mipmaps = true, unsigned int internal_format = GL_RGBA32F);
+
+	void upload(Image* img);
+	void upload(unsigned int format = GL_RGB, unsigned int type = GL_UNSIGNED_BYTE, bool mipmaps = true, Uint8* data = NULL, unsigned int internal_format = 0);
+	void upload3D(unsigned int format = GL_RED, unsigned int type = GL_UNSIGNED_BYTE, bool mipmaps = true, Uint8* data = NULL, unsigned int internal_format = 0);
+	void uploadCubemap(unsigned int format = GL_RGB, unsigned int type = GL_UNSIGNED_BYTE, bool mipmaps = true, Uint8** data = NULL, unsigned int internal_format = 0);
+	void uploadAsArray(unsigned int texture_size, bool mipmaps = true);
 
 	void bind();
 	void unbind();
+
+	void debugInMenu();
+
 	static void UnbindAll();
 
-	void upload(Image* img);
-	void upload(unsigned int width, unsigned int height, unsigned int format = GL_RGB, unsigned int type = GL_UNSIGNED_BYTE, bool mipmaps = true, Uint8* data = NULL);
-	void uploadAsArray(unsigned int texture_size, bool mipmaps = true);
+	void operator = (const Texture& tex) { assert("textures cannot be cloned like this!");  }
 
 	//load without using the manager
-	bool load(const char* filename, bool mipmaps = true, bool wrap = true);
+	bool load(const char* filename, bool mipmaps = true, bool wrap = true, unsigned int type = GL_UNSIGNED_BYTE);
 
 	//load using the manager (caching loaded ones to avoid reloading them)
 	static Texture* Get(const char* filename, bool mipmaps = true, bool wrap = true);
@@ -107,10 +123,12 @@ public:
 
 	//show the texture on the current viewport
 	void toViewport( Shader* shader = NULL );
-	void blit(Texture* destination, Shader* shader = NULL);
+	//copy to another texture
+	void copyTo(Texture* destination, Shader* shader = NULL);
 
 	static FBO* getGlobalFBO(Texture* texture);
 	static Texture* getBlackTexture();
+	static Texture* getWhiteTexture();
 };
 
 bool isPowerOfTwo(int n);

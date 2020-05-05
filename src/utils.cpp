@@ -8,7 +8,7 @@
 
 #include "includes.h"
 
-#include "game.h"
+#include "application.h"
 #include "camera.h"
 #include "shader.h"
 #include "mesh.h"
@@ -26,6 +26,26 @@ long getTime()
 	#endif
 }
 
+float * snapshot()
+{
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	int x = viewport[0];
+	int y = viewport[1];
+	int width = viewport[2];
+	int height = viewport[3];
+
+	float * data = new float[width * height * 4]; // (R, G, B, A)
+
+	if (!data)
+		return 0;
+
+	// glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(x, y, width, height, GL_RGBA, GL_FLOAT, data);
+
+	return data;
+}
 
 //this function is used to access OpenGL Extensions (special features not supported by all cards)
 void* getGLProcAddress(const char* name)
@@ -103,16 +123,19 @@ bool readFile(const std::string& filename, std::string& content)
 
 bool checkGLErrors()
 {
-	#ifdef _DEBUG
+	#ifndef _DEBUG
+        return true;
+    #endif
+    
 	GLenum errCode;
 	const GLubyte *errString;
 
 	if ((errCode = glGetError()) != GL_NO_ERROR) {
 		errString = gluErrorString(errCode);
-		std::cerr << "OpenGL Error: " << errString << std::endl;
+		std::cerr << "OpenGL Error: " << (errString ? (const char*)errString : "NO ERROR STRING")<< std::endl;
+        assert(0);
 		return false;
 	}
-	#endif
 
 	return true;
 }
@@ -166,7 +189,7 @@ bool drawText(float x, float y, std::string text, Vector3 c, float scale )
 	num_quads = stb_easy_font_print(x, y, (char*)(text.c_str()), NULL, buffer, sizeof(buffer));
 
 	Matrix44 projection_matrix;
-	projection_matrix.ortho(0, Game::instance->window_width / scale, Game::instance->window_height / scale, 0, -1, 1);
+	projection_matrix.ortho(0, Application::instance->window_width / scale, Application::instance->window_height / scale, 0, -1, 1);
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
@@ -261,7 +284,7 @@ std::string getGPUStats()
 		nCurAvailMemoryInKB = 0;
 	}
 
-	std::string str = "FPS: " + std::to_string(Game::instance->fps) + " DCS: " + std::to_string(Mesh::num_meshes_rendered) + " Tris: " + std::to_string(long(Mesh::num_triangles_rendered * 0.001)) + "Ks  VRAM: " + std::to_string(int((nTotalMemoryInKB-nCurAvailMemoryInKB) * 0.001)) + "MBs / " + std::to_string(int(nTotalMemoryInKB * 0.001)) + "MBs";
+	std::string str = "FPS: " + std::to_string(Application::instance->fps) + " DCS: " + std::to_string(Mesh::num_meshes_rendered) + " Tris: " + std::to_string(long(Mesh::num_triangles_rendered * 0.001)) + "Ks  VRAM: " + std::to_string(int((nTotalMemoryInKB-nCurAvailMemoryInKB) * 0.001)) + "MBs / " + std::to_string(int(nTotalMemoryInKB * 0.001)) + "MBs";
 	Mesh::num_meshes_rendered = 0;
 	Mesh::num_triangles_rendered = 0;
 	return str;
@@ -295,6 +318,21 @@ void drawGrid()
 	grid_shader->disable();
 }
 
+void ImGuiMatrix44(Matrix44& matrix, const char* text)
+{
+	#ifndef SKIP_IMGUI
+	if (ImGui::TreeNode((void*)&matrix, "Model"))
+	{
+		float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+		ImGuizmo::DecomposeMatrixToComponents(matrix.m, matrixTranslation, matrixRotation, matrixScale);
+		ImGui::DragFloat3("Position", matrixTranslation, 0.1f);
+		ImGui::DragFloat3("Rotation", matrixRotation, 0.1f);
+		ImGui::DragFloat3("Scale", matrixScale, 0.1f);
+		ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, matrix.m);
+		ImGui::TreePop();
+	}
+	#endif
+}
 
 char* fetchWord(char* data, char* word)
 {
@@ -382,7 +420,7 @@ char* fetchBufferFloat(char* data, std::vector<float>& vector, int num )
 
 char* fetchBufferVec3(char* data, std::vector<Vector3>& vector)
 {
-	//int pos = 0;
+	int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 3);
@@ -392,7 +430,7 @@ char* fetchBufferVec3(char* data, std::vector<Vector3>& vector)
 
 char* fetchBufferVec2(char* data, std::vector<Vector2>& vector)
 {
-	//int pos = 0;
+	int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 2);
@@ -402,7 +440,7 @@ char* fetchBufferVec2(char* data, std::vector<Vector2>& vector)
 
 char* fetchBufferVec3u(char* data, std::vector<Vector3u>& vector)
 {
-	//int pos = 0;
+	int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 3);
@@ -413,7 +451,7 @@ char* fetchBufferVec3u(char* data, std::vector<Vector3u>& vector)
 
 char* fetchBufferVec4ub(char* data, std::vector<Vector4ub>& vector)
 {
-	//int pos = 0;
+	int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 4);
@@ -424,7 +462,7 @@ char* fetchBufferVec4ub(char* data, std::vector<Vector4ub>& vector)
 
 char* fetchBufferVec4(char* data, std::vector<Vector4>& vector)
 {
-	//int pos = 0;
+	int pos = 0;
 	std::vector<float> floats;
 	data = fetchBufferFloat(data, floats);
 	vector.resize(floats.size() / 4);

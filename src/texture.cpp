@@ -49,6 +49,7 @@ Texture::Texture()
 {
 	width = 0;
 	height = 0;
+	depth = 0;
 	texture_id = 0;
 	mipmaps = false;
 	format = 0;
@@ -56,10 +57,10 @@ Texture::Texture()
 	texture_type = GL_TEXTURE_2D;
 }
 
-Texture::Texture(unsigned int width, unsigned int height, unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int data_format)
+Texture::Texture(unsigned int width, unsigned int height, unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format)
 {
 	texture_id = 0;
-	create(width, height, format, type, mipmaps, data, data_format);
+	create(width, height, format, type, mipmaps, data, internal_format);
 }
 
 Texture::Texture(Image* img)
@@ -70,39 +71,98 @@ Texture::Texture(Image* img)
 
 Texture::~Texture()
 {
-	glDeleteTextures(1, &texture_id);
-	glBindTexture(this->texture_type, 0);
+	clear();
 }
 
-void Texture::create(unsigned int width, unsigned int height, unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int data_format)
+void Texture::clear()
+{
+	glDeleteTextures(1, &texture_id);
+	glBindTexture(this->texture_type, 0);
+	texture_id = 0;
+}
+
+void Texture::debugInMenu()
+{
+	#ifndef SKIP_IMGUI
+	if (this == NULL)
+		return;
+	this->bind();
+		ImGui::Image((void*)(intptr_t)texture_id, ImVec2(50, 50));
+	#endif
+}
+
+void Texture::create(unsigned int width, unsigned int height, unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format)
 {
 	assert(width && height && "texture must have a size");
 
 	this->width = (float)width;
 	this->height = (float)height;
+	this->depth = 0;
 	this->format = format;
+	this->internal_format = internal_format;
 	this->type = type;
+	this->mipmaps = mipmaps && isPowerOfTwo(width) && isPowerOfTwo(height) && format != GL_DEPTH_COMPONENT;
+
+	//Delete previous texture and ensure that previous bounded texture_id is not of another texture type
+	if (this->texture_id != 0)
+		clear();
+
 	this->texture_type = GL_TEXTURE_2D;
 
 	if(texture_id == 0)
 		glGenTextures(1, &texture_id); //we need to create an unique ID for the texture
 
-	glBindTexture(this->texture_type, texture_id);	//we activate this id to tell opengl we are going to use this texture
+	assert(checkGLErrors() && "Error creating texture");
+	upload(format, type, mipmaps, data, internal_format);
+}
 
-	glTexImage2D(this->texture_type, 0, format, width, height, 0, data_format == 0 ? format : data_format, type, data );
+void Texture::create3D(unsigned int width, unsigned int height, unsigned int depth, unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format)
+{
+	assert(width && height && depth && "texture must have a size");
 
+	this->width = (float)width;
+	this->height = (float)height;
+	this->depth = (float)depth;
+	this->format = format;
+	this->internal_format = internal_format;
+	this->type = type;
+	this->mipmaps = mipmaps && isPowerOfTwo(width) && isPowerOfTwo(height) && format != GL_DEPTH_COMPONENT && isPowerOfTwo(this->depth);
+
+	//Delete previous texture and ensure that previous bounded texture_id is not of another texture type
+	if (this->texture_id != 0)
+		clear();
+
+	this->texture_type = GL_TEXTURE_3D;
+
+	if (texture_id == 0)
+		glGenTextures(1, &texture_id); //we need to create an unique ID for the texture
+
+	assert(checkGLErrors() && "Error creating texture");
+
+	upload3D(format, type, mipmaps, data, internal_format);
+}
+
+void Texture::createCubemap(unsigned int width, unsigned int height, Uint8** data, unsigned int format, unsigned int type, bool mipmaps, unsigned int internal_format)
+{
+	assert(width && height && "texture must have a size");
+
+	this->width = (float)width;
+	this->height = (float)height;
+	this->depth = 0;
+	this->format = format;
+	this->internal_format = internal_format;
+	this->type = type;
+	this->texture_type = GL_TEXTURE_CUBE_MAP;
 	this->mipmaps = mipmaps && isPowerOfTwo(width) && isPowerOfTwo(height) && format != GL_DEPTH_COMPONENT;
 
-	glTexParameteri(this->texture_type, GL_TEXTURE_MAG_FILTER, Texture::default_mag_filter);	//set the min filter
-	glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, this->mipmaps ? Texture::default_min_filter : GL_LINEAR);   //set the mag filter
-	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, this->mipmaps ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, this->mipmaps ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+	this->wrapS = GL_CLAMP_TO_EDGE;
+	this->wrapT = GL_CLAMP_TO_EDGE;
 
-	if(data && this->mipmaps)
-		generateMipmaps(); //glGenerateMipmapEXT(GL_TEXTURE_2D); 
+	if (texture_id == 0)
+		glGenTextures(1, &texture_id); //we need to create an unique ID for the texture
 
-	glBindTexture(this->texture_type, 0);
-	assert(glGetError() == GL_NO_ERROR && "Error creating texture");
+	glBindTexture(this->texture_type, texture_id);	//we activate this id to tell opengl we are going to use this texture
+	uploadCubemap(format, type, mipmaps, data, internal_format);
 }
 
 Texture* Texture::Get(const char* filename, bool mipmaps, bool wrap)
@@ -121,11 +181,11 @@ Texture* Texture::Get(const char* filename, bool mipmaps, bool wrap)
 		delete texture;
 		return NULL;
 	}
-	texture->setName(filename);
+
 	return texture;
 }
 
-bool Texture::load(const char* filename, bool mipmaps, bool wrap)
+bool Texture::load(const char* filename, bool mipmaps, bool wrap, unsigned int type)
 {
 	std::string str = filename;
 	std::string ext = str.substr(str.size() - 4, 4);
@@ -140,7 +200,7 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap)
 	if (ext == ".tga" || ext == ".TGA")
 		found = image->loadTGA(filename);
 	else if (ext == ".png" || ext == ".PNG")
-		found = image->loadPNG(filename, true);
+		found = image->loadPNG(filename);
 	else
 	{
 		std::cout << "[ERROR]: unsupported format" << std::endl;
@@ -155,8 +215,13 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap)
 
 	this->filename = filename;
 
+	unsigned int internal_format = 0;
+
+	if (type == GL_FLOAT)
+		internal_format = (image->bytes_per_pixel == 3 ? GL_RGB32F : GL_RGBA32F);
+
 	//upload to VRAM
-	upload( image->width, image->height, (image->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA), GL_UNSIGNED_BYTE, mipmaps, image->data );
+	create(image->width, image->height, (image->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA), type, mipmaps, image->data, 0 );
 
 	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, this->mipmaps && wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, this->mipmaps && wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE);
@@ -165,38 +230,79 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap)
 
 	this->image.clear();
 	std::cout << "[OK] Size: " << width << "x" << height << " Time: " << (getTime() - time) * 0.001 << "sec" << std::endl;
+	setName(filename);
 	return true;
 }
 
 void Texture::upload(Image* img)
 {
-	upload(img->width, img->height, img->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data);
+	create(img->width, img->height, img->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data);
 }
 
 //uploads the bytes of a texture to the VRAM
-void Texture::upload( unsigned int width, unsigned int height, unsigned int format, unsigned int type, bool mipmaps, Uint8* data)
+void Texture::upload( unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format)
 {
-	//How to store a texture in VRAM
-	if(texture_id == 0)
-		glGenTextures(1, &texture_id); //we need to create an unique ID for the texture
-
-	this->texture_type = GL_TEXTURE_2D;
-	this->type = type;
-	this->format = format;
-	this->width = (float)width;
-	this->height = (float)height;
-	this->mipmaps = mipmaps && isPowerOfTwo((int)width) && isPowerOfTwo((int)height);
-
-	//if (width != height) this->texture_type = GL_TEXTURE_RECTANGLE;
+	assert(texture_id && "Must create texture before uploading data.");
+	assert(texture_type == GL_TEXTURE_2D && "Texture type does not match.");
 
 	glBindTexture(this->texture_type, texture_id);	//we activate this id to tell opengl we are going to use this texture
+
+	glTexImage2D(this->texture_type, 0, internal_format == 0 ? format : internal_format, width, height, 0, format, type, data);
+
 	glTexParameteri(this->texture_type, GL_TEXTURE_MAG_FILTER, Texture::default_mag_filter);	//set the min filter
-	glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, this->mipmaps ? Texture::default_min_filter : GL_LINEAR); //set the mag filter
+	glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, this->mipmaps ? Texture::default_min_filter : GL_LINEAR);   //set the mag filter
 	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, this->mipmaps ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, this->mipmaps ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4); //better quality but takes more resources
 
-	glTexImage2D(this->texture_type, 0, format, width, height, 0, format, type, data); //upload without mipmaps
+	if (data && this->mipmaps)
+		generateMipmaps(); //glGenerateMipmapEXT(GL_TEXTURE_2D); 
+
+	glBindTexture(this->texture_type, 0);
+	assert(checkGLErrors() && "Error uploading texture");
+}
+
+void Texture::upload3D(unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format) {
+	assert(texture_id && "Must create texture before uploading data.");
+	assert(texture_type == GL_TEXTURE_3D && "Texture type does not match.");
+
+	glBindTexture(this->texture_type, texture_id);	//we activate this id to tell opengl we are going to use this texture
+
+	glTexImage3D(this->texture_type, 0, internal_format == 0 ? format : internal_format, width, height, depth, 0, format, type, data);
+
+	glTexParameteri(this->texture_type, GL_TEXTURE_MAG_FILTER, Texture::default_mag_filter);	//set the min filter
+	glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, this->mipmaps ? Texture::default_min_filter : GL_LINEAR);   //set the mag filter
+	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, this->mipmaps ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, this->mipmaps ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_R, this->mipmaps ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+
+	if (data && this->mipmaps)
+		generateMipmaps(); //glGenerateMipmapEXT(GL_TEXTURE_2D); 
+
+	glBindTexture(this->texture_type, 0);
+	assert(checkGLErrors() && "Error uploading texture");
+}
+
+void Texture::uploadCubemap(unsigned int format, unsigned int type, bool mipmaps, Uint8** data, unsigned int internal_format) {
+	
+	assert(texture_id && "Must create texture before uploading data.");
+	assert(texture_type == GL_TEXTURE_CUBE_MAP && "Texture type does not match.");
+
+	glBindTexture(this->texture_type, texture_id);	//we activate this id to tell opengl we are going to use this texture
+
+	for (int i = 0; i < 6; i++)
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format == 0 ? format : internal_format, width, height, 0, format, type, data ? data[i] : NULL );
+
+	glTexParameteri(this->texture_type, GL_TEXTURE_MAG_FILTER, Texture::default_mag_filter);	//set the min filter
+	glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, this->mipmaps ? Texture::default_min_filter : GL_LINEAR);   //set the mag filter
+	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, this->wrapS);
+	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, this->wrapT);
+
+	if (data && this->mipmaps)
+		generateMipmaps();
+
+	glBindTexture(this->texture_type, 0);
+	assert(glGetError() == GL_NO_ERROR && "Error creating texture");
 }
 
 //special function to upload texture arrays, a special type of texture that has layers
@@ -272,13 +378,13 @@ void Texture::uploadAsArray(unsigned int texture_size, bool mipmaps)
 
 void Texture::bind()
 {
-	glEnable(this->texture_type); //enable the textures 
+	//glEnable(this->texture_type); //enable the textures 
 	glBindTexture(this->texture_type, texture_id );	//enable the id of the texture we are going to use
 }
 
 void Texture::unbind()
 {
-	glDisable(this->texture_type); //disable the textures 
+	//glDisable(this->texture_type); //disable the textures 
 	glBindTexture(this->texture_type, 0 );	//disable the id of the texture we are going to use
 }
 
@@ -286,8 +392,10 @@ void Texture::UnbindAll()
 {
 	glDisable( GL_TEXTURE_CUBE_MAP );
 	glDisable( GL_TEXTURE_2D );
+	glDisable(GL_TEXTURE_3D);
 	glBindTexture( GL_TEXTURE_2D, 0 );
 	glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+	glBindTexture(GL_TEXTURE_3D, 0);
 }
 
 void Texture::generateMipmaps()
@@ -307,7 +415,7 @@ void Texture::toViewport(Shader* shader)
 	if (!shader)
 		shader = Shader::getDefaultShader("screen");
 	shader->enable();
-	shader->setUniform("u_texture", this);
+	shader->setUniform("u_texture", this, 0);
 	quad->render(GL_TRIANGLES);
 	shader->disable();
 }
@@ -316,7 +424,7 @@ FBO* Texture::getGlobalFBO(Texture* texture)
 {
 	if (!global_fbo)
 		global_fbo = new FBO();
-	global_fbo->createFromTextures(texture);
+	global_fbo->setTexture(texture);
 	return global_fbo;
 }
 
@@ -330,12 +438,32 @@ Texture* Texture::getBlackTexture()
 	return black;
 }
 
-void Texture::blit(Texture* destination, Shader* shader)
+Texture* Texture::getWhiteTexture()
 {
+	static Texture* white = NULL;
+	if (white)
+		return white;
+	const Uint8 data[3] = { 255,255,255 };
+	white = new Texture(1, 1, GL_RGB, GL_UNSIGNED_BYTE, true, (Uint8*)data);
+	return white;
+}
+
+void Texture::copyTo(Texture* destination, Shader* shader)
+{
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
 	FBO* fbo = getGlobalFBO(destination);
 	fbo->bind();
+	if (!shader && format == GL_DEPTH_COMPONENT)
+	{
+		shader = Shader::getDefaultShader("screen_depth");
+		glDepthFunc(GL_ALWAYS);
+		glEnable(GL_DEPTH_TEST);
+	}
 	toViewport(shader);
 	fbo->unbind();
+	glDisable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 }
 
 void Image::fromScreen(int width, int height)
@@ -371,12 +499,13 @@ void Image::fromTexture(Texture* texture)
 }
 
 //TGA format from: http://www.paulbourke.net/dataformats/tga/
+//also on https://gshaw.ca/closecombat/formats/tga.html
 bool Image::loadTGA(const char* filename)
 {
     GLubyte TGAheader[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     GLubyte TGAcompare[12];
     GLubyte header[6];
-    //GLuint bytesPerPixel;
+    GLuint bytesPerPixel;
     GLuint imageSize;
     //GLuint type = GL_RGBA;
 
@@ -430,7 +559,7 @@ bool Image::loadTGA(const char* filename)
         return NULL;
     }
 
-	if (header[5] & (1 << 5)) //flip?
+	if (header[5] & (1 << 5)) //flip
 		origin_topleft = true;
     
 	//flip BGR to RGB pixels

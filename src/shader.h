@@ -52,14 +52,20 @@ public:
 	virtual bool IsAttribute(const char* varname) { return (getAttribLocation(varname) != -1); } //attribute exist
 
 	//upload
+	void setUniform(const char* varname, bool input) { assert(current == this); setUniform1(varname, input); }
+	void setUniform(const char* varname, int input) { assert(current == this); setUniform1(varname, input); }
 	void setUniform(const char* varname, float input) { assert(current == this); setUniform1(varname, input); }
 	void setUniform(const char* varname, const Vector2& input) { assert(current == this); setUniform2(varname, input.x, input.y ); }
 	void setUniform(const char* varname, const Vector3& input) { assert(current == this); setUniform3(varname, input.x, input.y, input.z); }
 	void setUniform(const char* varname, const Vector4& input) { assert(current == this); setUniform4(varname, input.x, input.y, input.z, input.w); }
 	void setUniform(const char* varname, const Matrix44& input) { assert(current == this); setMatrix44(varname, input); }
-	void setUniform(const char* varname, Texture* texture) { assert(current == this); setTexture(varname, texture); }
-	void setUniform(const char* varname, std::vector<Matrix44>& m_vector) { assert(current == this && (int)m_vector.size()); setMatrix44Array(varname, &m_vector[0], (int)m_vector.size()); }
+	void setUniform(const char* varname, std::vector<Matrix44>& m_vector) { assert(current == this && m_vector.size()); setMatrix44Array(varname, &m_vector[0], m_vector.size()); }
+	
+	//for textures you must specify an slot (a number from 0 to 16) where this texture is stored in the shader
+	void setUniform(const char* varname, Texture* texture, int slot) { assert(current == this); setTexture(varname, texture, slot); }
 
+
+	virtual void setInt(const char* varname, const int& input) { setUniform1(varname, input); }
 	virtual void setFloat(const char* varname, const float& input) { setUniform1(varname, input); }
 	virtual void setVector3(const char* varname, const Vector3& input) { setUniform3(varname, input.x, input.y, input.z); }
 	virtual void setMatrix44(const char* varname, const float* m);
@@ -76,6 +82,8 @@ public:
 	virtual void setUniform3Array(const char* varname, const int* input, const int count) ;
 	virtual void setUniform4Array(const char* varname, const int* input, const int count) ;
 
+	virtual void setUniform1(const char* varname, const bool input1);
+
 	virtual void setUniform1(const char* varname, const int input1) ;
 	virtual void setUniform2(const char* varname, const int input1, const int input2) ;
 	virtual void setUniform3(const char* varname, const int input1, const int input2, const int input3) ;
@@ -88,8 +96,8 @@ public:
 	virtual void setUniform4(const char* varname, const Vector4& input) { setUniform4(varname, input.x, input.y, input.z, input.w); }
 	virtual void setUniform4(const char* varname, const float input1, const float input2, const float input3, const float input4) ;
 
-	virtual void setTexture(const char* varname, const unsigned int tex) ;
-	virtual void setTexture(const char* varname, Texture* texture);
+	//virtual void setTexture(const char* varname, const unsigned int tex) ;
+	virtual void setTexture(const char* varname, Texture* texture, int slot);
 
 	virtual int getAttribLocation(const char* varname);
 	virtual int getUniformLocation(const char* varname);
@@ -97,6 +105,8 @@ public:
 	std::string getInfoLog() const;
 	bool hasInfoLog() const;
 	bool compiled;
+
+	void setMacros(const char * macros);
 
 	static Shader* Get(const char* vsf, const char* psf = NULL, const char* macros = NULL);
 	static void ReloadAll();
@@ -106,7 +116,7 @@ public:
 	//to know more about the file format, it is based in this https://github.com/jagenjo/rendeer.js/tree/master/guides#the-shaders but with tiny differences
 	static bool LoadAtlas(const char* filename);
 	static std::string s_shader_atlas_filename;
-	static std::map<std::string, std::string> s_shaders_atlas;
+	static std::map<std::string, std::string> s_shaders_atlas; //stores strings, no shaders
 
 	static Shader* getDefaultShader(std::string name);
 

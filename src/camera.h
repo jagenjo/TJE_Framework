@@ -40,16 +40,18 @@ public:
 	Matrix44 projection_matrix;
 	Matrix44 viewprojection_matrix;
 
-	Matrix44 iview_matrix; //model
-
 	Camera();
 
 	//set as current
 	void enable();
+	void renderInMenu();
 
 	//translate and rotate the camera
 	void move(Vector3 delta);
+	void moveGlobal(Vector3 delta);
 	void rotate(float angle, const Vector3& axis);
+	void orbit(float yaw, float pitch);
+	void changeDistance(float dt);
 
 	//transform a local camera vector to world coordinates
 	Vector3 getLocalVector(const Vector3& v);
@@ -76,7 +78,7 @@ public:
 	//culling
 	bool testPointInFrustum( Vector3 v );
 	char testSphereInFrustum( const Vector3& v, float radius);
-	char testBoxInFrustum( const Vector3& center, const Vector3& halfsize);
+	char testBoxInFrustum( const Vector3& center, const Vector3& halfsize );
 };
 
 

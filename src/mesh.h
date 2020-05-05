@@ -36,6 +36,7 @@ public:
 	std::vector< Vector3 > vertices; //here we store the vertices
 	std::vector< Vector3 > normals;	 //here we store the normals
 	std::vector< Vector2 > uvs;	 //here we store the texture coordinates
+	std::vector< Vector2 > uvs1;	 //here we store the texture coordinates
 	std::vector< Vector4 > colors; //here we store the colors
 
 	struct tInterleaved {
@@ -65,6 +66,7 @@ public:
 	unsigned int normals_vbo_id;
 	unsigned int colors_vbo_id;
 
+	unsigned int uvs1_vbo_id;
 	unsigned int indices_vbo_id;
 	unsigned int interleaved_vbo_id;
 	unsigned int bones_vbo_id;
@@ -88,9 +90,9 @@ public:
 	bool readBin(const char* filename);
 	bool writeBin(const char* filename);
 
-	unsigned int getNumSubmaterials() { return (unsigned int)material_name.size(); }
-	unsigned int getNumSubmeshes() { return (unsigned int)material_range.size(); }
-	unsigned int getNumVertices() { return (unsigned int)interleaved.size() ? (unsigned int)interleaved.size() : (unsigned int)vertices.size(); }
+	unsigned int getNumSubmaterials() { return material_name.size(); }
+	unsigned int getNumSubmeshes() { return material_range.size(); }
+	unsigned int getNumVertices() { return interleaved.size() ? interleaved.size() : vertices.size(); }
 
 	//collision testing
 	void* collision_model;
@@ -112,6 +114,8 @@ public:
 	void createGrid(float dist);
 	void displace(Image* heightmap, float altitude);
 	static Mesh* getQuad(); //get global quad
+
+	void updateBoundingBox();
 
 
 	//optimize meshes

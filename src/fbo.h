@@ -12,7 +12,7 @@ public:
 	GLuint fbo_id; 
 	Texture* color_textures[4];
 	Texture* depth_texture;
-	int num;
+	int num_color_textures;
 	GLenum bufs[4];
 	int width;
 	int height;
@@ -24,12 +24,19 @@ public:
 	FBO();
 	~FBO();
 
-	bool create(int width, int height, int format = GL_RGB, int type = GL_UNSIGNED_BYTE, int num_textures = 1);
-	bool createFromTextures(Texture* color, Texture* colorB = NULL, Texture* depth = NULL);
-	bool createDepthOnly(int width, int height); //use this for shadowmaps
+	bool create(int width, int height, int num_textures = 1, int format = GL_RGB, int type = GL_UNSIGNED_BYTE, bool use_depth_texture = true );
+	bool setTexture(Texture* texture, int cubemap_face = -1);
+	bool setTextures(std::vector<Texture*> textures, Texture* depth = NULL, int cubemap_face = -1);
+	bool setDepthOnly(int width, int height); //use this for shadowmaps
 	
 	void bind();
 	void unbind();
+
+	//to render momentarily to a single buffer
+	void enableSingleBuffer(int num);
+	void enableAllBuffers(); //back to all
+
+	void freeTextures();
 };
 
 #endif

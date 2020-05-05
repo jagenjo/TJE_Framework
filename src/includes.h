@@ -58,7 +58,14 @@
 //OPENGL EXTENSIONS
 
 
-
+//IMGUI
+#ifndef SKIP_IMGUI
+#include "extra/imgui/imgui.h"
+#include "extra/imgui/imgui_impl_sdl.h"
+#include "extra/imgui/imgui_impl_opengl3.h"
+//imguizmo
+#include "extra/imgui/ImGuizmo.h"
+#endif
 
 
 

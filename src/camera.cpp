@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "utils.h"
 
 #include "includes.h"
 #include <iostream>
@@ -13,19 +14,21 @@ Camera::Camera()
 
 void Camera::enable()
 {
+    checkGLErrors();
 	current = this;
 	updateViewMatrix();
 	updateProjectionMatrix();
 	extractFrustum();
+    checkGLErrors();
 
-	iview_matrix = view_matrix;
-	iview_matrix.inverse();
-
-	//old...
+	//legacy rendering...
+#ifndef __APPLE__
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(projection_matrix.m);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(view_matrix.m);
+    checkGLErrors();
+#endif
 }
 
 void Camera::updateViewMatrix()
@@ -52,7 +55,11 @@ void Camera::updateProjectionMatrix()
 
 Vector3 Camera::getLocalVector(const Vector3& v)
 {
-	return iview_matrix.rotateVector(v);
+	Matrix44 iV = view_matrix;
+	if (iV.inverse() == false)
+		std::cout << "Matrix Inverse error" << std::endl;
+	Vector3 result = iV.rotateVector(v);
+	return result;
 }
 
 void Camera::move(Vector3 delta)
@@ -60,6 +67,13 @@ void Camera::move(Vector3 delta)
 	Vector3 localDelta = getLocalVector(delta);
 	eye = eye - localDelta;
 	center = center - localDelta;
+	updateViewMatrix();
+}
+
+void Camera::moveGlobal(Vector3 delta)
+{
+	eye = eye - delta;
+	center = center - delta;
 	updateViewMatrix();
 }
 
@@ -71,6 +85,47 @@ void Camera::rotate(float angle, const Vector3& axis)
 	center = eye + new_front;
 	updateViewMatrix();
 
+}
+
+void Camera::orbit(float yaw, float pitch)
+{
+	vec3 front = normalize( center - eye );
+	float problem_angle = dot(front, up);
+
+	vec3 right = getLocalVector(vec3(1.0, 0, 0));
+	vec3 dist = eye - center;
+
+	//yaw
+	quat R = quat(up, -yaw);
+	dist = transformQuat(dist, R);
+
+	if (!(problem_angle > 0.99 && pitch > 0 || problem_angle < -0.99 && pitch < 0))
+		R.setAxisAngle(right, pitch);
+
+	dist = transformQuat(dist, R);
+
+	eye = dist + center;
+
+	updateViewMatrix();
+}
+
+void Camera::changeDistance(float dt)
+{
+	if (type == ORTHOGRAPHIC)
+	{
+		float f = dt < 0 ? 1.1 : 0.9;
+		left *= f;
+		right *= f;
+		bottom *= f;
+		top *= f;
+		updateProjectionMatrix();
+		return;
+	}
+	vec3 dist = eye - center;
+	dist *= dt < 0 ? 1.1 : 0.9;
+	eye = dist + center;
+
+	updateViewMatrix();
 }
 
 void Camera::setOrthographic(float left, float right, float bottom, float top, float near_plane, float far_plane)
@@ -280,6 +335,26 @@ char Camera::testSphereInFrustum( const Vector3& v, float radius)
 	}
 	return CLIP_INSIDE;
 }
+
+
+void Camera::renderInMenu()
+{
+	#ifndef SKIP_IMGUI
+		bool changed = false;
+		changed |= ImGui::Combo("Type", (int*)&type, "PERSPECTIVE\0ORTHOGRAPHIC",2);
+		if (changed && type == ORTHOGRAPHIC)
+			setOrthographic(-200, 200, -200 / aspect, 200 / aspect, 0.1, 10000);
+		changed |= ImGui::SliderFloat3("Eye", &eye.x, -100, 100);
+		changed |= ImGui::SliderFloat3("Center", &center.x, -100, 100);
+		changed |= ImGui::SliderFloat3("Up", &up.x, -100, 100);
+		changed |= ImGui::SliderFloat("FOV", &fov, 15, 180);
+		changed |= ImGui::SliderFloat("Near", &near_plane, 0.01, far_plane);
+		changed |= ImGui::SliderFloat("Far", &far_plane, near_plane, 10000);
+		if (changed)
+			this->lookAt(eye, center, up);
+	#endif
+}
+
 
 char Camera::testBoxInFrustum(const Vector3& center, const Vector3& halfsize)
 {

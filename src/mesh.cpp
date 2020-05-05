@@ -12,11 +12,11 @@
 
 #include "camera.h"
 #include "texture.h"
-#include "animation.h"
+//#include "animation.h"
 #include "extra/coldet/coldet.h"
 
 std::map<std::string, Mesh*> Mesh::sMeshesLoaded;
-bool Mesh::use_binary = true;
+bool Mesh::use_binary = false;
 bool Mesh::auto_upload_to_vram = true;
 bool Mesh::interleave_meshes = true;
 long Mesh::num_meshes_rendered = 0;
@@ -48,7 +48,9 @@ void Mesh::clear()
 		glDeleteBuffersARB(1,&vertices_vbo_id);
 	if (uvs_vbo_id)
 		glDeleteBuffersARB(1,&uvs_vbo_id);
-	if (normals_vbo_id) 
+	if (uvs1_vbo_id)
+		glDeleteBuffersARB(1, &uvs_vbo_id);
+	if (normals_vbo_id)
 		glDeleteBuffersARB(1,&normals_vbo_id);
 	if (colors_vbo_id) 
 		glDeleteBuffersARB(1,&colors_vbo_id);
@@ -62,12 +64,13 @@ void Mesh::clear()
 		glDeleteBuffersARB(1, &weights_vbo_id);
 
 	//VBOs ids
-	vertices_vbo_id = uvs_vbo_id = normals_vbo_id = colors_vbo_id = interleaved_vbo_id = indices_vbo_id = weights_vbo_id = bones_vbo_id = 0;
+	vertices_vbo_id = uvs_vbo_id = uvs1_vbo_id = normals_vbo_id = colors_vbo_id = interleaved_vbo_id = indices_vbo_id = weights_vbo_id = bones_vbo_id = 0;
 
 	//buffers
 	vertices.clear();
 	normals.clear();
 	uvs.clear();
+	uvs1.clear();
 	colors.clear();
 	interleaved.clear();
 	indices.clear();
@@ -75,12 +78,13 @@ void Mesh::clear()
 	weights.clear();
 
 	if (collision_model)
-		delete (CollisionModel3D*)collision_model;
+		delete collision_model;
 }
 
-int vertex_location = 1;
-int normal_location = 1;
-int uv_location = 1;
+int vertex_location = -1;
+int normal_location = -1;
+int uv_location = -1;
+int uv1_location = -1;
 int color_location = -1;
 int bones_location = -1;
 int weights_location = -1;
@@ -114,6 +118,8 @@ void Mesh::enableBuffers(Shader* sh)
 	else
 		glVertexAttribPointer(vertex_location, 3, GL_FLOAT, GL_FALSE, spacing, interleaved.size() ? &interleaved[0].vertex : &vertices[0]);
 
+    checkGLErrors();
+
 	normal_location = -1;
 	if (normals.size() || spacing)
 	{
@@ -145,6 +151,23 @@ void Mesh::enableBuffers(Shader* sh)
 			}
 			else
 				glVertexAttribPointer(uv_location, 2, GL_FLOAT, GL_FALSE, spacing, interleaved.size() ? &interleaved[0].uv : &uvs[0]);
+		}
+	}
+
+	uv1_location = -1;
+	if (uvs1.size() || spacing)
+	{
+		uv1_location = sh->getAttribLocation("a_uv1");
+		if (uv1_location != -1)
+		{
+			glEnableVertexAttribArray(uv1_location);
+			if (uvs1_vbo_id)
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, uvs1_vbo_id);
+				glVertexAttribPointer(uv1_location, 2, GL_FLOAT, GL_FALSE, spacing, 0);
+			}
+			else
+				glVertexAttribPointer(uv1_location, 2, GL_FLOAT, GL_FALSE, spacing, &uvs1[0]);
 		}
 	}
 
@@ -198,6 +221,8 @@ void Mesh::enableBuffers(Shader* sh)
 		}
 	}
 
+	assert(glGetError() == GL_NO_ERROR);
+
 }
 
 void Mesh::render(unsigned int primitive, int submesh_id, int num_instances)
@@ -223,11 +248,11 @@ void Mesh::render(unsigned int primitive, int submesh_id, int num_instances)
 void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 {
 	int start = 0;
-	int size = (int)vertices.size();
+	int size = vertices.size();
 	if (indices.size())
-		size = (int)indices.size();
+		size = indices.size();
 	else if (interleaved.size())
-		size = (int)interleaved.size();
+		size = interleaved.size();
 
 	if (submesh_id > 0)
 	{
@@ -267,6 +292,8 @@ void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 			glDrawArrays(primitive, start, size);
 	}
 
+	assert(glGetError() == GL_NO_ERROR);
+
 	num_triangles_rendered += (size / 3) * (num_instances ? num_instances : 1);
 	num_meshes_rendered++;
 }
@@ -276,10 +303,12 @@ void Mesh::disableBuffers(Shader* shader)
 	glDisableVertexAttribArray(vertex_location);
 	if (normal_location != -1) glDisableVertexAttribArray(normal_location);
 	if (uv_location != -1) glDisableVertexAttribArray(uv_location);
+	if (uv1_location != -1) glDisableVertexAttribArray(uv1_location);
 	if (color_location != -1) glDisableVertexAttribArray(color_location);
 	if (bones_location != -1) glDisableVertexAttribArray(bones_location);
 	if (weights_location != -1) glDisableVertexAttribArray(weights_location);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);    //if crashes here, COMMENT THIS LINE ****************************
+	assert(glGetError() == GL_NO_ERROR);
 }
 
 GLuint instances_buffer_id = 0;
@@ -379,9 +408,9 @@ void Mesh::renderFixedPipeline(int primitive)
 			glColorPointer(4, GL_FLOAT, 0, &colors[0]);
 	}
 
-	int size = (int)vertices.size();
+	int size = vertices.size();
 	if (!size)
-		size = (int)interleaved.size();
+		size = interleaved.size();
 
 	glDrawArrays(primitive, 0, (GLsizei)size);
 	glDisableClientState(GL_VERTEX_ARRAY);
@@ -394,6 +423,7 @@ void Mesh::renderFixedPipeline(int primitive)
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //if it crashes, comment this line
 }
 
+/*
 void Mesh::renderAnimated( unsigned int primitive, Skeleton* skeleton )
 {
 	Shader* shader = Shader::current;
@@ -407,6 +437,31 @@ void Mesh::renderAnimated( unsigned int primitive, Skeleton* skeleton )
 	}
 
 	render(primitive);
+}
+*/
+
+void Mesh::updateBoundingBox()
+{
+	if (vertices.size())
+	{
+		aabb_max = aabb_min = vertices[0];
+		for (int i = 1; i < vertices.size(); ++i)
+		{
+			aabb_min.setMin(vertices[i]);
+			aabb_max.setMax(vertices[i]);
+		}
+	}
+	else if (interleaved.size())
+	{
+		aabb_max = aabb_min = interleaved[0].vertex;
+		for (int i = 1; i < vertices.size(); ++i)
+		{
+			aabb_min.setMin(interleaved[i].vertex);
+			aabb_max.setMax(interleaved[i].vertex);
+		}
+	}
+	box.center = (aabb_max + aabb_min) * 0.5f;
+	box.halfsize = aabb_max - box.center;
 }
 
 void Mesh::uploadToVRAM()
@@ -442,6 +497,15 @@ void Mesh::uploadToVRAM()
 				glGenBuffersARB(1, &uvs_vbo_id);
 			glBindBufferARB(GL_ARRAY_BUFFER_ARB, uvs_vbo_id);
 			glBufferDataARB(GL_ARRAY_BUFFER_ARB, uvs.size() * sizeof(Vector2), &uvs[0], GL_STATIC_DRAW_ARB);
+		}
+
+		// UVs1
+		if (uvs1.size())
+		{
+			if (uvs1_vbo_id == 0)
+				glGenBuffersARB(1, &uvs1_vbo_id);
+			glBindBufferARB(GL_ARRAY_BUFFER_ARB, uvs1_vbo_id);
+			glBufferDataARB(GL_ARRAY_BUFFER_ARB, uvs1.size() * sizeof(Vector2), &uvs1[0], GL_STATIC_DRAW_ARB);
 		}
 
 		// Normals
@@ -506,7 +570,7 @@ bool Mesh::createCollisionModel(bool is_static)
 
 	if (indices.size()) //indexed
 	{
-		collision_model->setTriangleNumber((int)indices.size());
+		collision_model->setTriangleNumber(indices.size());
 
 		if (interleaved.size())
 			for (unsigned int i = 0; i < indices.size(); ++i)
@@ -538,8 +602,8 @@ bool Mesh::createCollisionModel(bool is_static)
 	}
 	else if (vertices.size()) //non interleaved
 	{
-		collision_model->setTriangleNumber((int)vertices.size() / 3);
-		for (unsigned int i = 0; i < (int)vertices.size(); i+=3)
+		collision_model->setTriangleNumber(vertices.size() / 3);
+		for (unsigned int i = 0; i < vertices.size(); i+=3)
 		{
 			auto v1 = vertices[i];
 			auto v2 = vertices[i + 1];
@@ -652,9 +716,9 @@ typedef struct
 	float radius;
 	int num_bones;
 	int material_range[4];
-	char material_names[256];
 	Matrix44 bind_matrix;
 	char streams[8]; //Normal|Uvs|Color|Indices|Bones|Weights|Extra
+	char material_names[256];
 	char extra[32]; //unused
 } sMeshInfo;
 
@@ -670,7 +734,7 @@ bool Mesh::readBin(const char* filename)
 	if (f == NULL)
 		return false;
 
-	unsigned int size = (unsigned int)stbuffer.st_size;
+	unsigned int size = stbuffer.st_size;
 	char* data = new char[size];
 	fread(data,size,1,f);
 	fclose(f);
@@ -811,8 +875,9 @@ bool Mesh::writeBin(const char* filename)
 	info.bind_matrix = bind_matrix;
 	std::string names = join(material_name, "|");
 	memset(info.material_names, 0, 255);
-	memcpy(info.material_names, names.c_str(), min( names.size(),255) );
+	memcpy(info.material_names, names.c_str(), fmin( names.size(),255) );
 	info.material_names[255] = 0;
+
 	info.streams[0] = interleaved.size() ? 'I' : 'V';
 	info.streams[1] = normals.size() ? 'N' : ' ';
 	info.streams[2] = uvs.size() ? 'U' : ' ';
@@ -1042,7 +1107,7 @@ bool Mesh::loadOBJ(const char* filename)
 			aabb_min.setMin( v );
 			aabb_max.setMax( v );
 		}
-		else if (tokens[0] == "vt" && tokens.size() == 4)
+		else if (tokens[0] == "vt" && tokens.size() > 2)
 		{
 			Vector2 v((float)atof(tokens[1].c_str()), (float)atof(tokens[2].c_str()) );
 			indexed_uvs.push_back(v);
@@ -1051,12 +1116,6 @@ bool Mesh::loadOBJ(const char* filename)
 		{
 			Vector3 v((float)atof(tokens[1].c_str()), (float)atof(tokens[2].c_str()), (float)atof(tokens[3].c_str()) );
 			indexed_normals.push_back(v);
-		}
-		else if (tokens[0] == "s") //surface? it appears one time before the faces
-		{
-			//process mesh: ????
-			//if (uvs.size() == 0 && indexed_uvs.size() )
-			//	uvs.resize(1);
 		}
 		else if (tokens[0] == "usemtl") //surface? it appears one time before the faces
 		{
@@ -1069,6 +1128,7 @@ bool Mesh::loadOBJ(const char* filename)
 		}
 		else if (tokens[0] == "f" && tokens.size() >= 4)
 		{
+			assert(vertices.size() == normals.size() && vertices.size() == uvs.size());
 			Vector3 v1,v2,v3;
 			v1.parseFromText( tokens[1].c_str(), '/' );
 
@@ -1172,7 +1232,7 @@ bool Mesh::loadMESH(const char* filename)
                     #else
                         strcpy_s(bones_info[j].name, 32, word);
                     #endif
-                    pos = fetchMatrix44(pos, bones_info[j].bind_pose);
+					pos = fetchMatrix44(pos, bones_info[j].bind_pose);
 				}
 			}
 			else if (str == "bind_matrix")
@@ -1289,7 +1349,7 @@ void Mesh::createPlane(float size)
 void Mesh::createSubdividedPlane(float size, int subdivisions, bool centered )
 {
 	double isize = size / (double)(subdivisions);
-	//float hsize = centered ? size * -0.5f : 0.0f;
+	float hsize = centered ? size * -0.5f : 0.0f;
 	double iuv = 1 / (double)(subdivisions * size);
 	float sub_size = 1.0f / subdivisions;
 	vertices.clear();
@@ -1435,7 +1495,11 @@ Mesh* Mesh::Get(const char* filename)
 
 	//detect format
 	char file_format = 0;
-	std::string ext = name.substr(name.find_last_of(".")+1);
+	int pos = name.find_last_of(".");
+	if(pos == -1) //no extension, internal mesh probably
+		return NULL;
+	std::string ext = name.substr(pos+1);
+
 	if (ext == "ase" || ext == "ASE")
 		file_format = FORMAT_ASE;
 	else if (ext == "obj" || ext == "OBJ")
@@ -1444,7 +1508,7 @@ Mesh* Mesh::Get(const char* filename)
 		file_format = FORMAT_MBIN;
 	else if (ext == "mesh" || ext == "MESH")
 		file_format = FORMAT_MESH;
-	else
+	else 
 	{
 		std::cerr << "Unknown mesh format: " << filename << std::endl;
 		return NULL;

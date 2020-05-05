@@ -41,7 +41,7 @@ void Skeleton::computeFinalBoneMatrices( std::vector<Matrix44>& bone_matrices, M
 
 	bone_matrices.resize(mesh->bones_info.size());
 	#pragma omp for  
-	for (int i = 0; i < (int)mesh->bones_info.size(); ++i)
+	for (int i = 0; i < mesh->bones_info.size(); ++i)
 	{
 		BoneInfo& bone_info = mesh->bones_info[i];
 		bone_matrices[i] = mesh->bind_matrix * bone_info.bind_pose * getBoneMatrix( bone_info.name, false ); //use globals
@@ -186,7 +186,7 @@ void Animation::assignTime(float t, bool loop, bool interpolate, uint8 layers)
 			t = duration + t;
 	}
 	else
-		t = clamp( t, 0.0f, duration - (1.0f/samples_per_second) );
+		t = clamp( t, 0.0f, duration - (1.0/samples_per_second) );
 	float v = samples_per_second * t;
 	int index = clamp(floor(v), 0, num_keyframes - 1);
 	int index2 = index + 1;
