@@ -5,8 +5,9 @@
 #include <cmath> //for sqrt (square root) function
 #include <math.h> //atan2
 
-
-#define M_PI_2 1.57079632679489661923
+#ifndef M_PI_2
+    #define M_PI_2 1.57079632679489661923
+#endif
 
 //**************************************
 float Vector2::distance(const Vector2& v)
@@ -174,6 +175,7 @@ Vector3 cross(const Vector3& a, const Vector3& b)
 {
 	return Vector3(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x);
 }
+
 
 //*********************************
 const Matrix44 Matrix44::IDENTITY;
@@ -405,7 +407,7 @@ void Matrix44::ortho(float left, float right, float bottom, float top, float nea
 	M[1][1] = 2.0f / (top - bottom);
 	M[3][1] = -(top + bottom) / (top - bottom);
 	M[2][2] = -2.0f / (far_plane - near_plane);
-	M[3][2] = -(far_plane + near_plane) / (far_plane - near_plane);
+	M[3][2] = (far_plane + near_plane) / (far_plane - near_plane);
 	M[3][3] = 1.0f;
 }
 
@@ -926,40 +928,6 @@ void Quaternion::toMatrix(Matrix44& matrix) const
 	matrix._44 = 1;
 }
 
-Vector3 transformQuat(const Vector3& a, const Quaternion& q)
-{
-	// benchmarks: https://jsperf.com/quaternion-transform-vec3-implementations-fixed
-	float qx = q.x, qy = q.y, qz = q.z, qw = q.w;
-	float x = a.x, y = a.y, z = a.z;
-	// var qvec = [qx, qy, qz];
-	// var uv = vec3.cross([], qvec, a);
-	float uvx = qy * z - qz * y,
-		uvy = qz * x - qx * z,
-		uvz = qx * y - qy * x;
-	// var uuv = vec3.cross([], qvec, uv);
-	float uuvx = qy * uvz - qz * uvy,
-		uuvy = qz * uvx - qx * uvz,
-		uuvz = qx * uvy - qy * uvx;
-	// vec3.scale(uv, uv, 2 * w);
-	float w2 = qw * 2;
-	uvx *= w2;
-	uvy *= w2;
-	uvz *= w2;
-	// vec3.scale(uuv, uuv, 2);
-	uuvx *= 2;
-	uuvy *= 2;
-	uuvz *= 2;
-	// return vec3.add(out, a, vec3.add(out, uv, uuv));
-
-	Vector3 out;
-
-	out[0] = x + uvx + uuvx;
-	out[1] = y + uvy + uuvy;
-	out[2] = z + uvz + uuvz;
-
-	return out;
-}
-
 float DotProduct(const Quaternion& q1, const Quaternion& q2)
 {
 	return q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w;
@@ -1275,115 +1243,4 @@ BoundingBox transformBoundingBox(const Matrix44 m, const BoundingBox& box)
 
 	Vector3 halfsize = (box_max - box_min) * 0.5;
 	return BoundingBox(box_max - halfsize, halfsize );
-}
-
-//from https://github.com/erich666/GraphicsGems/blob/master/gems/RayBox.c
-bool RayBoundingBoxCollision(const BoundingBox& box, const Vector3& ray_origin, const Vector3& ray_dir, Vector3& coll)
-{
-	const int NUMDIM = 3;
-	const int RIGHT = 0;
-	const int LEFT = 1;
-	const int MIDDLE = 2;
-
-	char inside = TRUE;
-	char quadrant[NUMDIM];
-	register int i;
-	int whichPlane;
-	double maxT[NUMDIM];
-	double candidatePlane[NUMDIM];
-	Vector3 minB = box.center - box.halfsize;
-	Vector3 maxB = box.center + box.halfsize;
-
-	/* Find candidate planes; this loop can be avoided if
-	rays cast all from the eye(assume perpsective view) */
-	for (i = 0; i < NUMDIM; i++)
-		if (ray_origin.v[i] < minB[i]) {
-			quadrant[i] = LEFT;
-			candidatePlane[i] = minB[i];
-			inside = FALSE;
-		}
-		else if (ray_origin.v[i] > maxB[i]) {
-			quadrant[i] = RIGHT;
-			candidatePlane[i] = maxB[i];
-			inside = FALSE;
-		}
-		else {
-			quadrant[i] = MIDDLE;
-		}
-
-	/* Ray origin inside bounding box */
-	if (inside) {
-		coll = ray_origin;
-		return (TRUE);
-	}
-
-
-	/* Calculate T distances to candidate planes */
-	for (i = 0; i < NUMDIM; i++)
-		if (quadrant[i] != MIDDLE && ray_dir.v[i] != 0.)
-			maxT[i] = (candidatePlane[i] - ray_origin.v[i]) / ray_dir.v[i];
-		else
-			maxT[i] = -1.;
-
-	/* Get largest of the maxT's for final choice of intersection */
-	whichPlane = 0;
-	for (i = 1; i < NUMDIM; i++)
-		if (maxT[whichPlane] < maxT[i])
-			whichPlane = i;
-
-	/* Check final candidate actually inside box */
-	if (maxT[whichPlane] < 0.) return (FALSE);
-	for (i = 0; i < NUMDIM; i++)
-		if (whichPlane != i) {
-			coll.v[i] = ray_origin.v[i] + maxT[whichPlane] * ray_dir.v[i];
-			if (coll.v[i] < minB[i] || coll[i] > maxB[i])
-				return (FALSE);
-		}
-		else {
-			coll.v[i] = candidatePlane[i];
-		}
-	return (TRUE);				/* ray hits box */
-}
-
-bool BoundingBoxSphereOverlap(const BoundingBox& box, const Vector3& center, float radius)
-{
-	// arvo's algorithm from gamasutra
-	// http://www.gamasutra.com/features/19991018/Gomez_4.htm
-
-	float s, d = 0.0;
-	//find the square of the distance
-	//from the sphere to the box
-	Vector3 vmin = box.center - box.halfsize;
-	Vector3 vmax = box.center + box.halfsize;
-	for (int i = 0; i < 3; ++i)
-	{
-		if (center.v[i] < vmin.v[i])
-		{
-			s = center.v[i] - vmin.v[i];
-			d += s * s;
-		}
-		else if (center.v[i] > vmax.v[i])
-		{
-			s = center.v[i] - vmax.v[i];
-			d += s * s;
-		}
-	}
-	//return d <= r*r
-
-	float radiusSquared = radius * radius;
-	if (d <= radiusSquared)
-	{
-		return true; //overlaps
-		/*
-		// this is used just to know if it overlaps or is just inside, but I dont care
-		// make an aabb aabb test with the sphere aabb to test inside state
-		var halfsize = vec3.fromValues( radius, radius, radius );
-		var sphere_bbox = BBox.fromCenterHalfsize( center, halfsize );
-		if ( geo.testBBoxBBox(bbox, sphere_bbox) )
-			return INSIDE;
-		return OVERLAP;
-		*/
-	}
-
-	return false; //OUTSIDE;
 }

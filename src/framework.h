@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <cmath>
+#include <stdlib.h>
 
 #ifndef PI
 	#define PI 3.14159265359
@@ -22,14 +23,11 @@ typedef short int16;
 typedef int int32;
 typedef unsigned int uint32;
 
-inline float clamp(float v, float a, float b) { return v < a ? a : (v > b ? b : v); }
+//ideas to use them https://www.youtube.com/watch?v=R6UB7mVO3fY
+inline float clamp(float v, float a = 0.0f, float b = 1.0f) { return v < a ? a : (v > b ? b : v); }
 inline float lerp(float a, float b, float v ) { return a*(1.0f-v) + b*v; }
-
-enum {
-	CLIP_OUTSIDE = 0,
-	CLIP_OVERLAP,
-	CLIP_INSIDE
-};
+inline float invlerp(float a, float b, float v ) { return (v-a)/(b-a); }
+inline float remap(float iMin, float iMax, float oMin, float oMax, float v ) { return lerp( oMin,oMax, invlerp(iMin,iMax,v)); }
 
 class Vector2
 {
@@ -109,7 +107,6 @@ public:
 	void random(Vector3 range);
 
 	float distance(const Vector3& v) const;
-	
 
 	Vector3 cross( const Vector3& v ) const;
 	float dot( const Vector3& v ) const;
@@ -118,7 +115,6 @@ public:
 
 	float& operator [] (int n) { return v[n]; }
 	void operator *= (float v) { x *= v; y *= v; z *= v; }
-	void operator = (float* v) { x = v[0]; y = v[1]; z = v[2]; }
 };
 
 Vector3 normalize(Vector3 n);
@@ -142,12 +138,11 @@ public:
 		struct { Vector3 xyz; };
 	};
 
-	Vector4() { x = y = z = w = 0.0; }
+	Vector4() { x = y = z = w = 0.0f; }
 	Vector4(float x, float y, float z, float w) { this->x = x; this->y = y; this->z = z; this->w = w; }
 	Vector4(const Vector3& v, float w) { x = v.x; y = v.y; z = v.z; this->w = w; }
 	Vector4(const float* v) { x = v[0]; x = v[1]; x = v[2]; x = v[3]; }
-	void set(float x, float y, float z, float w) { this->x = x; this->y = y; this->z = z; this->w = w; }
-	void operator = (float* v) { x = v[0]; y = v[1]; z = v[2]; w = v[3]; }
+    void set(float x, float y, float z, float w) { this->x = x; this->y = y; this->z = z; this->w = w; }
 };
 
 inline Vector4 operator * (const Vector4& a, float v) { return Vector4(a.x * v, a.y * v, a.z * v, a.w * v); }
@@ -161,28 +156,28 @@ public:
 	union
 	{
 		struct {
-			unsigned char x;
-			unsigned char y;
-			unsigned char z;
-			unsigned char w;
+			uint8 x;
+			uint8 y;
+			uint8 z;
+			uint8 w;
 		};
 		struct {
-			unsigned char r;
-			unsigned char g;
-			unsigned char b;
-			unsigned char a;
+			uint8 r;
+			uint8 g;
+			uint8 b;
+			uint8 a;
 		};
-		unsigned char v[4];
+		uint8 v[4];
 	};
 	Vector4ub() { x = y = z = 0; }
-	Vector4ub(unsigned char x, unsigned char y, unsigned char z, unsigned char w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
-	void set(unsigned char x, unsigned char y, unsigned char z, unsigned char w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
-	Vector4ub operator = (const Vector4& a) { x = (unsigned char)a.x; y = (unsigned char)a.y; z = (unsigned char)a.z; w = (unsigned char)a.w; return *this;  }
+	Vector4ub(uint8 x, uint8 y, uint8 z, uint8 w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	void set(uint8 x, uint8 y, uint8 z, uint8 w = 0) { this->x = x; this->y = y; this->z = z; this->w = w; }
+	Vector4ub operator = (const Vector4& a) { x = (uint8)a.x; y = (uint8)a.y; z = (uint8)a.z; w = (uint8)a.w; return *this; }
 	Vector4 toVector4() { return Vector4(x, y, z, w); }
 };
 
 inline Vector4ub operator + (const Vector4ub& a, const Vector4ub& b) { return Vector4ub(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w ); }
-inline Vector4ub operator * (const Vector4ub& a, float v) { return Vector4ub((unsigned char)(a.x * v), (unsigned char)(a.y * v), (unsigned char)(a.z * v), (unsigned char)(a.w * v)); }
+inline Vector4ub operator * (const Vector4ub& a, float v) { return Vector4ub((uint8)(a.x * v), (uint8)(a.y * v), (uint8)(a.z * v), (uint8)(a.w * v)); }
 inline bool operator == (const Vector4ub& a, const Vector4ub& b) { return a.x == b.x && a.y == b.y && a.z == b.z; } //only colors, no alpha
 inline Vector4ub lerp(const Vector4ub& a, const Vector4ub& b, float v) { return a*(1.0f - v) + b*v; }
 
@@ -346,7 +341,6 @@ Quaternion QslerpNoInvert(const Quaternion &q1, const Quaternion &q2, float t);
 Quaternion Qexp(const Quaternion &q);
 Quaternion Qlog(const Quaternion &q);
 Quaternion SimpleRotation(const Vector3 &a, const Vector3 &b);
-Vector3 transformQuat(const Vector3& a, const Quaternion& q); //to euler
 
 class BoundingBox
 {
@@ -355,19 +349,22 @@ public:
 	Vector3 halfsize;
 	BoundingBox() {}
 	BoundingBox(Vector3 center, Vector3 halfsize) { this->center = center; this->halfsize = halfsize; };
-	float getArea() { return halfsize.x * halfsize.y * halfsize.z * 2.0f; }
 };
 
-//applies a transform to a AABB from object to world
+//applies a transform to a AABB so it is 
 BoundingBox transformBoundingBox(const Matrix44 m, const BoundingBox& box);
+
+enum {
+	CLIP_OUTSIDE = 0,
+	CLIP_OVERLAP,
+	CLIP_INSIDE
+};
 
 float signedDistanceToPlane(const Vector4& plane, const Vector3& point);
 int planeBoxOverlap( const Vector4& plane, const Vector3& center, const Vector3& halfsize );
 float ComputeSignedAngle( Vector2 a, Vector2 b); //returns the angle between both vectors in radians
 inline float ease(float f) { return f*f*f*(f*(f*6.0f - 15.0f) + 10.0f); }
 Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal, const Vector3& ray_origin, const Vector3& ray_dir );
-bool RayBoundingBoxCollision(const BoundingBox& box, const Vector3& ray_origin, const Vector3& ray_dir, Vector3& coll);
-bool BoundingBoxSphereOverlap(const BoundingBox& box, const Vector3& center, float radius );
 Vector3 reflect(const Vector3& I, const Vector3& N);
 
 //value between 0 and 1

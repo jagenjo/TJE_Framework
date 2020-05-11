@@ -41,7 +41,7 @@ void Skeleton::computeFinalBoneMatrices( std::vector<Matrix44>& bone_matrices, M
 
 	bone_matrices.resize(mesh->bones_info.size());
 	#pragma omp for  
-	for (int i = 0; i < mesh->bones_info.size(); ++i)
+	for (int i = 0; i < (int)mesh->bones_info.size(); ++i)
 	{
 		BoneInfo& bone_info = mesh->bones_info[i];
 		bone_matrices[i] = mesh->bind_matrix * bone_info.bind_pose * getBoneMatrix( bone_info.name, false ); //use globals
@@ -186,9 +186,9 @@ void Animation::assignTime(float t, bool loop, bool interpolate, uint8 layers)
 			t = duration + t;
 	}
 	else
-		t = clamp( t, 0.0f, duration - (1.0/samples_per_second) );
+		t = clamp( t, 0.0f, duration - (1.0f/samples_per_second) );
 	float v = samples_per_second * t;
-	int index = clamp(floor(v), 0, num_keyframes - 1);
+	int index = (int)clamp( floor(v), 0.0f, (float)(num_keyframes - 1));
 	int index2 = index + 1;
 	if (index2 >= num_keyframes)
 		index2 = 0;
@@ -390,8 +390,8 @@ bool Animation::loadSKANIM(const char* filename)
 	pos = fetchBufferFloat(pos, header, 5);
 	duration = header[0];
 	samples_per_second = header[1];
-	num_keyframes = header[2];
-	skeleton.num_bones = header[3];
+	num_keyframes = (int)header[2];
+	skeleton.num_bones = (int)header[3];
 	assert(skeleton.num_bones < 128); //MAX_BONES
 	num_animated_bones = 0;
 
@@ -409,12 +409,12 @@ bool Animation::loadSKANIM(const char* filename)
 		if (type == 'B') //bone
 		{
 			pos = fetchWord(pos, word);
-			int index = atof(word);
+			int index = (int)atof(word);
 			Skeleton::Bone& bone = skeleton.bones[index];
 			pos = fetchWord(pos, bone.name);
 			//std::cout << bone.name << std::endl;
 			pos = fetchWord(pos, word);
-			int parent_index = atof(word);
+			int parent_index = (int)atof(word);
 			bone.parent = parent_index;
 			if (bone.parent != -1)
 			{
@@ -430,7 +430,7 @@ bool Animation::loadSKANIM(const char* filename)
 			std::vector<float> bones_map_info;
 			pos = fetchBufferFloat(pos, bones_map_info);
 			for (int j = 0; j < (int)bones_map_info.size(); ++j)
-				bones_map[j] = bones_map_info[j];
+				bones_map[j] = (int8)bones_map_info[j];
 			num_animated_bones = (int)bones_map_info.size();
 			assert(keyframes == NULL);
 			keyframes = new Matrix44[num_animated_bones * num_keyframes];

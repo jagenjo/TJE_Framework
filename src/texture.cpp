@@ -81,16 +81,6 @@ void Texture::clear()
 	texture_id = 0;
 }
 
-void Texture::debugInMenu()
-{
-	#ifndef SKIP_IMGUI
-	if (this == NULL)
-		return;
-	this->bind();
-		ImGui::Image((void*)(intptr_t)texture_id, ImVec2(50, 50));
-	#endif
-}
-
 void Texture::create(unsigned int width, unsigned int height, unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format)
 {
 	assert(width && height && "texture must have a size");

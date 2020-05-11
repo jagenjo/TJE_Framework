@@ -106,8 +106,6 @@ public:
 	void bind();
 	void unbind();
 
-	void debugInMenu();
-
 	static void UnbindAll();
 
 	void operator = (const Texture& tex) { assert("textures cannot be cloned like this!");  }

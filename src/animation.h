@@ -1,6 +1,8 @@
 #pragma once
 
 #include "mesh.h"
+#include <cstring>
+#include <algorithm>
 
 class Camera;
 

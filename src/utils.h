@@ -13,7 +13,6 @@
 
 //General functions **************
 long getTime();
-float * snapshot();
 bool readFile(const std::string& filename, std::string& content);
 
 //generic purposes fuctions
@@ -31,8 +30,6 @@ std::vector<std::string> tokenize(const std::string& source, const char* delimit
 std::vector<std::string>& split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
 std::string join(std::vector<std::string>& strings, const char* delim);
-
-void ImGuiMatrix44(Matrix44& matrix, const char* text);
 
 std::string getGPUStats();
 void drawGrid();
