@@ -336,7 +336,7 @@ void Mesh::renderInstanced(unsigned int primitive, const Matrix44* instanced_mod
 	}
 
 	//regular render
-	render(primitive, 0, num_instances);
+	render(primitive, -1, num_instances);
 
 	//disable instanced attribs
 	for (int k = 0; k < 4; ++k)
@@ -345,6 +345,38 @@ void Mesh::renderInstanced(unsigned int primitive, const Matrix44* instanced_mod
 		glVertexAttribDivisor(attribLocation + k, 0);
 	}
 }
+
+void Mesh::renderInstanced(unsigned int primitive, const std::vector<Vector3> positions, const char* uniform_name)
+{
+	if (!positions.size())
+		return;
+	int num_instances = positions.size();
+
+	Shader* shader = Shader::current;
+	assert(shader && "shader must be enabled");
+
+	if (instances_buffer_id == 0)
+		glGenBuffersARB(1, &instances_buffer_id);
+	glBindBufferARB(GL_ARRAY_BUFFER_ARB, instances_buffer_id);
+	glBufferDataARB(GL_ARRAY_BUFFER_ARB, num_instances * sizeof(Vector3), &positions[0], GL_STREAM_DRAW_ARB);
+
+	int attribLocation = shader->getAttribLocation(uniform_name);
+	assert(attribLocation != -1 && "shader uniform not found");
+	if (attribLocation == -1)
+		return; //this shader doesnt have instanced uniform
+
+	glEnableVertexAttribArray(attribLocation);
+	glVertexAttribPointer(attribLocation, 3, GL_FLOAT, false, sizeof(Vector3), 0);
+	glVertexAttribDivisor(attribLocation, 1); // This makes it instanced!
+
+	//regular render
+	render(primitive, -1, num_instances);
+
+	//disable instanced attribs
+	glDisableVertexAttribArray(attribLocation);
+	glVertexAttribDivisor(attribLocation, 0);
+}
+
 
 //super obsolete rendering method, do not use
 void Mesh::renderFixedPipeline(int primitive)

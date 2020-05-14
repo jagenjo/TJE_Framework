@@ -1201,6 +1201,32 @@ Vector3 RayPlaneCollision(const Vector3& plane_pos, const Vector3& plane_normal,
 	return ray_origin + ray_dir * t;
 }
 
+bool RaySphereCollision(const Vector3& center, const float& radius, const Vector3& ray_origin, const Vector3& ray_dir, Vector3& coll)
+{
+	Vector3 m = ray_origin - center;
+	float b = dot(m, ray_dir);
+	float c = dot(m, m) - radius * radius;
+
+	// Exit if r’s origin outside s (c > 0) and r pointing away from s (b > 0) 
+	if (c > 0.0f && b > 0.0f)
+		return false;
+	float discr = b * b - c;
+
+	// A negative discriminant corresponds to ray missing sphere 
+	if (discr < 0.0f)
+		return false;
+
+	// Ray now found to intersect sphere, compute smallest t value of intersection
+	float t = -b - sqrt(discr);
+
+	// If t is negative, ray started inside sphere so clamp t to zero 
+	if (t < 0.0f)
+		t = 0.0f;
+	coll = ray_origin + t * ray_dir;
+
+	return true;
+}
+
 Vector3 normalize(Vector3 n)
 {
 	return n.normalize();

@@ -365,10 +365,11 @@ int planeBoxOverlap( const Vector4& plane, const Vector3& center, const Vector3&
 float ComputeSignedAngle( Vector2 a, Vector2 b); //returns the angle between both vectors in radians
 inline float ease(float f) { return f*f*f*(f*(f*6.0f - 15.0f) + 10.0f); }
 Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal, const Vector3& ray_origin, const Vector3& ray_dir );
+bool RaySphereCollision(const Vector3& center, const float& radius, const Vector3& ray_origin, const Vector3& ray_dir, Vector3& coll);
 Vector3 reflect(const Vector3& I, const Vector3& N);
 
 //value between 0 and 1
-inline float random(float range = 1.0f, int offset = 0) { return ((rand() % 1000) / (1000.0f)) * range + offset; }
+inline float random(float range = 1.0f, int offset = 0) { return ((rand() % 10000) / (10000.0)) * range + offset; }
 
 
 typedef Vector3 vec2;

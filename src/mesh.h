@@ -87,6 +87,7 @@ public:
 
 	void render( unsigned int primitive, int submesh_id = -1, int num_instances = 0 );
 	void renderInstanced(unsigned int primitive, const Matrix44* instanced_models, int number);
+	void renderInstanced(unsigned int primitive, const std::vector<Vector3> positions, const char* uniform_name );
 	void renderBounding( const Matrix44& model, bool world_bounding = true );
 	void renderFixedPipeline(int primitive); //sloooooooow
 	void renderAnimated(unsigned int primitive, Skeleton *sk);
