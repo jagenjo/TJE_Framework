@@ -407,7 +407,7 @@ void Matrix44::ortho(float left, float right, float bottom, float top, float nea
 	M[1][1] = 2.0f / (top - bottom);
 	M[3][1] = -(top + bottom) / (top - bottom);
 	M[2][2] = -2.0f / (far_plane - near_plane);
-	M[3][2] = (far_plane + near_plane) / (far_plane - near_plane);
+	M[3][2] = -(far_plane + near_plane) / (far_plane - near_plane);
 	M[3][3] = 1.0f;
 }
 
