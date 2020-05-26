@@ -832,8 +832,11 @@ bool Mesh::readBin(const char* filename)
 	bind_matrix = info.bind_matrix;
 
 	submeshes.resize(info.num_submeshes);
-	memcpy(&submeshes[0], pos, sizeof(sSubmeshInfo) * info.num_submeshes);
-	pos += sizeof(sSubmeshInfo) * info.num_submeshes;
+	if (info.num_submeshes)
+	{
+		memcpy(&submeshes[0], pos, sizeof(sSubmeshInfo) * info.num_submeshes);
+		pos += sizeof(sSubmeshInfo) * info.num_submeshes;
+	}
 
 	createCollisionModel();
 	return true;
@@ -909,7 +912,8 @@ bool Mesh::writeBin(const char* filename)
 	if (uvs1.size())
 		fwrite((void*)&uvs1[0], uvs1.size() * sizeof(Vector2), 1, f);
 
-	fwrite((void*)&submeshes[0], submeshes.size() * sizeof(sSubmeshInfo), 1, f);
+	if(submeshes.size())
+		fwrite((void*)&submeshes[0], submeshes.size() * sizeof(sSubmeshInfo), 1, f);
 
 	fclose(f);
 	return true;
