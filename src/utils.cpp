@@ -299,7 +299,7 @@ void drawGrid()
 char* fetchWord(char* data, char* word)
 {
 	int pos = 0;
-	while (*data != ',' && *data != '\n' && pos < 254) { word[pos++] = *data; data++; }
+	while (*data && *data != ',' && *data != '\n' && pos < 254) { word[pos++] = *data; data++; }
 	word[pos] = 0;
 	if (pos < 254)
 		data++; //skip ',' or '\n'
