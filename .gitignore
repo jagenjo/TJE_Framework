@@ -1,0 +1,7 @@
+.exe
+.iobj
+.ipdb
+.pdb
+.db
+visualstudio/visualstudio/Debug
+visualstudio/visualstudio/Release
