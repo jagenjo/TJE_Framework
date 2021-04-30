@@ -61,7 +61,6 @@ Shader::Shader()
 {
 	if(!Shader::s_ready)
 		Shader::init();
-	vs = fs = 0;
 	compiled = false;
 	from_atlas = false;
 }

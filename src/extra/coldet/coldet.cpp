@@ -57,7 +57,7 @@ bool CollisionModel3DImpl::collision(CollisionModel3D* other,
   if (MaxProcessingTime==0) MaxProcessingTime=0xFFFFFF;
   
   DWORD EndTime,BeginTime = GetTickCount();
-  int num=Max(m_Triangles.size(),o->m_Triangles.size());
+  int num=Max((int)m_Triangles.size(),(int)o->m_Triangles.size());
   int Allocated=Max(64,(num>>4));
   std::vector<Check> checks(Allocated);
   

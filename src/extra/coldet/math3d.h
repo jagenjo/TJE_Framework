@@ -230,13 +230,6 @@ inline Matrix3D operator*(const Matrix3D& m1, const Matrix3D& m2)
     m1._41*m2._14 + m1._42*m2._24 + m1._43*m2._34 + m1._44*m2._44);
 }
 
-inline void
-Matrix3D::rotate(const Vector3D& v)
-{
-   if (v.x!=0.0f) *this = PitchMatrix3D(v.x) * (*this);
-   if (v.y!=0.0f) *this = YawMatrix3D  (v.y) * (*this);
-   if (v.z!=0.0f) *this = RollMatrix3D (v.z) * (*this);
-}
 
 inline Matrix3D
 TranslateMatrix3D(const Vector3D& v)
@@ -308,12 +301,21 @@ RollMatrix3D(const float c, const float s)
                    0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-
 inline Matrix3D
 RollMatrix3D(const float theta)
 {
-   return RollMatrix3D((float) cos(theta), (float) sin(theta));
+    return RollMatrix3D((float) cos(theta), (float) sin(theta));
 }
+
+
+inline void
+Matrix3D::rotate(const Vector3D& v)
+{
+    if (v.x!=0.0f) *this = PitchMatrix3D(v.x) * (*this);
+    if (v.y!=0.0f) *this = YawMatrix3D  (v.y) * (*this);
+    if (v.z!=0.0f) *this = RollMatrix3D (v.z) * (*this);
+}
+
 
 
 template<class T>

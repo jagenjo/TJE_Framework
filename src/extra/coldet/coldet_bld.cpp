@@ -66,7 +66,7 @@ void CollisionModel3DImpl::finalize()
     m_Root.m_Boxes.push_back(&bt);
   }
   int logdepth=0;
-  for(int num=m_Triangles.size();num>0;num>>=1,logdepth++);
+  for(int num=(int)m_Triangles.size();num>0;num>>=1,logdepth++);
   m_Root.m_logdepth=int(logdepth*1.5f);
   m_Root.divide(0);
 }

@@ -127,7 +127,7 @@ int BoxTreeInnerNode::divide(int p_depth)
   BoxTreeInnerNode* f=static_cast<BoxTreeInnerNode*>(m_First);
   BoxTreeInnerNode* s=static_cast<BoxTreeInnerNode*>(m_Second);
   int depth=1;
-  int bnum=m_Boxes.size();
+  int bnum=(int)m_Boxes.size();
 #ifdef _DEBUG
   int fnum=0;
 #endif
@@ -147,8 +147,8 @@ int BoxTreeInnerNode::divide(int p_depth)
     }
   }
   
-  int b1num=f->m_Boxes.size();
-  int b2num=s->m_Boxes.size();
+  int b1num=(int)f->m_Boxes.size();
+  int b2num=(int)s->m_Boxes.size();
   if ((b1num==bnum  ||  b2num==bnum))// && p_depth>m_logdepth)
   {
     delete m_First;  m_First=NULL;

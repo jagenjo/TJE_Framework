@@ -16,11 +16,20 @@ Enough to make gamejam games pretty easily.
 
 ## Installation ##
 
-It comes with a Visual Studio 2010 solution, but the code should compile in any platform that supports SDL.
-The libs and DLLs are not provided with the source code, please download SDL2 from https://www.libsdl.org/download-2.0.php and copy the libs in the libs/lib folder
-The DLLs should be copyed in the root folder.
+It comes with a Visual Studio solution, but the code should compile in any platform that supports SDL.
 
-Feedback
+
+## Compiling in Linux
+
+Remember to install the libraries:
+
+sudo apt-get install libsdl2-dev freeglut3 freeglut3-dev
+
+and then just use the makefile:
+
+make
+
+## Feedback
 --------
 
 You can write any feedback to javi.agenjo@gmail.com

@@ -509,7 +509,7 @@ int decodePNG(std::vector<unsigned char>& out_image, unsigned int& image_width, 
 
 	PNG decoder; 
 	decoder.decode(out_image, in_png, in_size, convert_to_rgba32);
-	image_width = decoder.info.width;
-	image_height = decoder.info.height;
+	image_width = (unsigned int)decoder.info.width;
+	image_height = (unsigned int)decoder.info.height;
 	return decoder.error;
 }

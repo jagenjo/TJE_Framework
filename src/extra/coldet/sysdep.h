@@ -56,13 +56,12 @@ DWORD GetTickCount();
 // MacOS 9.0.4/MacOS X.  CodeWarrior Pro 6
 // Thanks to Marco Tenuti for this addition
 ///////////////////////////////////////////////////
-#elif defined(macintosh)
+#elif defined(__APPLE__)
    typedef unsigned long DWORD;
    #define __CD__BEGIN
    #define __CD__END
-   #include <Events.h>
-   #define GetTickCount() ::TickCount()
-
+   #define GetTickCount() ::getTime()
+extern long getTime();
 #else
 
 #error No system specified (WIN32 GCC macintosh)

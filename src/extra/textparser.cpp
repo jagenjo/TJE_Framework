@@ -25,7 +25,7 @@ TextParser::TextParser(const char *name)
   
   stat(name,&stbuffer);
   f = fopen(name,"rb");
-  size = stbuffer.st_size;
+  size = (int)stbuffer.st_size;
   data = new char[size];
   sl = 0;
   fread(data,size,1,f);
@@ -52,7 +52,7 @@ bool TextParser::create(const char *name)
       //MessageBox(GLOBmainwindow,s,"SR",MB_OK);
       return false;
     }
-  size = stbuffer.st_size;
+  size = (int)stbuffer.st_size;
   data = new char[size];
   sl = 0;
   fread(data,size,1,f);

@@ -31,7 +31,7 @@ __CD__BEGIN
 
 int BoxTreeInnerNode::getTrianglesNumber()
 {
-  return m_Boxes.size();
+  return (int)m_Boxes.size();
 }
 
 BoxedTriangle* BoxTreeInnerNode::getTriangle(int which)
