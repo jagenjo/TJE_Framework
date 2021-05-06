@@ -2,7 +2,7 @@
 
 include Makefile.inc
 
-SOURCES = src/*.cpp src/extra/*.cpp src/extra/colded/*.cpp 
+SOURCES = src/*.cpp src/extra/*.cpp src/extra/coldet/*.cpp 
 
 OBJECTS = $(patsubst %.cpp, %.o, $(wildcard $(SOURCES)))
 DEPENDS = $(patsubst %.cpp, %.d, $(wildcard $(SOURCES)))
@@ -18,7 +18,7 @@ main:	$(DEPENDS) $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) $(LIBS) -o $@
 
 %.d: %.cpp
-	@$(CXX) -M -MT "$*.o $@" $(CPPFLAGS) $<  > $@
+	@$(CXX) -M -MT "$*.o $@" $(CXXFLAGS) $<  > $@
 	@echo Generating new dependencies for $<
 
 run:
