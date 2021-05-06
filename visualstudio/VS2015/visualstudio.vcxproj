@@ -135,7 +135,7 @@
     <ClCompile Include="..\..\src\extra\coldet\math3d.cpp" />
     <ClCompile Include="..\..\src\extra\coldet\mytritri.cpp" />
     <ClCompile Include="..\..\src\extra\coldet\sysdep.cpp" />
-    <ClCompile Include="..\..\src\extra\coldet\tritri.c" />
+    <ClCompile Include="..\..\src\extra\coldet\tritri.cpp" />
     <ClCompile Include="..\..\src\extra\picopng.cpp" />
     <ClCompile Include="..\..\src\extra\textparser.cpp" />
     <ClCompile Include="..\..\src\fbo.cpp" />

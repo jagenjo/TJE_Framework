@@ -4,5 +4,7 @@
 .pdb
 .db
 .d
+.ipch
+.opendb
 visualstudio/visualstudio/Debug
 visualstudio/visualstudio/Release
