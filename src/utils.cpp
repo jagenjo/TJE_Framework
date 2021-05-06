@@ -15,6 +15,10 @@
 
 #include "extra/stb_easy_font.h"
 
+#include <sstream>
+#include <string>
+#include <iostream>
+
 long getTime()
 {
 	#ifdef WIN32
@@ -72,6 +76,19 @@ std::string getPath()
 
 #endif    
     return fullpath;
+}
+
+template <typename T>
+std::string to_string(T value)
+{
+  //create an output string stream
+  std::ostringstream os ;
+
+  //throw the value into the string stream
+  os << value ;
+
+  //convert the string stream into a string and return
+  return os.str() ;
 }
 
 bool readFile(const std::string& filename, std::string& content)
@@ -261,7 +278,7 @@ std::string getGPUStats()
 		nCurAvailMemoryInKB = 0;
 	}
 
-	std::string str = "FPS: " + std::to_string(Game::instance->fps) + " DCS: " + std::to_string(Mesh::num_meshes_rendered) + " Tris: " + std::to_string(long(Mesh::num_triangles_rendered * 0.001)) + "Ks  VRAM: " + std::to_string(int((nTotalMemoryInKB-nCurAvailMemoryInKB) * 0.001)) + "MBs / " + std::to_string(int(nTotalMemoryInKB * 0.001)) + "MBs";
+	std::string str = "FPS: " + to_string(Game::instance->fps) + " DCS: " + to_string(Mesh::num_meshes_rendered) + " Tris: " + to_string(long(Mesh::num_triangles_rendered * 0.001)) + "Ks  VRAM: " + to_string(int((nTotalMemoryInKB-nCurAvailMemoryInKB) * 0.001)) + "MBs / " + to_string(int(nTotalMemoryInKB * 0.001)) + "MBs";
 	Mesh::num_meshes_rendered = 0;
 	Mesh::num_triangles_rendered = 0;
 	return str;
@@ -431,3 +448,5 @@ char* fetchBufferVec4(char* data, std::vector<Vector4>& vector)
 	memcpy(&vector[0], &floats[0], sizeof(float)*floats.size());
 	return data;
 }
+
+

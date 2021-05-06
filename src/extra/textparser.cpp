@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <string>
 #include <algorithm>
+#include <cstring>
 
 #pragma warning(disable: 4996)
 #pragma warning(disable: 4244)

@@ -575,17 +575,17 @@ bool Mesh::createCollisionModel(bool is_static)
 		if (interleaved.size())
 			for (unsigned int i = 0; i < indices.size(); ++i)
 			{
-				auto v1 = interleaved[indices[i].x];
-				auto v2 = interleaved[indices[i].y];
-				auto v3 = interleaved[indices[i].z];
-				collision_model->addTriangle(v1.vertex.v, v2.vertex.v, v3.vertex.v);
+				Vector3 v1 = interleaved[indices[i].x].vertex;
+				Vector3 v2 = interleaved[indices[i].y].vertex;
+				Vector3 v3 = interleaved[indices[i].z].vertex;
+				collision_model->addTriangle(v1.v, v2.v, v3.v);
 			}
 		else
 			for (unsigned int i = 0; i < indices.size(); ++i)
 			{
-				auto v1 = vertices[indices[i].x];
-				auto v2 = vertices[indices[i].y];
-				auto v3 = vertices[indices[i].z];
+				Vector3 v1 = vertices[indices[i].x];
+				Vector3 v2 = vertices[indices[i].y];
+				Vector3 v3 = vertices[indices[i].z];
 				collision_model->addTriangle(v1.v, v2.v, v3.v);
 			}
 	}
@@ -594,10 +594,10 @@ bool Mesh::createCollisionModel(bool is_static)
 		collision_model->setTriangleNumber(interleaved.size() / 3);
 		for (unsigned int i = 0; i < interleaved.size(); i+=3)
 		{
-			auto v1 = interleaved[i];
-			auto v2 = interleaved[i+1];
-			auto v3 = interleaved[i+2];
-			collision_model->addTriangle(v1.vertex.v, v2.vertex.v, v3.vertex.v);
+			Vector3 v1 = interleaved[i].vertex;
+			Vector3 v2 = interleaved[i+1].vertex;
+			Vector3 v3 = interleaved[i+2].vertex;
+			collision_model->addTriangle(v1.v, v2.v, v3.v);
 		}
 	}
 	else if (vertices.size()) //non interleaved
@@ -605,9 +605,9 @@ bool Mesh::createCollisionModel(bool is_static)
 		collision_model->setTriangleNumber((int)vertices.size() / 3);
 		for (unsigned int i = 0; i < (int)vertices.size(); i+=3)
 		{
-			auto v1 = vertices[i];
-			auto v2 = vertices[i + 1];
-			auto v3 = vertices[i + 2];
+			Vector3 v1 = vertices[i];
+			Vector3 v2 = vertices[i + 1];
+			Vector3 v3 = vertices[i + 2];
 			collision_model->addTriangle(v1.v, v2.v, v3.v);
 		}
 	}
@@ -1260,7 +1260,7 @@ bool Mesh::loadMESH(const char* filename)
 				for (int j = 0; j < bones_info.size(); ++j)
 				{
 					pos = fetchWord(pos, word);
-                    #ifdef __APPLE__
+                    #if defined( __APPLE__ ) || defined( GCC )
                         strcpy(bones_info[j].name, word);
                     #else
                         strcpy_s(bones_info[j].name, 32, word);
