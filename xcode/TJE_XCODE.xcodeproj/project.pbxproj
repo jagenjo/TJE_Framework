@@ -13,7 +13,7 @@
 		1208AC832433FCAD00BB6E8A /* animation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1208AC822433FCAD00BB6E8A /* animation.cpp */; };
 		1208AC8C2433FCC500BB6E8A /* box_bld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1208AC842433FCC400BB6E8A /* box_bld.cpp */; };
 		1208AC8D2433FCC500BB6E8A /* coldet_bld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1208AC852433FCC400BB6E8A /* coldet_bld.cpp */; };
-		1208AC8E2433FCC500BB6E8A /* tritri.c in Sources */ = {isa = PBXBuildFile; fileRef = 1208AC862433FCC400BB6E8A /* tritri.c */; };
+		1208AC8E2433FCC500BB6E8A /* tritri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1208AC862433FCC400BB6E8A /* tritri.cpp */; };
 		1208AC8F2433FCC500BB6E8A /* math3d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1208AC872433FCC400BB6E8A /* math3d.cpp */; };
 		1208AC902433FCC500BB6E8A /* mytritri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1208AC882433FCC400BB6E8A /* mytritri.cpp */; };
 		1208AC912433FCC500BB6E8A /* box.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1208AC892433FCC500BB6E8A /* box.cpp */; };
@@ -47,7 +47,7 @@
 		1208AC822433FCAD00BB6E8A /* animation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = animation.cpp; path = ../src/animation.cpp; sourceTree = "<group>"; };
 		1208AC842433FCC400BB6E8A /* box_bld.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = box_bld.cpp; path = ../src/extra/coldet/box_bld.cpp; sourceTree = "<group>"; };
 		1208AC852433FCC400BB6E8A /* coldet_bld.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = coldet_bld.cpp; path = ../src/extra/coldet/coldet_bld.cpp; sourceTree = "<group>"; };
-		1208AC862433FCC400BB6E8A /* tritri.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = tritri.c; path = ../src/extra/coldet/tritri.c; sourceTree = "<group>"; };
+		1208AC862433FCC400BB6E8A /* tritri.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = tritri.cpp; path = ../src/extra/coldet/tritri.cpp; sourceTree = "<group>"; };
 		1208AC872433FCC400BB6E8A /* math3d.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = math3d.cpp; path = ../src/extra/coldet/math3d.cpp; sourceTree = "<group>"; };
 		1208AC882433FCC400BB6E8A /* mytritri.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = mytritri.cpp; path = ../src/extra/coldet/mytritri.cpp; sourceTree = "<group>"; };
 		1208AC892433FCC500BB6E8A /* box.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = box.cpp; path = ../src/extra/coldet/box.cpp; sourceTree = "<group>"; };
@@ -115,7 +115,7 @@
 				1208AC872433FCC400BB6E8A /* math3d.cpp */,
 				1208AC882433FCC400BB6E8A /* mytritri.cpp */,
 				1208AC8B2433FCC500BB6E8A /* sysdep.cpp */,
-				1208AC862433FCC400BB6E8A /* tritri.c */,
+				1208AC862433FCC400BB6E8A /* tritri.cpp */,
 				1208AC822433FCAD00BB6E8A /* animation.cpp */,
 				1208AC7E2433FC7300BB6E8A /* picopng.cpp */,
 				1208AC7F2433FC7300BB6E8A /* textparser.cpp */,
@@ -267,7 +267,7 @@
 				1208AC952433FD5800BB6E8A /* input.cpp in Sources */,
 				1208AC8C2433FCC500BB6E8A /* box_bld.cpp in Sources */,
 				1208AC8D2433FCC500BB6E8A /* coldet_bld.cpp in Sources */,
-				1208AC8E2433FCC500BB6E8A /* tritri.c in Sources */,
+				1208AC8E2433FCC500BB6E8A /* tritri.cpp in Sources */,
 				1208AC8F2433FCC500BB6E8A /* math3d.cpp in Sources */,
 				1208AC902433FCC500BB6E8A /* mytritri.cpp in Sources */,
 				1208AC912433FCC500BB6E8A /* box.cpp in Sources */,

@@ -6,5 +6,6 @@
 .d
 .ipch
 .opendb
+.DS_store
 visualstudio/visualstudio/Debug
 visualstudio/visualstudio/Release
