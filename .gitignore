@@ -3,5 +3,6 @@
 .ipdb
 .pdb
 .db
+.d
 visualstudio/visualstudio/Debug
 visualstudio/visualstudio/Release
