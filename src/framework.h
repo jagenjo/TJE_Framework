@@ -147,6 +147,7 @@ public:
 };
 
 inline Vector4 operator * (const Vector4& a, float v) { return Vector4(a.x * v, a.y * v, a.z * v, a.w * v); }
+inline Vector4 operator * (const Vector4& a, const Vector4& b) { return Vector4(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w); }
 inline Vector4 operator + (const Vector4& a, const Vector4& b) { return Vector4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w); }
 inline Vector4 lerp(const Vector4& a, const Vector4& b, float v) { return a*(1.0f - v) + b*v; }
 
@@ -366,7 +367,7 @@ int planeBoxOverlap( const Vector4& plane, const Vector3& center, const Vector3&
 float ComputeSignedAngle( Vector2 a, Vector2 b); //returns the angle between both vectors in radians
 inline float ease(float f) { return f*f*f*(f*(f*6.0f - 15.0f) + 10.0f); }
 Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal, const Vector3& ray_origin, const Vector3& ray_dir );
-bool RaySphereCollision(const Vector3& center, const float& radius, const Vector3& ray_origin, const Vector3& ray_dir, Vector3& coll);
+bool RaySphereCollision(const Vector3& center, const float& radius, const Vector3& ray_origin, const Vector3& ray_dir, Vector3& coll, float &t );
 Vector3 reflect(const Vector3& I, const Vector3& N);
 
 //value between 0 and 1

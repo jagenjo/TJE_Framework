@@ -14,6 +14,7 @@
 //General functions **************
 long getTime();
 bool readFile(const std::string& filename, std::string& content);
+bool readFileBin(const std::string& filename, std::vector<unsigned char>& buffer);
 
 //generic purposes fuctions
 void drawGrid();
@@ -23,6 +24,7 @@ bool drawText(float x, float y, std::string text, Vector3 c, float scale = 1);
 bool checkGLErrors();
 
 std::string getPath();
+void stdlog(std::string str);
 
 Vector2 getDesktopSize( int display_index = 0 );
 

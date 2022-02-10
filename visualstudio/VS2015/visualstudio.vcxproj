@@ -136,6 +136,7 @@
     <ClCompile Include="..\..\src\extra\coldet\mytritri.cpp" />
     <ClCompile Include="..\..\src\extra\coldet\sysdep.cpp" />
     <ClCompile Include="..\..\src\extra\coldet\tritri.cpp" />
+    <ClCompile Include="..\..\src\extra\jpgd.cpp" />
     <ClCompile Include="..\..\src\extra\picopng.cpp" />
     <ClCompile Include="..\..\src\extra\textparser.cpp" />
     <ClCompile Include="..\..\src\fbo.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="..\..\src\extra\coldet\math3d.h" />
     <ClInclude Include="..\..\src\extra\coldet\mytritri.h" />
     <ClInclude Include="..\..\src\extra\coldet\sysdep.h" />
+    <ClInclude Include="..\..\src\extra\jpgd.h" />
     <ClInclude Include="..\..\src\extra\picopng.h" />
     <ClInclude Include="..\..\src\extra\textparser.h" />
     <ClInclude Include="..\..\src\fbo.h" />

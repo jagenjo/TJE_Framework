@@ -1,3 +1,4 @@
+
 #include "texture.h"
 #include "fbo.h"
 #include "utils.h"
@@ -8,7 +9,14 @@
 #include "mesh.h"
 #include "shader.h"
 #include "extra/picopng.h"
+#include "extra/jpgd.h"
 #include <cassert>
+
+#define STB_IMAGE_IMPLEMENTATION
+//#include "extra/stb_image.h"
+//#include "engine/application.h"
+
+#include "extra/stb_image.h"
 
 //bilinear interpolation
 Color Image::getPixelInterpolated(float x, float y, bool repeat) {
@@ -66,7 +74,7 @@ Texture::Texture(unsigned int width, unsigned int height, unsigned int format, u
 Texture::Texture(Image* img)
 {
 	texture_id = 0;
-	create(img->width, img->height, img->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data);
+	create(img->width, img->height, img->num_channels == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data);
 }
 
 Texture::~Texture()
@@ -76,9 +84,48 @@ Texture::~Texture()
 
 void Texture::clear()
 {
-	glDeleteTextures(1, &texture_id);
 	glBindTexture(this->texture_type, 0);
+
+	//external textures are handled by an outside system (like Android OS)
+	if( texture_type != GL_TEXTURE_EXTERNAL_OES)
+		glDeleteTextures(1, &texture_id);
+
+	stdlog("Destroy texture: " + filename );
 	texture_id = 0;
+
+	if (filename.size())
+	{
+		auto it = sTexturesLoaded.find(filename);
+		if (it != sTexturesLoaded.end())
+			sTexturesLoaded.erase(it);
+	}
+}
+
+void Texture::Release()
+{
+	std::vector<Texture *> texs;
+
+	for (auto mp : sTexturesLoaded)
+	{
+		Texture *m = mp.second;
+		texs.push_back(m);
+	}
+
+	for (Texture *m : texs)
+	{
+		delete m;
+	}
+	sTexturesLoaded.clear();
+}
+
+void Texture::debugInMenu()
+{
+	#ifdef IMGUI
+	if (this == NULL)
+		return;
+	this->bind();
+		ImGui::Image((void*)(intptr_t)texture_id, ImVec2(50, 50));
+	#endif
 }
 
 void Texture::create(unsigned int width, unsigned int height, unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format)
@@ -106,6 +153,7 @@ void Texture::create(unsigned int width, unsigned int height, unsigned int forma
 	upload(format, type, mipmaps, data, internal_format);
 }
 
+/*
 void Texture::create3D(unsigned int width, unsigned int height, unsigned int depth, unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format)
 {
 	assert(width && height && depth && "texture must have a size");
@@ -131,6 +179,7 @@ void Texture::create3D(unsigned int width, unsigned int height, unsigned int dep
 
 	upload3D(format, type, mipmaps, data, internal_format);
 }
+*/
 
 void Texture::createCubemap(unsigned int width, unsigned int height, Uint8** data, unsigned int format, unsigned int type, bool mipmaps, unsigned int internal_format)
 {
@@ -155,18 +204,24 @@ void Texture::createCubemap(unsigned int width, unsigned int height, Uint8** dat
 	uploadCubemap(format, type, mipmaps, data, internal_format);
 }
 
-Texture* Texture::Get(const char* filename, bool mipmaps, bool wrap)
+Texture* Texture::Find(const char* filename)
 {
 	assert(filename);
-
-	//check if loaded
 	auto it = sTexturesLoaded.find(filename);
 	if (it != sTexturesLoaded.end())
 		return it->second;
+	return NULL;
+}
 
+Texture* Texture::Get(const char* filename, bool mipmaps, bool wrap)
+{
 	//load it
-	Texture* texture = new Texture();
-	if (!texture->load(filename, mipmaps,wrap))
+	Texture* texture = Find(filename);
+	if (texture)
+		return texture;
+
+	texture = new Texture();
+	if (!texture->load(filename, mipmaps, wrap))
 	{
 		delete texture;
 		return NULL;
@@ -180,7 +235,7 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap, unsigned int t
 	std::string str = filename;
 	std::string ext = str.substr(str.size() - 4, 4);
 	Image* image = NULL;
-	long time = getTime();
+	double time = getTime();
 
 	std::cout << " + Texture loading: " << filename << " ... ";
 
@@ -191,6 +246,8 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap, unsigned int t
 		found = image->loadTGA(filename);
 	else if (ext == ".png" || ext == ".PNG")
 		found = image->loadPNG(filename);
+	else if (ext == ".jpg" || ext == ".JPG" || ext == "JPEG" || ext == "jpeg")
+		found = image->loadJPG(filename);
 	else
 	{
 		std::cout << "[ERROR]: unsupported format" << std::endl;
@@ -203,31 +260,48 @@ bool Texture::load(const char* filename, bool mipmaps, bool wrap, unsigned int t
 		return false;
 	}
 
+	loadFromImage(image,mipmaps,wrap,type);
 	this->filename = filename;
+	setName(filename);
+
+	std::cout << "[OK] Size: " << width << "x" << height << " Time: " << (getTime() - time) * 0.001 << "sec" << std::endl;
+	this->image.clear();
+	return true;
+}
+
+void Texture::loadFromImage(Image* image, bool mipmaps, bool wrap, unsigned int type)
+{
 
 	unsigned int internal_format = 0;
-
 	if (type == GL_FLOAT)
-		internal_format = (image->bytes_per_pixel == 3 ? GL_RGB32F : GL_RGBA32F);
+		internal_format = (image->num_channels == 3 ? GL_RGB32F : GL_RGBA32F);
 
 	//upload to VRAM
-	create(image->width, image->height, (image->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA), type, mipmaps, image->data, 0 );
+	// We have to synchronously upload for now because Image class is not ref-counted
+	create(image->width, image->height, (image->num_channels == 3 ? GL_RGB : GL_RGBA), type,  mipmaps, image->data, 0);
 
-	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, this->mipmaps && wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, this->mipmaps && wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-	if (mipmaps)
-		generateMipmaps();
-
-	this->image.clear();
-	std::cout << "[OK] Size: " << width << "x" << height << " Time: " << (getTime() - time) * 0.001 << "sec" << std::endl;
-	setName(filename);
-	return true;
+	glBindTexture(this->texture_type, texture_id);	//we activate this id to tell opengl we are going to use this texture
+	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, (this->mipmaps && wrap) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, (this->mipmaps && wrap) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+	//glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	//glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	//if (mipmaps)
+	//	generateMipmaps();
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Texture::upload(Image* img)
 {
-	create(img->width, img->height, img->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data);
+	create(img->width, img->height, img->num_channels == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data);
 }
+
+void Texture::upload(FloatImage* img)
+{
+	if( !width || img->width != width || img->height != height )
+		create(img->width, img->height, img->num_channels == 3 ? GL_RGB : GL_RGBA, GL_FLOAT, true);
+	upload(this->format, this->type, false, (Uint8*)img->data);
+}
+
 
 //uploads the bytes of a texture to the VRAM
 void Texture::upload( unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format)
@@ -236,6 +310,14 @@ void Texture::upload( unsigned int format, unsigned int type, bool mipmaps, Uint
 	assert(texture_type == GL_TEXTURE_2D && "Texture type does not match.");
 
 	glBindTexture(this->texture_type, texture_id);	//we activate this id to tell opengl we are going to use this texture
+
+	if (internal_format == 0)
+	{
+		if (type == GL_FLOAT)
+			internal_format = format == GL_RGB ? GL_RGB32F : GL_RGBA32F;
+		else if (type == GL_HALF_FLOAT)
+			internal_format = format == GL_RGB ? GL_RGB16F : GL_RGBA16F;
+	}
 
 	glTexImage2D(this->texture_type, 0, internal_format == 0 ? format : internal_format, width, height, 0, format, type, data);
 
@@ -252,6 +334,7 @@ void Texture::upload( unsigned int format, unsigned int type, bool mipmaps, Uint
 	assert(checkGLErrors() && "Error uploading texture");
 }
 
+/*
 void Texture::upload3D(unsigned int format, unsigned int type, bool mipmaps, Uint8* data, unsigned int internal_format) {
 	assert(texture_id && "Must create texture before uploading data.");
 	assert(texture_type == GL_TEXTURE_3D && "Texture type does not match.");
@@ -272,24 +355,53 @@ void Texture::upload3D(unsigned int format, unsigned int type, bool mipmaps, Uin
 	glBindTexture(this->texture_type, 0);
 	assert(checkGLErrors() && "Error uploading texture");
 }
+*/
 
-void Texture::uploadCubemap(unsigned int format, unsigned int type, bool mipmaps, Uint8** data, unsigned int internal_format) {
+void Texture::uploadCubemap(unsigned int format, unsigned int t, bool mips, Uint8** data, unsigned int intFormat, int level) {
 	
 	assert(texture_id && "Must create texture before uploading data.");
 	assert(texture_type == GL_TEXTURE_CUBE_MAP && "Texture type does not match.");
+	//assert(glGetError() == GL_NO_ERROR);
 
 	glBindTexture(this->texture_type, texture_id);	//we activate this id to tell opengl we are going to use this texture
 
+	int w = ((int)this->width) >> level;
+	int h = ((int)this->height) >> level;
+
+	if (intFormat == 0)
+	{
+		if (type == GL_FLOAT)
+			intFormat = format == GL_RGB ? GL_RGB32F : GL_RGBA32F;
+		else
+		if (type == GL_HALF_FLOAT)
+			intFormat = format == GL_RGB ? GL_RGB16F : GL_RGBA16F;
+        else
+        if (type == GL_UNSIGNED_BYTE)
+            intFormat = format == GL_RGB ? GL_RGB : GL_RGBA;
+		this->internal_format = intFormat;
+	}
+
 	for (int i = 0; i < 6; i++)
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format == 0 ? format : internal_format, width, height, 0, format, type, data ? data[i] : NULL );
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, level, internal_format == 0 ? format : internal_format, w, h, 0, format, t, data ? data[i] : NULL);
 
-	glTexParameteri(this->texture_type, GL_TEXTURE_MAG_FILTER, Texture::default_mag_filter);	//set the min filter
-	glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, this->mipmaps ? Texture::default_min_filter : GL_LINEAR);   //set the mag filter
-	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, this->wrapS);
-	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, this->wrapT);
+	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	if (data && this->mipmaps)
-		generateMipmaps();
+	bool bAllowMips = true;
+
+    /*if (t == GL_HALF_FLOAT)
+    {
+        short *s = (short *)data[0];
+        printf("Env Data %d, Mip: %d: [%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n", texture_id, level, r3dHalfToFloat(s[0]), r3dHalfToFloat(s[1]), r3dHalfToFloat(s[2]), r3dHalfToFloat(s[3]), r3dHalfToFloat(s[4]), r3dHalfToFloat(s[5]), r3dHalfToFloat(s[6]), r3dHalfToFloat(s[7]));
+    }*/
+
+	if (level == 0)
+	{
+		glTexParameteri(this->texture_type, GL_TEXTURE_MAG_FILTER, Texture::default_mag_filter);	//set the min filter
+		glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, this->mipmaps ? Texture::default_min_filter : GL_LINEAR);   //set the mag filter
+		//if (data && this->mipmaps && level == 0 && bAllowMips)
+		//	generateMipmaps();
+	}
 
 	glBindTexture(this->texture_type, 0);
 	assert(glGetError() == GL_NO_ERROR && "Error creating texture");
@@ -298,6 +410,9 @@ void Texture::uploadCubemap(unsigned int format, unsigned int type, bool mipmaps
 //special function to upload texture arrays, a special type of texture that has layers
 void Texture::uploadAsArray(unsigned int texture_size, bool mipmaps)
 {
+#ifndef OPENGL_ES3
+	assert(0 && "texture arrays not supported");
+#else
 	assert((image.height % texture_size) == 0); //size doesnt match
 	assert(image.data);//no image in memory
 	int num_columns = image.width / texture_size;
@@ -316,11 +431,11 @@ void Texture::uploadAsArray(unsigned int texture_size, bool mipmaps)
 
 	texture_type = GL_TEXTURE_2D_ARRAY;
 	type = GL_UNSIGNED_BYTE;
-	int dataFormat = (image.bytes_per_pixel == 3 ? GL_RGB : GL_RGBA);
-	format = (image.bytes_per_pixel == 3 ? GL_RGB8 : GL_RGBA8);
+	int dataFormat = (image.num_channels == 3 ? GL_RGB : GL_RGBA);
+	format = (image.num_channels == 3 ? GL_RGB8 : GL_RGBA8);
 	this->width = (float)width;
 	this->height = (float)height;
-	int bytes_per_pixel = image.bytes_per_pixel;
+	int bytes_per_pixel = image.num_channels;
 	this->mipmaps = mipmaps && isPowerOfTwo((int)width) && isPowerOfTwo((int)height);
 	uint8* data = NULL;
 
@@ -364,7 +479,9 @@ void Texture::uploadAsArray(unsigned int texture_size, bool mipmaps)
 
 	if (num_columns > 1)
 		delete[] data;
+	#endif
 }
+
 
 void Texture::bind()
 {
@@ -390,12 +507,23 @@ void Texture::UnbindAll()
 
 void Texture::generateMipmaps()
 {
-	if(!glGenerateMipmapEXT)
-		return;
+#ifdef OPENGL_ES3
+		if(!glGenerateMipmapEXT)
+			return;
 
-	glBindTexture(this->texture_type, texture_id );	//enable the id of the texture we are going to use
-	glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, Texture::default_min_filter ); //set the mag filter
-	glGenerateMipmapEXT(this->texture_type);
+		glBindTexture(this->texture_type, texture_id );	//enable the id of the texture we are going to use
+		glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, Texture::default_min_filter ); //set the mag filter
+		if (this->texture_type == GL_TEXTURE_CUBE_MAP)
+		{
+			glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); //set the mag filter
+			glTexParameteri(this->texture_type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); //set the mag filter
+		}
+		glGenerateMipmapEXT(this->texture_type);
+#else
+	glBindTexture(this->texture_type, texture_id);	//enable the id of the texture we are going to use
+	glTexParameteri(this->texture_type, GL_TEXTURE_MIN_FILTER, Texture::default_min_filter);
+	glGenerateMipmap(this->texture_type);
+    #endif
 }
 
 
@@ -405,8 +533,13 @@ void Texture::toViewport(Shader* shader)
 	if (!shader)
 		shader = Shader::getDefaultShader("screen");
 	shader->enable();
-	shader->setUniform("u_texture", this, 0);
+	if(shader->getUniformLocation("u_texture") != -1)
+		shader->setUniform("u_texture", this, 0);
+	assert(glGetError() == GL_NO_ERROR);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
 	quad->render(GL_TRIANGLES);
+	assert(glGetError() == GL_NO_ERROR);
 	shader->disable();
 }
 
@@ -440,6 +573,30 @@ Texture* Texture::getWhiteTexture()
 
 void Texture::copyTo(Texture* destination, Shader* shader)
 {
+	if (!destination) //to current viewport
+	{
+		if (format == GL_DEPTH_COMPONENT) //to clone depth buffer
+		{
+			glEnable(GL_DEPTH_TEST); //we need to use the depth buffer
+			glDepthFunc(GL_ALWAYS); //but ignore the test, every fragment should update the depth
+			glColorMask(false, false, false, false); //block drawing to colors
+			if(!shader)
+				shader = Shader::getDefaultShader("screen_depth");
+		}
+		else if (!shader)
+			shader = Shader::getDefaultShader("texture");
+		Mesh* quad = Mesh::getQuad();
+		shader->enable();
+		shader->setUniform("u_texture", this, 0);
+		shader->setUniform("u_color", Vector4(1,1,1,1) );
+		glDisable(GL_CULL_FACE);
+		quad->render(GL_TRIANGLES);
+		glColorMask(true, true, true, true);
+		glDisable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+		return;
+	}
+
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	FBO* fbo = getGlobalFBO(destination);
@@ -485,6 +642,7 @@ void Image::fromTexture(Texture* texture)
 		data = new uint8[width * height * 4];
 	}
 	
+	texture->bind();
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
@@ -492,7 +650,7 @@ void Image::fromTexture(Texture* texture)
 //also on https://gshaw.ca/closecombat/formats/tga.html
 bool Image::loadTGA(const char* filename)
 {
-    GLubyte TGAheader[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	GLubyte TGAheader[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     GLubyte TGAcompare[12];
     GLubyte header[6];
     GLuint bytesPerPixel;
@@ -516,14 +674,14 @@ bool Image::loadTGA(const char* filename)
 
     width = header[1] * 256 + header[0];
     height = header[3] * 256 + header[2];
-	bytes_per_pixel = header[4] / 8;
+	num_channels = header[4] / 8;
 
 	bool error = false;
 
-	if (bytes_per_pixel != 3 && bytes_per_pixel != 4)
+	if (num_channels != 3 && num_channels != 4)
 	{
 		error = true;
-		std::cerr << "File format not supported: " << bytes_per_pixel << " bytes per pixel" << std::endl;
+		std::cerr << "File format not supported: " << num_channels << " bytes per pixel" << std::endl;
 	}
     
     if (width <= 0 || height <= 0)
@@ -532,13 +690,13 @@ bool Image::loadTGA(const char* filename)
 		std::cerr << "Wrong texture size: " << width << "x" << height << " pixels" << std::endl;
 	}
 
-	if(error)
+	if (error)
     {
         fclose(file);
         return false;
     }
 
-    imageSize = width * height * bytes_per_pixel;
+    imageSize = width * height * num_channels;
     
     data = new GLubyte[imageSize];
     if (data == NULL || fread(data, 1, imageSize, file) != imageSize)
@@ -554,7 +712,7 @@ bool Image::loadTGA(const char* filename)
     
 	//flip BGR to RGB pixels
 	#pragma omp simd
-    for (GLuint i = 0; i < int(imageSize); i += bytes_per_pixel)
+    for (GLuint i = 0; i < int(imageSize); i += num_channels)
     {
         uint8 temp = data[i];
         data[i] = data[i + 2];
@@ -570,35 +728,71 @@ bool Image::loadTGA(const char* filename)
 
 bool Image::loadPNG(const char* filename, bool flip_y)
 {
-	std::ifstream file( filename, std::ios::in | std::ios::binary | std::ios::ate);
+	std::vector<unsigned char> buffer;
+	if (!readFileBin(filename, buffer))
+		return false;
+	return loadPNG(buffer);
+}
 
-	//get filesize
-	std::streamsize size = 0;
-	if (file.seekg(0, std::ios::end).good()) size = file.tellg();
-	if (file.seekg(0, std::ios::beg).good()) size -= file.tellg();
+bool Image::loadPNG(std::vector<unsigned char>& buffer, bool flip_y)
+{
+    std::vector<unsigned char> out_image;
 
-	if (!size)
+	if (decodePNG(out_image, width, height, buffer.empty() ? 0 : &buffer[0], (unsigned long)buffer.size(), true) != 0)
 		return false;
 
+	data = new Uint8[out_image.size()];
+	memcpy(data, &out_image[0], out_image.size());
+	num_channels = 4;
+
+	//flip pixels in Y
+	if (flip_y)
+		flipY();
+
+	return true;
+}
+
+bool Image::loadJPG(const char* filename, bool flip_y)
+{
 	std::vector<unsigned char> buffer;
+	if (!readFileBin(filename, buffer))
+		return false;
+	return loadJPG(buffer);
+}
 
-	//read contents of the file into the vector
-	if (size > 0)
-	{
-		buffer.resize((size_t)size);
-		file.read((char*)(&buffer[0]), size);
-	}
-	else 
-		buffer.clear();
-
+bool Image::loadJPG(std::vector<unsigned char>& buffer, bool flip_y)
+{
 	std::vector<unsigned char> out_image;
 
-	if (decodePNG( out_image, width, height, buffer.empty() ? 0 : &buffer[0], (unsigned long)buffer.size(), true) != 0)
+	int width;
+	int height;
+	int actual_comps;
+	int channels;
+
+	/*
+	int req_comps = 3;
+	assert(data == NULL); //image must be empty
+	data = jpgd::decompress_jpeg_image_from_memory(&buffer[0], (unsigned long)buffer.size(), &width, &height, &actual_comps, req_comps);
+	if(!data)
 		return false;
 
-	data = new Uint8[ out_image.size() ];
-	memcpy( data, &out_image[0], out_image.size() );
-	bytes_per_pixel = 4;
+	this->width = (unsigned int)width;
+	this->height = (unsigned int)height;
+	*/
+
+	//stb_image
+	unsigned char* image_data = stbi_load_from_memory( (stbi_uc*) &buffer[0], (unsigned long)buffer.size(), &width, &height, &channels, STBI_rgb);
+	if (!image_data)
+		return false;
+	this->width = (unsigned int)width;
+	this->height = (unsigned int)height;
+	this->num_channels = 3;// (unsigned int)channels;
+
+	//clone
+	data = new unsigned char[width * height * this->num_channels];
+	memcpy(data, image_data, width * height * this->num_channels);
+
+	stbi_image_free(image_data);
 
 	//flip pixels in Y
 	if (flip_y)
@@ -611,7 +805,10 @@ bool Image::loadPNG(const char* filename, bool flip_y)
 bool Image::saveTGA(const char* filename, bool flip_y)
 {
 	unsigned char TGAheader[12] = { 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
+#ifdef ANDROID
+	//assert(!"not supported");
+	return false;
+#endif
 	FILE *file = fopen(filename, "wb");
 	if (file == NULL)
 	{
@@ -649,11 +846,12 @@ bool Image::saveTGA(const char* filename, bool flip_y)
 	return true;
 }
 
-void Image::flipY()
+template<typename T>
+void tImage<T>::flipY()
 {
 	assert(data);
-	int row_size = 4 * width;
-	uint8* temp_row = new uint8[row_size];
+	int row_size = num_channels * width;
+	T* temp_row = new T[row_size];
 #pragma omp simd
 	for (int y = 0; y < height*0.5; y += 1)
 	{
@@ -665,6 +863,66 @@ void Image::flipY()
 	}
 	delete[] temp_row;
 }
+
+struct tImageHeader {
+	int width;
+	int height;
+	int layers;
+	uint8 channels;
+	uint8 bytesperchannel;
+	uint8 flags[17]; //32 bytes header
+};
+
+bool FloatImage::saveIBIN(const char* filename)
+{
+	tImageHeader header;
+	header.width = width;
+	header.height = height;
+	header.layers = 1;
+	header.bytesperchannel = 4;
+	header.channels = 3;
+	FILE* file = fopen(filename, "wb");
+	if (file == NULL)
+	{
+		fclose(file);
+		return false;
+	}
+	fwrite(&header, 1, sizeof(header), file);
+	fwrite(data, 1, sizeof(float) * width * height * num_channels * header.layers, file);
+	fclose(file);
+	return true;
+}
+
+bool FloatImage::loadIBIN(const char* filename)
+{
+	FILE* file = fopen(filename, "rb");
+	if (file == NULL)
+		return false;
+	tImageHeader header;
+	fread(&header, 1, sizeof(header), file);
+	resize(header.width, header.height, header.channels);
+	fread(data, 1, sizeof(float) * width * height * num_channels * header.layers, file);
+	fclose(file);
+	return true;
+}
+
+void FloatImage::fromTexture(Texture* texture)
+{
+	assert(texture);
+	assert(texture->type == GL_FLOAT);
+	if (data && (width != texture->width || height != texture->height))
+		clear();
+	if (!data)
+	{
+		width = texture->width;
+		height = texture->height;
+		data = new float[width * height * num_channels];
+	}
+
+	texture->bind();
+	glGetTexImage(GL_TEXTURE_2D, 0, num_channels == 3 ? GL_RGB : GL_RGBA, GL_FLOAT, data);
+}
+
 
 bool isPowerOfTwo( int n )
 {

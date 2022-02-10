@@ -61,6 +61,9 @@
     <ClCompile Include="..\..\src\extra\coldet\tritri.cpp">
       <Filter>extra\coldet</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\extra\jpgd.cpp">
+      <Filter>extra</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -118,6 +121,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\animation.h">
       <Filter>gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\extra\jpgd.h">
+      <Filter>extra</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

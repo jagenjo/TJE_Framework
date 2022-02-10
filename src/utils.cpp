@@ -118,6 +118,27 @@ bool readFile(const std::string& filename, std::string& content)
 	return true;
 }
 
+bool readFileBin(const std::string& filename, std::vector<unsigned char>& buffer)
+{
+	buffer.clear();
+	FILE* fp = nullptr;
+	fp = fopen(filename.c_str(), "rb");
+	if (fp == nullptr)
+		return false;
+	fseek(fp, 0L, SEEK_END);
+	int size = ftell(fp);
+	rewind(fp);
+	buffer.resize(size);
+	fread(&buffer[0], sizeof(char), buffer.size(), fp);
+	fclose(fp);
+	return true;
+}
+
+void stdlog(std::string str)
+{
+	std::cout << str << std::endl;
+}
+
 bool checkGLErrors()
 {
 	#ifdef _DEBUG

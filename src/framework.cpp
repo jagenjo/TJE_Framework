@@ -1201,7 +1201,7 @@ Vector3 RayPlaneCollision(const Vector3& plane_pos, const Vector3& plane_normal,
 	return ray_origin + ray_dir * t;
 }
 
-bool RaySphereCollision(const Vector3& center, const float& radius, const Vector3& ray_origin, const Vector3& ray_dir, Vector3& coll)
+bool RaySphereCollision(const Vector3& center, const float& radius, const Vector3& ray_origin, const Vector3& ray_dir, Vector3& coll, float& t)
 {
 	Vector3 m = ray_origin - center;
 	float b = dot(m, ray_dir);
@@ -1217,7 +1217,7 @@ bool RaySphereCollision(const Vector3& center, const float& radius, const Vector
 		return false;
 
 	// Ray now found to intersect sphere, compute smallest t value of intersection
-	float t = -b - sqrt(discr);
+	t = -b - sqrt(discr);
 
 	// If t is negative, ray started inside sphere so clamp t to zero 
 	if (t < 0.0f)
@@ -1269,4 +1269,10 @@ BoundingBox transformBoundingBox(const Matrix44 m, const BoundingBox& box)
 
 	Vector3 halfsize = (box_max - box_min) * 0.5;
 	return BoundingBox(box_max - halfsize, halfsize );
+}
+
+//I - 2.0 * dot(N, I) * N.
+Vector3 reflect(const Vector3& I, const Vector3& N)
+{
+	return I - (2.0 * N.dot(I)) * N;
 }
