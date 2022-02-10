@@ -9,5 +9,8 @@
 .DS_store
 visualstudio/visualstudio/Debug
 visualstudio/visualstudio/Release
+visualstudio/VS2015/Debug
+visualstudio/VS2015/Release
 *.ipch
 *.db
+*.exe
