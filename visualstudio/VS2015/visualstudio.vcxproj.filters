@@ -64,6 +64,13 @@
     <ClCompile Include="..\..\src\extra\jpgd.cpp">
       <Filter>extra</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\entities\Entity.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\entities\MeshEntity.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Scene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -125,6 +132,16 @@
     <ClInclude Include="..\..\src\extra\jpgd.h">
       <Filter>extra</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\entities\Entity.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\entities\MeshEntity.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Scene.h" />
+    <ClInclude Include="..\..\src\entities\EntityInclude.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">
@@ -138,6 +155,9 @@
     </Filter>
     <Filter Include="utils">
       <UniqueIdentifier>{feb78646-9d96-43df-8d00-2397429ea3ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entities">
+      <UniqueIdentifier>{0f3f46e6-6753-40c5-97b0-4aa0046b6d21}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

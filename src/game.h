@@ -9,6 +9,9 @@
 #include "camera.h"
 #include "utils.h"
 
+class Entity;
+class Scene;
+
 class Game
 {
 public:
@@ -46,6 +49,15 @@ public:
 	void onGamepadButtonUp(SDL_JoyButtonEvent event);
 	void onResize(int width, int height);
 
+	//custom vars
+	std::vector<Entity*> destroyQueue;
+	std::vector<Scene*> scenes;
+	Scene* activeScene=nullptr;
+	
+
+	//custom functions
+	void addToDestroyQueue(Entity* ent);
+	void setActiveScene(Scene* scene);
 };
 
 

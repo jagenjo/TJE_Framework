@@ -6,8 +6,11 @@
 #include "shader.h"
 #include "input.h"
 #include "animation.h"
-
 #include <cmath>
+
+#include "Scene.h"
+#include "entities/EntityInclude.h"
+
 
 //some globals
 Mesh* mesh = NULL;
@@ -19,6 +22,20 @@ float mouse_speed = 100.0f;
 FBO* fbo = NULL;
 
 Game* Game::instance = NULL;
+
+
+Scene* returnTestScene() {
+	Scene* testScene= new Scene();
+	
+	Entity* baseEntity = new Entity();
+	testScene->setRoot(baseEntity);
+
+	MeshEntity* testMeshEntity = new MeshEntity(mesh, texture, shader);
+	
+	baseEntity->addChild(testMeshEntity);
+
+	return testScene;
+}
 
 Game::Game(int window_width, int window_height, SDL_Window* window)
 {
@@ -52,7 +69,8 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 	// example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
-
+	this->setActiveScene(returnTestScene());
+	
 	//hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse
 }
@@ -78,13 +96,14 @@ void Game::render(void)
 	Matrix44 m;
 	m.rotate(angle*DEG2RAD, Vector3(0, 1, 0));
 
-	if(shader)
+	/*if (shader)
 	{
 		//enable shader
 		shader->enable();
 
 		//upload uniforms
 		shader->setUniform("u_color", Vector4(1,1,1,1));
+		
 		shader->setUniform("u_viewprojection", camera->viewprojection_matrix );
 		shader->setUniform("u_texture", texture, 0);
 		shader->setUniform("u_model", m);
@@ -95,7 +114,8 @@ void Game::render(void)
 
 		//disable shader
 		shader->disable();
-	}
+	}*/
+	this->activeScene->render();
 
 	//Draw the floor grid
 	drawGrid();
@@ -182,5 +202,15 @@ void Game::onResize(int width, int height)
 	camera->aspect =  width / (float)height;
 	window_width = width;
 	window_height = height;
+}
+
+void Game::addToDestroyQueue(Entity* ent)
+{
+	this->destroyQueue.push_back(ent);
+}
+
+void Game::setActiveScene(Scene* scene)
+{
+	this->activeScene = scene;
 }
 
