@@ -111,6 +111,8 @@ public:
 	Vector3 cross( const Vector3& v ) const;
 	float dot( const Vector3& v ) const;
 
+	float getBiggestVal();
+
 	void parseFromText(const char* text, const char separator);
 
 	float& operator [] (int n) { return v[n]; }

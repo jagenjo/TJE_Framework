@@ -75,6 +75,10 @@ public:
 	bool testPointInFrustum( Vector3 v );
 	char testSphereInFrustum( const Vector3& v, float radius);
 	char testBoxInFrustum( const Vector3& center, const Vector3& halfsize);
+
+	float getDistanceFromCamera(Vector3 v) {
+		return (v - eye).length();
+	}
 };
 
 

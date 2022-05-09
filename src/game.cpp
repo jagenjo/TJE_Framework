@@ -14,6 +14,7 @@
 
 //some globals
 Mesh* mesh = NULL;
+Mesh* low_poly_mesh = NULL;
 Texture* texture = NULL;
 Shader* shader = NULL;
 Animation* anim = NULL;
@@ -30,8 +31,8 @@ Scene* returnTestScene() {
 	Entity* baseEntity = new Entity();
 	testScene->setRoot(baseEntity);
 
-	MeshEntity* testMeshEntity = new MeshEntity(mesh, texture, shader);
-	
+	MeshEntity* testMeshEntity = new MeshEntity(mesh,low_poly_mesh, texture, shader);
+	testMeshEntity->modifyScale(20);
 	baseEntity->addChild(testMeshEntity);
 
 	return testScene;
@@ -65,7 +66,8 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
  	texture->load("data/texture.tga");
 
 	// example of loading Mesh from Mesh Manager
-	mesh = Mesh::Get("data/box.ASE");
+	mesh = Mesh::Get("data/sphere.obj");
+	low_poly_mesh = Mesh::Get("data/sphereLow.obj");
 
 	// example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
@@ -133,6 +135,8 @@ void Game::update(double seconds_elapsed)
 
 	//example
 	angle += (float)seconds_elapsed * 10.0f;
+
+	this->activeScene->update(seconds_elapsed);
 
 	//mouse input to rotate the cam
 	if ((Input::mouse_state & SDL_BUTTON_LEFT) || mouse_locked ) //is left button pressed?

@@ -29,6 +29,13 @@ void Entity::render()
 	}
 }
 
+void Entity::update(float elapsed_time)
+{
+	for (int i = 0; i < children.size(); ++i) {
+		children[i]->update(elapsed_time);
+	}
+}
+
 Vector3 Entity::getPosition()
 {
     return this->model.getTranslation();
@@ -37,8 +44,8 @@ Vector3 Entity::getPosition()
 Vector3 Entity::getScale()
 {
 	//TODO
-    //return Vector3(model[0],model[5],model[10]);
-	return Vector3();
+    return Vector3(model._11,model._22,model._33);
+	
 }
 
 
@@ -49,6 +56,21 @@ Matrix44 Entity::getGlobalMatrix()
 		return parent->getGlobalMatrix() * model;
 	else
 		return model;
+}
+
+void Entity::setPosition(Vector3 pos)
+{
+}
+
+void Entity::setScale(Vector3 scale)
+{
+	this->model.setScale(scale.x, scale.y, scale.z);
+}
+
+void Entity::modifyScale(Vector3 scale)
+{
+	this->setScale(this->getScale() * scale);
+	
 }
 
 void Entity::addChild(Entity* ent)
@@ -67,6 +89,11 @@ void Entity::removeChild(Entity* ent)
 	}
 }
 
+bool Entity::getShouldRenderEntity()
+{
+	return true;
+}
+
 Entity* Entity::getParent()
 {
 	return this->parent;
@@ -83,3 +110,4 @@ void Entity::destroy()
 	}
 
 }
+

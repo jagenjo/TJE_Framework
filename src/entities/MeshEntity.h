@@ -10,9 +10,14 @@ class Camera;
 class MeshEntity :
     public Entity
 {
+private:
+	inline Mesh* getMeshToRender();
+	
+
 public:
 
 	MeshEntity(Mesh* mesh, Texture* Texture, Shader* shader, Vector4 color = Vector4(1, 1, 1, 1), Vector3 pos = Vector3(0, 0, 0));
+	MeshEntity(Mesh* mesh, Mesh* lowPoly, Texture* Texture, Shader* shader, Vector4 color = Vector4(1, 1, 1, 1), Vector3 pos = Vector3(0, 0, 0));
 	~MeshEntity();
 
 	Mesh* mesh;
@@ -20,13 +25,23 @@ public:
 	Shader* shader;
 	Vector4 color;
 
+	BoundingBox bounding;
+
 	bool hasLowPolyVersion = false;
+	float minDistanceForLowPoly = 200;
 	Mesh* lowPolyMesh;
 
+	float maxRenderDist = 300;
+
+	//void render();
 	void render();
 	void update(float dt);
 
+	bool getShouldRenderEntity();
+	
 	void setLowPoly(Mesh* mesh);
+	inline void setLowPolyDistance(float dist) { this->minDistanceForLowPoly= dist; }
+	float getLowPolyDistance() { return this->minDistanceForLowPoly; }
 	
 };
 

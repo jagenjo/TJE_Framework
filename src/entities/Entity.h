@@ -31,7 +31,7 @@ public:
 	virtual ~Entity();
 	
 	virtual void render();
-	virtual void update(float elapsed_time){};
+	virtual void update(float elapsed_time);
 
 	Vector3 getPosition();
 	//Vector3 getRotation();
@@ -40,10 +40,17 @@ public:
 
 	void setPosition(Vector3 pos);
 	//void setRotation(Vector3 rot);
+	
 	void setScale(Vector3 scale);
+	inline void setScale(float scale) { setScale(Vector3(scale, scale, scale)); }
+
+	void modifyScale(Vector3 scale);
+	inline void modifyScale(float scale) { modifyScale(Vector3(scale, scale, scale)); }
 	
 	void addChild(Entity* ent);
 	void removeChild(Entity* ent);
+
+	virtual bool getShouldRenderEntity();
 	
 	Entity* getParent();
 	

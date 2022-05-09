@@ -104,6 +104,11 @@ float Vector3::dot( const Vector3& v ) const
 	return x*v.x + y*v.y + z*v.z;
 }
 
+float Vector3::getBiggestVal()
+{
+	return max(this->x, max(this->y, this->z));
+}
+
 void Vector3::random(float range)
 {
 	//rand returns a value between 0 and RAND_MAX
