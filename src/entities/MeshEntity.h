@@ -25,7 +25,7 @@ public:
 	Shader* shader;
 	Vector4 color;
 
-	BoundingBox bounding;
+	
 
 	bool hasLowPolyVersion = false;
 	float minDistanceForLowPoly = 200;

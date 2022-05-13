@@ -5,14 +5,16 @@ Entity::Entity()
 {
 	gameInstance = Game::instance;
 	this->name= "Entity";
+	this->forceCheckChilds = false;
 }
 
-Entity::Entity(Vector3 pos)
+Entity::Entity(Vector3 pos,bool checkChilds)
 {
 	gameInstance = Game::instance;
 	this->model.setIdentity();
 	this->model.translate(pos.x, pos.y, pos.z);
 	this->name= "Entity";
+	this->forceCheckChilds = checkChilds;
 }
 
 Entity::~Entity()

@@ -21,13 +21,14 @@ public:
 	EntityType type= EntityType::BASE;
 	std::string name;
 	Matrix44 model;
+	bool forceCheckChilds = false;
 
 	std::vector<Entity*> children;
 	
 	Entity* parent=nullptr;
 	
 	Entity();
-	Entity(Vector3 pos);
+	Entity(Vector3 pos, bool checkChilds=false);
 	virtual ~Entity();
 	
 	virtual void render();

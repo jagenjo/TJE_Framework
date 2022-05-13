@@ -71,6 +71,7 @@
       <Filter>Entities</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Scene.cpp" />
+    <ClCompile Include="..\..\src\entities\GroupEntity.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -142,6 +143,7 @@
     <ClInclude Include="..\..\src\entities\EntityInclude.h">
       <Filter>Entities</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\entities\GroupEntity.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">

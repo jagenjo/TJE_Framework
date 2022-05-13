@@ -10,6 +10,7 @@ MeshEntity::MeshEntity(Mesh* mesh, Texture* Texture, Shader* shader, Vector4 col
 	this->name = (mesh->name.empty()) ?"MeshEntity":mesh->name;
 	this->type = EntityType::MESH;
 	this->hasLowPolyVersion = false;
+
 }
 MeshEntity::MeshEntity(Mesh* mesh, Mesh* lowPoly, Texture* Texture, Shader* shader, Vector4 color, Vector3 pos) :Entity(pos)
 {
@@ -19,7 +20,6 @@ MeshEntity::MeshEntity(Mesh* mesh, Mesh* lowPoly, Texture* Texture, Shader* shad
 	this->color = color;
 	this->name = (mesh->name.empty()) ? "MeshEntity" : mesh->name;
 	this->type = EntityType::MESH;
-	
 	this->setLowPoly(lowPoly);
 
 }
@@ -40,7 +40,11 @@ void MeshEntity::render()
 	Camera* camera = Camera::current;
 	Matrix44 model = this->model;
 	
-	if (!this->getShouldRenderEntity()) return;
+	if (!this->getShouldRenderEntity()) {
+		if (this->forceCheckChilds)
+			Entity::render();
+		return;
+	}		
 	
 	shader->enable();
 	shader->setUniform("u_model", model);
@@ -60,7 +64,7 @@ void MeshEntity::render()
 void MeshEntity::update(float dt)
 {
 	
-	this->bounding = transformBoundingBox(this->getGlobalMatrix(),this->mesh->box);
+	//this->bounding = transformBoundingBox(this->getGlobalMatrix(),this->mesh->box);
 	Entity::update(dt);
 	
 }
@@ -74,7 +78,7 @@ bool MeshEntity::getShouldRenderEntity()
 	float sphere_radius = this->mesh->radius;
 
 	//discard objects whose bounding sphere is not inside the camera frustum
-	return cam->testSphereInFrustum(this->bounding.center, this->bounding.halfsize.getBiggestVal());
+	return cam->testSphereInFrustum(this->getPosition(), this->mesh->radius);
 		
 	
 }
