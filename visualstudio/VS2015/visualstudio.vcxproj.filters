@@ -74,6 +74,8 @@
     <ClCompile Include="..\..\src\entities\GroupEntity.cpp">
       <Filter>Entities</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\trackHandler.cpp" />
+    <ClCompile Include="..\..\src\curves.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -148,6 +150,8 @@
     <ClInclude Include="..\..\src\entities\GroupEntity.h">
       <Filter>Entities</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\trackHandler.h" />
+    <ClInclude Include="..\..\src\curves.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">

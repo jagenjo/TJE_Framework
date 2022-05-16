@@ -127,6 +127,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\animation.cpp" />
+    <ClCompile Include="..\..\src\curves.cpp" />
     <ClCompile Include="..\..\src\camera.cpp" />
     <ClCompile Include="..\..\src\entities\Entity.cpp" />
     <ClCompile Include="..\..\src\entities\GroupEntity.cpp" />
@@ -152,10 +153,12 @@
     <ClCompile Include="..\..\src\Scene.cpp" />
     <ClCompile Include="..\..\src\shader.cpp" />
     <ClCompile Include="..\..\src\texture.cpp" />
+    <ClCompile Include="..\..\src\trackHandler.cpp" />
     <ClCompile Include="..\..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\animation.h" />
+    <ClInclude Include="..\..\src\curves.h" />
     <ClInclude Include="..\..\src\camera.h" />
     <ClInclude Include="..\..\src\entities\Entity.h" />
     <ClInclude Include="..\..\src\entities\EntityInclude.h" />
@@ -180,6 +183,7 @@
     <ClInclude Include="..\..\src\Scene.h" />
     <ClInclude Include="..\..\src\shader.h" />
     <ClInclude Include="..\..\src\texture.h" />
+    <ClInclude Include="..\..\src\trackHandler.h" />
     <ClInclude Include="..\..\src\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

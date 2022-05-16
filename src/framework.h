@@ -117,6 +117,7 @@ public:
 
 	float& operator [] (int n) { return v[n]; }
 	void operator *= (float v) { x *= v; y *= v; z *= v; }
+	void operator += (float v) { x += v; y += v; z += v; }
 };
 
 Vector3 normalize(Vector3 n);
