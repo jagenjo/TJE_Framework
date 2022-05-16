@@ -22,7 +22,7 @@ public:
 	std::string name;
 	Matrix44 model;
 	bool forceCheckChilds = false;
-
+	float maxRenderDist = 300.0f;
 	std::vector<Entity*> children;
 	
 	Entity* parent=nullptr;

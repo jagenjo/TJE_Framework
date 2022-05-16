@@ -29,9 +29,9 @@ public:
 
 	bool hasLowPolyVersion = false;
 	float minDistanceForLowPoly = 200;
-	Mesh* lowPolyMesh;
+	Mesh* lowPolyMesh= nullptr;
 
-	float maxRenderDist = 300;
+	
 
 	//void render();
 	void render();

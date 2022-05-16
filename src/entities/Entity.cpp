@@ -33,6 +33,7 @@ void Entity::render()
 
 void Entity::update(float elapsed_time)
 {
+	if (!children.size()) return;
 	for (int i = 0; i < children.size(); ++i) {
 		children[i]->update(elapsed_time);
 	}
