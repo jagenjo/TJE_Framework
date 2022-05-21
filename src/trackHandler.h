@@ -2,6 +2,7 @@
 #include "framework.h"
 #include "curves.h"
 
+
 class TrackHandler
 {
 private:
@@ -16,9 +17,12 @@ public:
 	void setActiveCurve(BeizerCurve* curve);
 	void updatePosition(double dt);
 	
+	void renderTrack(int maxDistance = 10);
+	
 	double getTrackPosition(){ return trackPosition; }
 	BeizerCurve* getActiveCurve(){ return activeCurve; }
 	Matrix44 getRenderMatrix(){ return posRotMatrix; }
+	
 	
 };	
 

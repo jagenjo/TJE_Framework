@@ -11,6 +11,7 @@
 
 class Entity;
 class Scene;
+class Stage;
 
 class Game
 {
@@ -50,14 +51,18 @@ public:
 	void onResize(int width, int height);
 
 	//custom vars
+
+	
 	std::vector<Entity*> destroyQueue;
 	std::vector<Scene*> scenes;
-	Scene* activeScene=nullptr;
+	Scene* activeScene=nullptr; //TODO: remove (or refactor since now in stage)
+	Stage* activeStage = nullptr;
 	
 
 	//custom functions
 	void addToDestroyQueue(Entity* ent);
 	void setActiveScene(Scene* scene);
+	void setActiveStage(Stage* stage);
 };
 
 
