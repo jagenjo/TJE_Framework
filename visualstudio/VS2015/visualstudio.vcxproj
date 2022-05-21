@@ -152,8 +152,10 @@
     <ClCompile Include="..\..\src\rendertotexture.cpp" />
     <ClCompile Include="..\..\src\Scene.cpp" />
     <ClCompile Include="..\..\src\shader.cpp" />
+    <ClCompile Include="..\..\src\stages\ProceduralWorldStage.cpp" />
+    <ClCompile Include="..\..\src\stages\Stage.cpp" />
     <ClCompile Include="..\..\src\texture.cpp" />
-    <ClCompile Include="..\..\src\trackHandler.cpp" />
+    <ClCompile Include="..\..\src\TrackHandler.cpp" />
     <ClCompile Include="..\..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -170,6 +172,7 @@
     <ClInclude Include="..\..\src\extra\coldet\math3d.h" />
     <ClInclude Include="..\..\src\extra\coldet\mytritri.h" />
     <ClInclude Include="..\..\src\extra\coldet\sysdep.h" />
+    <ClInclude Include="..\..\src\extra\commonItems.h" />
     <ClInclude Include="..\..\src\extra\jpgd.h" />
     <ClInclude Include="..\..\src\extra\picopng.h" />
     <ClInclude Include="..\..\src\extra\textparser.h" />
@@ -182,8 +185,10 @@
     <ClInclude Include="..\..\src\rendertotexture.h" />
     <ClInclude Include="..\..\src\Scene.h" />
     <ClInclude Include="..\..\src\shader.h" />
+    <ClInclude Include="..\..\src\stages\ProceduralWorldStage.h" />
+    <ClInclude Include="..\..\src\stages\Stage.h" />
     <ClInclude Include="..\..\src\texture.h" />
-    <ClInclude Include="..\..\src\trackHandler.h" />
+    <ClInclude Include="..\..\src\TrackHandler.h" />
     <ClInclude Include="..\..\src\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
