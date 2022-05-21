@@ -74,6 +74,14 @@
     <ClCompile Include="..\..\src\entities\GroupEntity.cpp">
       <Filter>Entities</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\TrackHandler.cpp" />
+    <ClCompile Include="..\..\src\curves.cpp" />
+    <ClCompile Include="..\..\src\stages\Stage.cpp">
+      <Filter>stages</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\stages\ProceduralWorldStage.cpp">
+      <Filter>stages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -148,6 +156,17 @@
     <ClInclude Include="..\..\src\entities\GroupEntity.h">
       <Filter>Entities</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\TrackHandler.h" />
+    <ClInclude Include="..\..\src\curves.h" />
+    <ClInclude Include="..\..\src\stages\Stage.h">
+      <Filter>stages</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\stages\ProceduralWorldStage.h">
+      <Filter>stages</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\extra\commonItems.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">
@@ -164,6 +183,9 @@
     </Filter>
     <Filter Include="Entities">
       <UniqueIdentifier>{0f3f46e6-6753-40c5-97b0-4aa0046b6d21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="stages">
+      <UniqueIdentifier>{f04a845e-45fc-4891-ad4a-ee88e4718ea7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -10,6 +10,7 @@
 
 #include "Scene.h"
 #include "entities/EntityInclude.h"
+#include "curves.h"
 
 
 //some globals
@@ -21,6 +22,10 @@ Animation* anim = NULL;
 float angle = 0;
 float mouse_speed = 100.0f;
 FBO* fbo = NULL;
+
+bool playTrack = false;
+BeizerCurve* bc;
+float trackPos = 0;
 
 Game* Game::instance = NULL;
 
@@ -35,6 +40,12 @@ Scene* returnTestScene() {
 	testMeshEntity->modifyScale(20);
 	baseEntity->addChild(testMeshEntity);
 
+	
+	std::vector<Vector3> points({ Vector3(0, 0, 0), Vector3(5, 0, 2), Vector3(10, 0, 5), Vector3(12, 0, 10), Vector3(15, 0, 20) });
+	bc = new BeizerCurve(points,.05,false);
+	glPointSize(2);
+
+	
 	return testScene;
 }
 
@@ -117,8 +128,46 @@ void Game::render(void)
 		//disable shader
 		shader->disable();
 	}*/
-	this->activeScene->render();
+	//this->activeScene->render();
 
+	//TEST: DRAW BEIZER POINTS;
+	glPointSize(5);
+	glBegin(GL_POINTS);
+	if(bc->numSegments>0)
+		for (int i = 0; i < bc->cachedSegments.size(); ++i) {
+			Vector3& data = bc->cachedSegments[i];
+			Vector3 dir = bc->getSegmentDirection(i);
+			Vector3 right = dir.cross(Vector3(0, 1, 0));
+
+			Vector3 sideA = data + right * 10;
+			Vector3 sideB = data - right * 10;
+			//print data
+			//std::cout << "x: " << data.x << " y: " << data.y << " z: " << data.z << std::endl;
+			glColor3f(1, 1, 1);
+			glVertex3f(data.x, data.y, data.z);
+			glColor3f(1, 1, 0);
+			glVertex3f(sideA.x, sideA.y, sideA.z);
+			glColor3f(1, 0, 1);
+			glVertex3f(sideB.x, sideB.y, sideB.z);
+			
+		}
+	glColor3f(1, 0,0);
+	glPointSize(10);
+	if(bc->numPoints>0)
+		for (int i = 0; i < bc->curvePoints.size(); ++i) {
+			Vector3& data = bc->curvePoints[i];
+			glVertex3f(data.x, data.y, data.z);
+		}
+	if(playTrack)
+		{
+		glColor3f(0, 1, 0);
+		glPointSize(15);
+		Vector3& data = bc->getPosition(trackPos);
+		glVertex3f(data.x, data.y, data.z);
+	}
+	glEnd();
+	glPointSize(1);
+	glColor3f(1, 1, 1);
 	//Draw the floor grid
 	drawGrid();
 
@@ -145,12 +194,32 @@ void Game::update(double seconds_elapsed)
 		camera->rotate(Input::mouse_delta.y * 0.005f, camera->getLocalVector( Vector3(-1.0f,0.0f,0.0f)));
 	}
 
+	if (playTrack) {
+		//add constant speed taking into count size of segment
+		
+		int segmentNum = bc->getSegmentFromMu(trackPos);
+		float speedMultiplier = (bc->speedConstant/bc->getSegmentDistance(segmentNum));
+		std::cout << "(" << segmentNum << ") - " << speedMultiplier << std::endl;
+		trackPos += 1 * seconds_elapsed*speedMultiplier;
+		if(trackPos>1)
+			trackPos = 0;
+	}
+	else
+		trackPos = 0;
+	
 	//async input to move the camera around
 	if(Input::isKeyPressed(SDL_SCANCODE_LSHIFT) ) speed *= 10; //move faster with left shift
 	if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) camera->move(Vector3(0.0f, 0.0f, 1.0f) * speed);
 	if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) camera->move(Vector3(0.0f, 0.0f,-1.0f) * speed);
 	if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) camera->move(Vector3(1.0f, 0.0f, 0.0f) * speed);
 	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) camera->move(Vector3(-1.0f,0.0f, 0.0f) * speed);
+	
+	if (Input::wasKeyPressed(SDL_SCANCODE_P))
+		bc->addPoint(camera->eye*Vector3(1,0,1));
+	if (Input::wasKeyPressed(SDL_SCANCODE_C))
+		bc->cacheSegments();
+	if (Input::wasKeyPressed(SDL_SCANCODE_L))
+		playTrack = !playTrack;
 
 	//to navigate with the mouse fixed in the middle
 	if (mouse_locked)
