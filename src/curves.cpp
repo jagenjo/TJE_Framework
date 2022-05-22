@@ -66,7 +66,10 @@ void BeizerCurve::cacheSegments(float increments)
 	this->cachedSegments.reserve(this->numSegments);
 	for (float i = 0.0f; i <= 1.0f; i += increments)
 		this->cachedSegments.push_back(this->getPosition(i));
-	for (int i = 0; i < this->cachedSegments.size() - 1; i++)
+	for (int i = 0; i < this->cachedSegments.size() - 1; i++) {
 		this->segmentDistances.push_back(this->cachedSegments[i].distance(this->cachedSegments[i + 1]));
+		std::cout << this->segmentDistances[i] << std::endl;
+	}
+	
 }
 

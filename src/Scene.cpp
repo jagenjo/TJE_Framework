@@ -1,11 +1,15 @@
 #include "Scene.h"
 #include "entities/Entity.h"
 
+
+//TODO: remove singleton for scene
 Scene* Scene::instance = nullptr;
 
 Scene::Scene()
 {
 	instance = this;
+	this->setRoot(new Entity());
+	
 }
 
 void Scene::render()

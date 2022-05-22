@@ -167,6 +167,9 @@
     <ClInclude Include="..\..\src\extra\commonItems.h">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\stages\StagesInclude.h">
+      <Filter>stages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">
