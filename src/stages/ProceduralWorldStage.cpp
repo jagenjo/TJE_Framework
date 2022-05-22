@@ -49,6 +49,7 @@ void ProceduralWorldStage::generateProceduralScenery()
 			//pos = mat.getTranslation()  mat.rightVector() * distance;
 			//print pos to console
 			std::cout << "pos 2: " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
+			
 
 
 

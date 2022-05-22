@@ -18,6 +18,7 @@ struct sceneryData {
 	eSceneryType type;
 
 	sceneryData(std::vector<Vector3>& positions, eSceneryType type);
+	
 };
 
 class ProceduralWorldStage :

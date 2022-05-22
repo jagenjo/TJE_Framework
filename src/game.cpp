@@ -191,13 +191,7 @@ void Game::update(double seconds_elapsed)
 	if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) camera->move(Vector3(1.0f, 0.0f, 0.0f) * speed);
 	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) camera->move(Vector3(-1.0f,0.0f, 0.0f) * speed);
 	
-	if (Input::wasKeyPressed(SDL_SCANCODE_P))
-		bc->addPoint(camera->eye*Vector3(1,0,1));
-	if (Input::wasKeyPressed(SDL_SCANCODE_C))
-		bc->cacheSegments();
-	if (Input::wasKeyPressed(SDL_SCANCODE_L))
-		playTrack = !playTrack;
-
+	
 	//to navigate with the mouse fixed in the middle
 	if (mouse_locked)
 		Input::centerMouse();
