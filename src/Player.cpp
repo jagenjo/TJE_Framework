@@ -75,7 +75,7 @@ void Player::updatePlayer(double seconds_elapsed)
 	}
 	if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) {
 		wasMoved = true;
-		speedVector-= front*seconds_elapsed*acceleration;
+		speedVector+= front*seconds_elapsed* (-acceleration);
 	}
 	if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) {
 		wasMoved = true;
@@ -83,7 +83,7 @@ void Player::updatePlayer(double seconds_elapsed)
 	}
 	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) {
 		wasMoved = true;
-		speedVector-= right*seconds_elapsed*acceleration;
+		speedVector += right*seconds_elapsed*(-acceleration);
 	}
 
 	
@@ -96,14 +96,24 @@ void Player::updatePlayer(double seconds_elapsed)
 
 	if (!wasMoved||distanceFromCar> ropeLengthRadius) {
 		float multiplier = distanceFromCar > ropeLengthRadius ? 3.0 : .8;
-
-		speedVector -= speedVector * multiplier * seconds_elapsed;
-		if (abs(speedVector.length()) <= .000002)
-			speedVector = Vector3(0, 0, 0);
-		
+		if (distanceFromCar > ropeLengthRadius * 1.5f) speedVector = Vector3(0, 0, 0);  
+		else {
+			speedVector += speedVector * (-multiplier) * seconds_elapsed;
+			if (abs(speedVector.length()) <= .000002)
+				speedVector = Vector3(0, 0, 0);
+		}
 	}
-	
 
+
+
+
+	
+	if (Input::isKeyPressed(SDL_SCANCODE_F)) {
+		Vector3 vecToCar = this->playerMesh->getGlobalMatrix().getTranslation();
+		vecToCar = vecToCar.normalize();
+		vecToCar = vecToCar * (-1/ropeLengthRadius)*pullRopeSpeed;
+		this->playerMesh->model.translateGlobal(vecToCar.x,vecToCar.y,vecToCar.z);
+	}
 	
 
 

@@ -16,6 +16,7 @@ public:
 	Vector3 speedVector = Vector3(0, 0, 0);
 	float acceleration = 0.05f;
 	float deceleration = .04f;
+	float pullRopeSpeed = 2.0f;
 	
 
 	Player();
