@@ -285,8 +285,8 @@ void Game::update(double seconds_elapsed)
 	
 	
 	//to navigate with the mouse fixed in the middle
-	if (mouse_locked)
-		Input::centerMouse();
+	/*if (mouse_locked)
+		Input::centerMouse();*/
 }
 
 //Keyboard event handler (sync input)
