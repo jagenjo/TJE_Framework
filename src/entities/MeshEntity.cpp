@@ -37,8 +37,11 @@ Mesh* MeshEntity::getMeshToRender()
 
 void MeshEntity::render()
 {
+	
+	
+
 	Camera* camera = Camera::current;
-	Matrix44 model = this->model;
+	Matrix44 model = this->globalModel;
 	
 	if (!this->getShouldRenderEntity()) {
 		if (this->forceCheckChilds)

@@ -29,13 +29,18 @@ Entity::~Entity()
 
 void Entity::render()
 {
+	
+	
 	for (int i= 0; i < children.size(); ++i) {
+		
 		children[i]->render();
 	}
 }
 
 void Entity::update(float elapsed_time)
 {
+	this->globalModel = getGlobalMatrix();
+
 	if (!children.size()) return;
 	for (int i = 0; i < children.size(); ++i) {
 		children[i]->update(elapsed_time);
@@ -44,11 +49,12 @@ void Entity::update(float elapsed_time)
 
 Vector3 Entity::getPosition()
 {
+	return this->getGlobalMatrix().getTranslation();
 	
-	if (this->parent)
+	/*if (this->parent)
 		return this->parent->getPosition() + this->model.getTranslation();
 	else
-		return this->model.getTranslation();
+		return this->model.getTranslation();*/
 	
 }
 
@@ -69,9 +75,15 @@ Matrix44 Entity::getGlobalMatrix()
 		return model;
 }
 
-void Entity::setPosition(Vector3 pos)
+void Entity::setPosition(Vector3 pos,bool absolutePosition)
 {
-	this->model.setTranslation(pos.x, pos.y, pos.z);
+	if (absolutePosition) {
+		Vector3 globalPos = this->getPosition();
+		this->model.setTranslation(pos.x - globalPos.x, pos.y - globalPos.y, pos.z - globalPos.z);
+	}
+
+	else
+		this->model.setTranslation(pos.x, pos.y, pos.z);
 }
 
 void Entity::setRotation(Vector3 rotation)
