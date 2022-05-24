@@ -60,6 +60,7 @@ public:
 	virtual bool getShouldRenderEntity();
 	
 	Entity* getParent();
+	void setParent(Entity* parentObj);
 	
 	virtual void destroy();
 	
