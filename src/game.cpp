@@ -190,7 +190,6 @@ void Game::render(void)
 	}*/
 	//this->activeScene->render();
 
-
 	//Coses URI										///
 	playerMesh->move(player.pos);
 	playerMesh->rotate(player.yaw);
@@ -289,7 +288,6 @@ void Game::update(double seconds_elapsed)
 
 	// end Coses URI
 	
-
 	//async input to move the camera around
 	
 	
