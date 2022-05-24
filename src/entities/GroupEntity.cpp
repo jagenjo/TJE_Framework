@@ -32,41 +32,20 @@ GroupEntity::~GroupEntity()
 void GroupEntity::render()
 {
 	Camera* cam = Camera::current;
-	std::vector<Matrix44> lowPolyPositions;
 	shader->enable();
 	
 	shader->setUniform("u_viewprojection", cam->viewprojection_matrix);
 	shader->setUniform("u_texture", texture);
-
-	mesh->enableBuffers(shader);
-	if (hasLowPolyVersion)
-		lowPolyMesh->enableBuffers(shader);
-	for (int i = 0; i < matrixList.size(); ++i)
+	shader->setUniform("u_color", Vector3(1, 1, 1));
+	
+	for (int i = 0; i < matrixList.size(); i++)
 	{
-		Matrix44& matrix = matrixList[i];
-		float camDist = cam->getDistanceFromCamera(matrix.getTranslation());
-		if (camDist > maxRenderDist) continue;
-		if (hasLowPolyVersion)
-			if (camDist > minDistanceForLowPoly) {
-				lowPolyPositions.push_back(matrix);
-				continue;
-			}
-		shader->setUniform("u_model", matrix);
+		shader->setUniform("u_model", matrixList[i]);
 		mesh->render(GL_TRIANGLES);
 	}
-
-	mesh->disableBuffers(shader); //Shader argument here is useless, but it's needed to make the function work
-	if (hasLowPolyVersion && lowPolyPositions.size()) {
-		lowPolyMesh->enableBuffers(shader);
-		for (int i = 0; i < lowPolyPositions.size(); ++i)
-		{
-			Matrix44& matrix = lowPolyPositions[i];
-			shader->setUniform("u_model", matrix);
-			lowPolyMesh->render(GL_TRIANGLES);
-		}
-		lowPolyMesh->disableBuffers(shader);
-		//lowPolyPositions.clear(); TODO: Preguntar si cal fer el clear;
-	}
+	
+	
+	
 	shader->disable();
 	
 	Entity::render();

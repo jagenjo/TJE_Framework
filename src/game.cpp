@@ -11,6 +11,8 @@
 #include "Scene.h"
 #include "entities/EntityInclude.h"
 #include "curves.h"
+#include "stages/StagesInclude.h"
+#include "TrackHandler.h"
 
 
 //some globals
@@ -57,12 +59,18 @@ Scene* returnTestScene() {
 	baseEntity->addChild(testMeshEntity);
 
 	
-	std::vector<Vector3> points({ Vector3(0, 0, 0), Vector3(5, 0, 2), Vector3(10, 0, 5), Vector3(12, 0, 10), Vector3(15, 0, 20) });
-	bc = new BeizerCurve(points,.05,false);
+	
 	glPointSize(2);
 
 	
 	return testScene;
+}
+
+ProceduralWorldStage* testStage() {
+	ProceduralWorldStage* stage = new ProceduralWorldStage(returnTestScene());
+	
+	
+	return stage;
 }
 
 Game::Game(int window_width, int window_height, SDL_Window* window)
@@ -98,7 +106,8 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 	// example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
-	this->setActiveScene(returnTestScene());
+
+	
 
 	//Coses Uri																					///////////
 	Mesh* groundMesh = new Mesh();
@@ -109,7 +118,12 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 
 	playerMesh = new MeshEntity(mesh, texture, shader);
+	new TrackHandler();
+	this->setActiveStage(testStage());
 	//End coses uri																				//////////
+
+	//this->setActiveScene(returnTestScene());
+
 	
 	//hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse
@@ -159,6 +173,7 @@ void Game::render(void)
 	}*/
 	//this->activeScene->render();
 
+
 	//Coses URI										///
 	playerMesh->move(player.pos);
 	playerMesh->rotate(player.yaw);
@@ -174,44 +189,8 @@ void Game::render(void)
 	//End coses URI									///
 
 
-	//TEST: DRAW BEIZER POINTS;
-	glPointSize(5);
-	glBegin(GL_POINTS);
-	if(bc->numSegments>0)
-		for (int i = 0; i < bc->cachedSegments.size(); ++i) {
-			Vector3& data = bc->cachedSegments[i];
-			Vector3 dir = bc->getSegmentDirection(i);
-			Vector3 right = dir.cross(Vector3(0, 1, 0));
+	this->activeStage->render();
 
-			Vector3 sideA = data + right * 10;
-			Vector3 sideB = data - right * 10;
-			//print data
-			//std::cout << "x: " << data.x << " y: " << data.y << " z: " << data.z << std::endl;
-			glColor3f(1, 1, 1);
-			glVertex3f(data.x, data.y, data.z);
-			glColor3f(1, 1, 0);
-			glVertex3f(sideA.x, sideA.y, sideA.z);
-			glColor3f(1, 0, 1);
-			glVertex3f(sideB.x, sideB.y, sideB.z);
-			
-		}
-	glColor3f(1, 0,0);
-	glPointSize(10);
-	if(bc->numPoints>0)
-		for (int i = 0; i < bc->curvePoints.size(); ++i) {
-			Vector3& data = bc->curvePoints[i];
-			glVertex3f(data.x, data.y, data.z);
-		}
-	if(playTrack)
-		{
-		glColor3f(0, 1, 0);
-		glPointSize(15);
-		Vector3& data = bc->getPosition(trackPos);
-		glVertex3f(data.x, data.y, data.z);
-	}
-	glEnd();
-	glPointSize(1);
-	glColor3f(1, 1, 1);
 	//Draw the floor grid
 	drawGrid();
 
@@ -231,7 +210,8 @@ void Game::update(double seconds_elapsed)
 	//example
 	angle += (float)seconds_elapsed * 10.0f;
 
-	this->activeScene->update(seconds_elapsed);
+	//this->activeScene->update(seconds_elapsed);
+	this->activeStage->update(seconds_elapsed);
 
 	//mouse input to rotate the cam
 	if ((Input::mouse_state & SDL_BUTTON_LEFT) || mouse_locked ) //is left button pressed?
@@ -240,6 +220,7 @@ void Game::update(double seconds_elapsed)
 		camera->rotate(Input::mouse_delta.y * 0.005f, camera->getLocalVector( Vector3(-1.0f,0.0f,0.0f)));
 	}
 
+	/*
 	if (playTrack) {
 		//add constant speed taking into count size of segment
 		
@@ -252,6 +233,8 @@ void Game::update(double seconds_elapsed)
 	}
 	else
 		trackPos = 0;
+		*/
+
 
 	//Coses URI
 	if (cameraLocked) {
@@ -288,15 +271,10 @@ void Game::update(double seconds_elapsed)
 
 	// end Coses URI
 	
+
 	//async input to move the camera around
 	
-	if (Input::wasKeyPressed(SDL_SCANCODE_P))
-		bc->addPoint(camera->eye*Vector3(1,0,1));
-	if (Input::wasKeyPressed(SDL_SCANCODE_C))
-		bc->cacheSegments();
-	if (Input::wasKeyPressed(SDL_SCANCODE_L))
-		playTrack = !playTrack;
-
+	
 	//to navigate with the mouse fixed in the middle
 	if (mouse_locked)
 		Input::centerMouse();
@@ -361,5 +339,10 @@ void Game::addToDestroyQueue(Entity* ent)
 void Game::setActiveScene(Scene* scene)
 {
 	this->activeScene = scene;
+}
+
+void Game::setActiveStage(Stage* stage)
+{
+	this->activeStage = stage;
 }
 

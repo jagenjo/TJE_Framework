@@ -187,6 +187,7 @@
     <ClInclude Include="..\..\src\shader.h" />
     <ClInclude Include="..\..\src\stages\ProceduralWorldStage.h" />
     <ClInclude Include="..\..\src\stages\Stage.h" />
+    <ClInclude Include="..\..\src\stages\StagesInclude.h" />
     <ClInclude Include="..\..\src\texture.h" />
     <ClInclude Include="..\..\src\TrackHandler.h" />
     <ClInclude Include="..\..\src\utils.h" />
