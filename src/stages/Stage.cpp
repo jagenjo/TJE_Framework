@@ -16,6 +16,11 @@ Stage::Stage(Scene* scene)
 	this->gameInstance = Game::instance;
 }
 
+void Stage::render()
+{
+	this->scene->render();
+}
+
 void Stage::update(double seconds_elapsed)
 {
 	if (this->scene)

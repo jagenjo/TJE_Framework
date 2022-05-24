@@ -156,6 +156,7 @@
     <ClCompile Include="..\..\src\stages\Stage.cpp" />
     <ClCompile Include="..\..\src\texture.cpp" />
     <ClCompile Include="..\..\src\TrackHandler.cpp" />
+    <ClCompile Include="..\..\src\TrainHandler.cpp" />
     <ClCompile Include="..\..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +191,7 @@
     <ClInclude Include="..\..\src\stages\StagesInclude.h" />
     <ClInclude Include="..\..\src\texture.h" />
     <ClInclude Include="..\..\src\TrackHandler.h" />
+    <ClInclude Include="..\..\src\TrainHandler.h" />
     <ClInclude Include="..\..\src\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
