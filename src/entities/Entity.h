@@ -40,7 +40,10 @@ public:
 	Matrix44 getGlobalMatrix();
 
 	void setPosition(Vector3 pos);
-	//void setRotation(Vector3 rot);
+	void setRotation(Vector3 rotation);
+
+	void move(Vector3 pos);
+	void rotate(float yaw);
 	
 	void setScale(Vector3 scale);
 	inline void setScale(float scale) { setScale(Vector3(scale, scale, scale)); }
