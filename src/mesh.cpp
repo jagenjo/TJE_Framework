@@ -315,7 +315,7 @@ void Mesh::renderInstanced(unsigned int primitive, const Matrix44* instanced_mod
 
 	Shader* shader = Shader::current;
 	assert(shader && "shader must be enabled");
-
+	
 	if (instances_buffer_id == 0)
 		glGenBuffersARB(1, &instances_buffer_id);
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, instances_buffer_id);
