@@ -106,7 +106,8 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 	// example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
-	this->setActiveScene(returnTestScene());
+
+	
 
 	//Coses Uri																					///////////
 	Mesh* groundMesh = new Mesh();
@@ -117,12 +118,12 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 
 	playerMesh = new MeshEntity(mesh, texture, shader);
-	//End coses uri																				//////////
-	//this->setActiveScene(returnTestScene());
-
 	new TrackHandler();
 	this->setActiveStage(testStage());
-	
+	//End coses uri																				//////////
+
+	//this->setActiveScene(returnTestScene());
+
 	
 	//hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse
@@ -186,7 +187,9 @@ void Game::render(void)
 
 	//End coses URI									///
 
+
 	this->activeStage->render();
+
 	//Draw the floor grid
 	drawGrid();
 
@@ -229,7 +232,9 @@ void Game::update(double seconds_elapsed)
 	}
 	else
 		trackPos = 0;
-	*/
+		*/
+
+
 	//Coses URI
 	if (cameraLocked) {
 		SDL_ShowCursor(false);
@@ -264,7 +269,6 @@ void Game::update(double seconds_elapsed)
 	if (Input::isKeyPressed(SDL_SCANCODE_O)) cameraLocked = !cameraLocked;
 
 	// end Coses URI
-	
 	
 	//async input to move the camera around
 	
