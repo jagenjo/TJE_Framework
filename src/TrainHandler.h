@@ -19,8 +19,10 @@ private:
 	int numCars = 0;
 	double frontCarPos = 0.0;
 	BeizerCurve* activeCurve=NULL;
-	double speed = 0.0;
+	double speed = .5;
 public:
+
+	static TrainHandler* instance;
 
 	TrainHandler();
 	TrainHandler(BeizerCurve* curve);

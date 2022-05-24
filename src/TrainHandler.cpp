@@ -1,16 +1,22 @@
 #include "TrainHandler.h"
 
+
+TrainHandler* TrainHandler::instance = NULL;
+
 TrainHandler::TrainHandler()
 {
+	instance = this;
 }
 
 TrainHandler::TrainHandler(BeizerCurve* curve)
 {
 	this->activeCurve = curve;
+	instance = this;
 }
 
 void TrainHandler::setActiveCurve(BeizerCurve* curve)
 {
+	this->activeCurve = curve;
 }
 
 void TrainHandler::addCar(Entity* entity)
@@ -70,4 +76,19 @@ double TrainHandler::getSpeed()
 
 void TrainHandler::update(double dt)
 {
+	
+	for (int i = 0; i < this->trainCarArray.size(); i++)
+	{
+		trainCarData& data= this->trainCarArray[i];
+		data.curvePos += dt*this->speed * (1 / activeCurve->getSegmentDistance(data.segment));
+		if (data.curvePos >= 1.0) data.curvePos = 0;
+		data.segment = activeCurve->getSegmentFromMu(data.curvePos);
+		data.entity->setPosition(activeCurve->getPosition(data.curvePos));
+		Matrix44 rotMatrix= activeCurve->getRotationMatrix(data.curvePos);
+		data.entity->model.m[0] = rotMatrix._21;
+		data.entity->model.m[1] = rotMatrix._22;
+		data.entity->model.m[2] = rotMatrix._23;
+		data.entity->model.setFrontAndOrthonormalize(Vector3(rotMatrix._11, rotMatrix._12, rotMatrix._13));
+		
+	}
 }

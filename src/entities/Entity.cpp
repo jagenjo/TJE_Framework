@@ -70,7 +70,7 @@ Vector3 Entity::getScale()
 Matrix44 Entity::getGlobalMatrix()
 {
     if (parent)
-		return parent->getGlobalMatrix() * model;
+		return model*parent->getGlobalMatrix();
 	else
 		return model;
 }
@@ -111,7 +111,7 @@ void Entity::setScale(Vector3 scale)
 
 void Entity::modifyScale(Vector3 scale)
 {
-	this->setScale(this->getScale() * scale);
+	this->model.scale(scale.x,scale.y,scale.z);
 	
 }
 
