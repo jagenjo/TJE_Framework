@@ -83,6 +83,7 @@
       <Filter>stages</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\TrainHandler.cpp" />
+    <ClCompile Include="..\..\src\Player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -172,6 +173,7 @@
       <Filter>stages</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\TrainHandler.h" />
+    <ClInclude Include="..\..\src\Player.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">
