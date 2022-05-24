@@ -41,7 +41,7 @@ void MeshEntity::render()
 	
 
 	Camera* camera = Camera::current;
-	Matrix44 model = this->globalModel;
+	Matrix44 model = this->getGlobalMatrix();
 	
 	if (!this->getShouldRenderEntity()) {
 		if (this->forceCheckChilds)
@@ -55,7 +55,7 @@ void MeshEntity::render()
 	}
 
 	shader->enable();
-	shader->setUniform("u_model", model);
+	shader->setUniform("u_model", parent==NULL?model:globalModel);
 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
 	shader->setTexture("u_texture", texture,0);
 	shader->setUniform("u_color", Vector4(1, 1, 1, 1));
