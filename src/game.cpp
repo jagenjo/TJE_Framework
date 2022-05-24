@@ -87,6 +87,8 @@ void loadTestCar(Game* game) {
 	positionEntity->addChild(trolleyEntity);
 	stage->getScene()->getRoot()->addChild(positionEntity);
 	trainHandler->addCar(positionEntity);
+	trolleyEntity->maxRenderDist = 10000000000000;
+	trolleyEntity->modifyScale(10);
 	
 }
 
@@ -200,7 +202,7 @@ void Game::render(void)
 	
 
 
-	ground->render();
+	//ground->render();
 
 	
 
