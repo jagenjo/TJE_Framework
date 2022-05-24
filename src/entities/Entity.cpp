@@ -1,20 +1,23 @@
 #include "Entity.h"
 #include "../game.h"
 
-Entity::Entity()
+Entity::Entity(Entity* parent)
 {
 	gameInstance = Game::instance;
 	this->name= "Entity";
 	this->forceCheckChilds = false;
+	this->parent = parent;
 }
 
-Entity::Entity(Vector3 pos,bool checkChilds)
+
+Entity::Entity(Vector3 pos, bool checkChilds, Entity* parent)
 {
 	gameInstance = Game::instance;
 	this->model.setIdentity();
 	this->model.translate(pos.x, pos.y, pos.z);
 	this->name= "Entity";
 	this->forceCheckChilds = checkChilds;
+	this->parent = parent;
 }
 
 Entity::~Entity()
@@ -41,7 +44,12 @@ void Entity::update(float elapsed_time)
 
 Vector3 Entity::getPosition()
 {
-    return this->model.getTranslation();
+	
+	if (this->parent)
+		return this->parent->getPosition() + this->model.getTranslation();
+	else
+		return this->model.getTranslation();
+	
 }
 
 Vector3 Entity::getScale()
@@ -98,6 +106,7 @@ void Entity::modifyScale(Vector3 scale)
 void Entity::addChild(Entity* ent)
 {
 	this->children.push_back(ent);
+	ent->setParent(this);
 	
 }
 
@@ -119,6 +128,11 @@ bool Entity::getShouldRenderEntity()
 Entity* Entity::getParent()
 {
 	return this->parent;
+}
+
+void Entity::setParent(Entity* parentObj)
+{
+	this->parent = parentObj;
 }
 
 

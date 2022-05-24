@@ -28,8 +28,8 @@ public:
 	
 	Entity* parent=nullptr;
 	
-	Entity();
-	Entity(Vector3 pos, bool checkChilds=false);
+	Entity(Entity* parent= NULL);
+	Entity(Vector3 pos, bool checkChilds=false,Entity* parent=NULL);
 	virtual ~Entity();
 	
 	virtual void render();
