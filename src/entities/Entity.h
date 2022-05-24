@@ -23,6 +23,7 @@ public:
 	Matrix44 model;
 	bool forceCheckChilds = false;
 	float maxRenderDist = 300.0f;
+	bool visualRender = true;
 	std::vector<Entity*> children;
 	
 	Entity* parent=nullptr;
@@ -43,7 +44,9 @@ public:
 	void setRotation(Vector3 rotation);
 
 	void move(Vector3 pos);
-	void rotate(float yaw);
+	void rotate(float deg, Vector3 axis=Vector3(0,1,0));
+
+	void setWillRender(bool state){ visualRender = state; }
 	
 	void setScale(Vector3 scale);
 	inline void setScale(float scale) { setScale(Vector3(scale, scale, scale)); }

@@ -61,17 +61,28 @@ Matrix44 Entity::getGlobalMatrix()
 		return model;
 }
 
+void Entity::setPosition(Vector3 pos)
+{
+	this->model.setTranslation(pos.x, pos.y, pos.z);
+}
+
+void Entity::setRotation(Vector3 rotation)
+{
+	//TODO
+	
+}
+
 void Entity::move(Vector3 pos)
 {
 	model.translate(pos.x, pos.y, pos.z);
 	
 }
 
-void Entity::rotate(float yaw)
+void Entity::rotate(float deg, Vector3 axis)
 {
-	model.rotate(yaw*DEG2RAD, Vector3(0, 1, 0));
-
+	model.rotate(deg*DEG2RAD,axis);
 }
+
 
 void Entity::setScale(Vector3 scale)
 {

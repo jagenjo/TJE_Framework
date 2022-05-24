@@ -46,6 +46,11 @@ void MeshEntity::render()
 		return;
 	}		
 	
+	if (!this->visualRender) {
+		Entity::render();
+		return;
+	}
+
 	shader->enable();
 	shader->setUniform("u_model", model);
 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
