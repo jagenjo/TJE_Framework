@@ -13,6 +13,7 @@
 #include "curves.h"
 #include "stages/StagesInclude.h"
 #include "TrackHandler.h"
+#include "Player.h"
 
 
 //some globals
@@ -37,12 +38,7 @@ MeshEntity* ground;
 MeshEntity* playerMesh;
 bool cameraLocked;
 
-struct sPlayer {
-	Vector3 pos;
-	float yaw;
-};
-
-sPlayer player;
+Player player;
 
 
 
@@ -133,7 +129,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	ground = new MeshEntity(groundMesh,texture, shader);
 
 
-	playerMesh = new MeshEntity(mesh, texture, shader);
+	player.InitPlayer();
 	//End coses uri																				//////////
 	new TrackHandler();
 	this->setActiveStage(testStage());
@@ -191,15 +187,14 @@ void Game::render(void)
 	//this->activeScene->render();
 
 	//Coses URI										///
-	playerMesh->move(player.pos);
-	playerMesh->rotate(player.yaw);
+	
 
 
 	ground->render();
 
 	
 
-	playerMesh->render();
+	player.renderPlayer();
 
 
 	//End coses URI									///
@@ -257,21 +252,7 @@ void Game::update(double seconds_elapsed)
 	if (cameraLocked) {
 		SDL_ShowCursor(false);
 
-		Matrix44 playerRotation;
-		Vector3 forward = playerRotation.rotateVector(Vector3(0,0,-1));
-		Vector3 right = playerRotation.rotateVector(Vector3(1, 0, 0));;
-		Vector3 playerVel(0,0,0);
-
-		if (Input::isKeyPressed(SDL_SCANCODE_Q)) player.yaw = +rotSpeed;
-		if (Input::isKeyPressed(SDL_SCANCODE_E)) player.yaw = -rotSpeed;
-
-		
-		if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) playerVel =	playerVel+ (forward*playerSpeed);
-		if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) playerVel = playerVel - (forward * playerSpeed);
-		if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) playerVel = playerVel - (right * playerSpeed);
-		if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) playerVel = playerVel + (right * playerSpeed);
-
-		player.pos = playerVel; //Not player pos but dir
+		player.updatePlayer(seconds_elapsed);
 
 	}
 	else {
