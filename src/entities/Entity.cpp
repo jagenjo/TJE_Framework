@@ -1,20 +1,23 @@
 #include "Entity.h"
 #include "../game.h"
 
-Entity::Entity()
+Entity::Entity(Entity* parent)
 {
 	gameInstance = Game::instance;
 	this->name= "Entity";
 	this->forceCheckChilds = false;
+	this->parent = parent;
 }
 
-Entity::Entity(Vector3 pos,bool checkChilds)
+
+Entity::Entity(Vector3 pos, bool checkChilds, Entity* parent)
 {
 	gameInstance = Game::instance;
 	this->model.setIdentity();
 	this->model.translate(pos.x, pos.y, pos.z);
 	this->name= "Entity";
 	this->forceCheckChilds = checkChilds;
+	this->parent = parent;
 }
 
 Entity::~Entity()
@@ -26,13 +29,18 @@ Entity::~Entity()
 
 void Entity::render()
 {
+	
+	
 	for (int i= 0; i < children.size(); ++i) {
+		
 		children[i]->render();
 	}
 }
 
 void Entity::update(float elapsed_time)
 {
+	this->globalModel = getGlobalMatrix();
+
 	if (!children.size()) return;
 	for (int i = 0; i < children.size(); ++i) {
 		children[i]->update(elapsed_time);
@@ -41,7 +49,13 @@ void Entity::update(float elapsed_time)
 
 Vector3 Entity::getPosition()
 {
-    return this->model.getTranslation();
+	return this->getGlobalMatrix().getTranslation();
+	
+	/*if (this->parent)
+		return this->parent->getPosition() + this->model.getTranslation();
+	else
+		return this->model.getTranslation();*/
+	
 }
 
 Vector3 Entity::getScale()
@@ -61,9 +75,15 @@ Matrix44 Entity::getGlobalMatrix()
 		return model;
 }
 
-void Entity::setPosition(Vector3 pos)
+void Entity::setPosition(Vector3 pos,bool absolutePosition)
 {
-	this->model.setTranslation(pos.x, pos.y, pos.z);
+	if (absolutePosition) {
+		Vector3 globalPos = this->getPosition();
+		this->model.setTranslation(pos.x - globalPos.x, pos.y - globalPos.y, pos.z - globalPos.z);
+	}
+
+	else
+		this->model.setTranslation(pos.x, pos.y, pos.z);
 }
 
 void Entity::setRotation(Vector3 rotation)
@@ -98,6 +118,7 @@ void Entity::modifyScale(Vector3 scale)
 void Entity::addChild(Entity* ent)
 {
 	this->children.push_back(ent);
+	ent->setParent(this);
 	
 }
 
@@ -119,6 +140,11 @@ bool Entity::getShouldRenderEntity()
 Entity* Entity::getParent()
 {
 	return this->parent;
+}
+
+void Entity::setParent(Entity* parentObj)
+{
+	this->parent = parentObj;
 }
 
 

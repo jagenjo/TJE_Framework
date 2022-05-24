@@ -21,6 +21,7 @@ public:
 	EntityType type= EntityType::BASE;
 	std::string name;
 	Matrix44 model;
+	Matrix44 globalModel;
 	bool forceCheckChilds = false;
 	float maxRenderDist = 300.0f;
 	bool visualRender = true;
@@ -28,8 +29,8 @@ public:
 	
 	Entity* parent=nullptr;
 	
-	Entity();
-	Entity(Vector3 pos, bool checkChilds=false);
+	Entity(Entity* parent= NULL);
+	Entity(Vector3 pos, bool checkChilds=false,Entity* parent=NULL);
 	virtual ~Entity();
 	
 	virtual void render();
@@ -40,7 +41,7 @@ public:
 	Vector3 getScale();
 	Matrix44 getGlobalMatrix();
 
-	void setPosition(Vector3 pos);
+	void setPosition(Vector3 pos,bool absolutePosition=false);
 	void setRotation(Vector3 rotation);
 
 	void move(Vector3 pos);
@@ -60,6 +61,7 @@ public:
 	virtual bool getShouldRenderEntity();
 	
 	Entity* getParent();
+	void setParent(Entity* parentObj);
 	
 	virtual void destroy();
 	
