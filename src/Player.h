@@ -16,9 +16,7 @@ public:
 
 	sPlayer player;
 
-	Vector3 playerVel;
-	Vector3 moveDir;
-	Vector3 rotationYaw;
+
 	double ropeLengthRadius;
 	void InitPlayer();
 	void renderPlayer();
