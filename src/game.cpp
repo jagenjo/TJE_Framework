@@ -25,6 +25,9 @@ float angle = 0;
 float mouse_speed = 100.0f;
 FBO* fbo = NULL;
 
+Mesh* trolleyMesh = NULL;
+Texture* trolleyTexture = NULL;
+
 bool playTrack = false;
 BeizerCurve* bc;
 float trackPos = 0;
@@ -40,7 +43,7 @@ Scene* returnTestScene() {
 
 	MeshEntity* testMeshEntity = new MeshEntity(mesh,low_poly_mesh, texture, shader);
 	testMeshEntity->modifyScale(20);
-	baseEntity->addChild(testMeshEntity);
+	//baseEntity->addChild(testMeshEntity);
 
 	
 	
@@ -55,6 +58,17 @@ ProceduralWorldStage* testStage() {
 	
 	
 	return stage;
+}
+
+
+void loadTestCar(Game* game) {
+	trolleyMesh = Mesh::Get("data/test_vehicle.obj");
+	trolleyTexture = Texture::Get("data/test_vehicle.png");
+	Stage* stage = game->activeStage;
+	Entity* positionEntity = new Entity();
+	Entity* trolleyEntity = new MeshEntity(trolleyMesh,trolleyTexture,shader);
+	positionEntity->addChild(trolleyEntity);
+	stage->getScene()->getRoot()->addChild(positionEntity);
 }
 
 Game::Game(int window_width, int window_height, SDL_Window* window)
@@ -91,9 +105,9 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	// example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
 	//this->setActiveScene(returnTestScene());
-
 	new TrackHandler();
 	this->setActiveStage(testStage());
+	loadTestCar(this);
 	
 	
 	//hide the cursor
@@ -143,6 +157,7 @@ void Game::render(void)
 	//this->activeScene->render();
 
 	this->activeStage->render();
+	
 	//Draw the floor grid
 	drawGrid();
 

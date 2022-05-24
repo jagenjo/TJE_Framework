@@ -59,6 +59,30 @@ Vector3 BeizerCurve::getPosition(float mu) //Extracted from http://paulbourke.ne
 	
 }
 
+Vector3 BeizerCurve::getFrontDirection(float mu)
+{
+	return (getPosition(mu) - getPosition((mu) + .0001)).normalize();
+}
+
+Matrix44 BeizerCurve::getRotationMatrix(float mu)  // (1,2,3) Forward (4,5,6) right (7,8,9) up
+{
+	Matrix44 toReturn;
+	Vector3 forward = getFrontDirection(mu);
+	Vector3 right = Vector3(0,1,0).cross(forward).normalize();
+	toReturn._11 = forward.x;
+	toReturn._12 = forward.y;
+	toReturn._13 = forward.z;
+	toReturn._21 = right.x;
+	toReturn._22 = right.y;
+	toReturn._23 = right.z;
+	toReturn._31 = 0;
+	toReturn._32 = 1;
+	toReturn._33 = 0;
+	return toReturn;
+	
+	
+}
+
 void BeizerCurve::cacheSegments(float increments)
 {
 	this->numSegments = ceil(1.0 / increments);

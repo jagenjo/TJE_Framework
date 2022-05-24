@@ -20,6 +20,8 @@ class BeizerCurve
 		inline std::vector<Vector3> getPoints() { return curvePoints; };
 		
 		Vector3 getPosition(float mu);
+		Vector3 getFrontDirection(float mu);
+		Matrix44 getRotationMatrix(float mu);
 		
 		void clearSegmentCache() {
 			cachedSegments.clear();

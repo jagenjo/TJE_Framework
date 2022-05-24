@@ -82,6 +82,7 @@
     <ClCompile Include="..\..\src\stages\ProceduralWorldStage.cpp">
       <Filter>stages</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\TrainHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -170,6 +171,7 @@
     <ClInclude Include="..\..\src\stages\StagesInclude.h">
       <Filter>stages</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\TrainHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">

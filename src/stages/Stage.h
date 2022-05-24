@@ -16,7 +16,7 @@ public:
 	Stage();
 	Stage(Scene* scene);
 	
-	virtual void render() {};
+	virtual void render();
 	virtual void update(double seconds_elapsed);
 	virtual void initStage() {};
 
