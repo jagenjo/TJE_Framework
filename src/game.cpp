@@ -27,6 +27,22 @@ bool playTrack = false;
 BeizerCurve* bc;
 float trackPos = 0;
 
+//Coses Uri
+MeshEntity* ground;
+MeshEntity* playerMesh;
+bool cameraLocked;
+
+struct sPlayer {
+	Vector3 pos;
+	float yaw;
+};
+
+sPlayer player;
+
+
+
+
+//end coses uri
 Game* Game::instance = NULL;
 
 
@@ -83,6 +99,17 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	// example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
 	this->setActiveScene(returnTestScene());
+
+	//Coses Uri																					///////////
+	Mesh* groundMesh = new Mesh();
+	groundMesh->createPlane(10000);
+	cameraLocked = FALSE;
+
+	ground = new MeshEntity(groundMesh,texture, shader);
+
+
+	playerMesh = new MeshEntity(mesh, texture, shader);
+	//End coses uri																				//////////
 	
 	//hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse
@@ -109,6 +136,8 @@ void Game::render(void)
 	Matrix44 m;
 	m.rotate(angle*DEG2RAD, Vector3(0, 1, 0));
 
+
+
 	/*if (shader)
 	{
 		//enable shader
@@ -129,6 +158,21 @@ void Game::render(void)
 		shader->disable();
 	}*/
 	//this->activeScene->render();
+
+	//Coses URI										///
+	playerMesh->move(player.pos);
+	playerMesh->rotate(player.yaw);
+
+
+	ground->render();
+
+	
+
+	playerMesh->render();
+
+
+	//End coses URI									///
+
 
 	//TEST: DRAW BEIZER POINTS;
 	glPointSize(5);
@@ -182,6 +226,8 @@ void Game::update(double seconds_elapsed)
 {
 	float speed = seconds_elapsed * mouse_speed; //the speed is defined by the seconds_elapsed so it goes constant
 
+	float playerSpeed = 5.0f * seconds_elapsed;
+	float rotSpeed = 10.0f * seconds_elapsed;
 	//example
 	angle += (float)seconds_elapsed * 10.0f;
 
@@ -206,13 +252,43 @@ void Game::update(double seconds_elapsed)
 	}
 	else
 		trackPos = 0;
+
+	//Coses URI
+	if (cameraLocked) {
+		SDL_ShowCursor(false);
+
+		Matrix44 playerRotation;
+		Vector3 forward = playerRotation.rotateVector(Vector3(0,0,-1));
+		Vector3 right = playerRotation.rotateVector(Vector3(1, 0, 0));;
+		Vector3 playerVel(0,0,0);
+
+		if (Input::isKeyPressed(SDL_SCANCODE_Q)) player.yaw = +rotSpeed;
+		if (Input::isKeyPressed(SDL_SCANCODE_E)) player.yaw = -rotSpeed;
+
+		
+		if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) playerVel =	playerVel+ (forward*playerSpeed);
+		if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) playerVel = playerVel - (forward * playerSpeed);
+		if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) playerVel = playerVel - (right * playerSpeed);
+		if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) playerVel = playerVel + (right * playerSpeed);
+
+		player.pos = playerVel; //Not player pos but dir
+
+	}
+	else {
+		SDL_ShowCursor(true);
+		if (Input::isKeyPressed(SDL_SCANCODE_LSHIFT)) speed *= 10; //move faster with left shift
+		if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) camera->move(Vector3(0.0f, 0.0f, 1.0f) * speed);
+		if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) camera->move(Vector3(0.0f, 0.0f, -1.0f) * speed);
+		if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) camera->move(Vector3(1.0f, 0.0f, 0.0f) * speed);
+		if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) camera->move(Vector3(-1.0f, 0.0f, 0.0f) * speed);
+
+	}
+
+	if (Input::isKeyPressed(SDL_SCANCODE_O)) cameraLocked = !cameraLocked;
+
+	// end Coses URI
 	
 	//async input to move the camera around
-	if(Input::isKeyPressed(SDL_SCANCODE_LSHIFT) ) speed *= 10; //move faster with left shift
-	if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) camera->move(Vector3(0.0f, 0.0f, 1.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) camera->move(Vector3(0.0f, 0.0f,-1.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) camera->move(Vector3(1.0f, 0.0f, 0.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) camera->move(Vector3(-1.0f,0.0f, 0.0f) * speed);
 	
 	if (Input::wasKeyPressed(SDL_SCANCODE_P))
 		bc->addPoint(camera->eye*Vector3(1,0,1));
