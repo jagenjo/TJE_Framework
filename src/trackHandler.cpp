@@ -18,13 +18,14 @@ void TrackHandler::setActiveCurve(BeizerCurve* curve)
 {
 	this->activeCurve = curve;
 	this->trackPosition = 0.0;
+	
 	calculateTrack();
 }
 
 void TrackHandler::updatePosition(double dt)
 {
 	if (!calculated) {
-		calculated = true;
+
 		calculateTrack();
 	}
 	
@@ -33,6 +34,7 @@ void TrackHandler::updatePosition(double dt)
 void TrackHandler::calculateTrack()
 {
 	BeizerCurve* bc = this->activeCurve;
+	calculated = true;
 	//std::cout << bc->numSegments << std::endl;
 	for (int i = 0; i < bc->numSegments;++i) {
 		Vector3& data = bc->cachedSegments[i];
@@ -99,7 +101,7 @@ void TrackHandler::calculateTrack()
 		tieDataArray.push_back(data);
 		
 	}
-
+	std::cout << "Track Calculation done\n";
 	
 }
 

@@ -3,6 +3,7 @@
 #include "../TrackHandler.h"
 #include "../curves.h"
 #include "../entities/EntityInclude.h"
+#include "../trainHandler.h"
 
 
 
@@ -75,26 +76,43 @@ void ProceduralWorldStage::renderScenery()
 
 ProceduralWorldStage::ProceduralWorldStage(Scene* scene):Stage(scene)
 {
-	stageType = eStageType::PROCEDURAL_WORLD;
+	initStage();
+}
+
+ProceduralWorldStage::ProceduralWorldStage(Scene* scene, TrainHandler* trainHandler):Stage(scene)
+{
+	this->trainHandler = trainHandler;
+	initStage();
 	
-	this->trackHandler = TrackHandler::instance;
 	
-	//TODO: Generate spline randomly
-	std::vector<Vector3> positions({ Vector3(0, 0, 0), Vector3(5, 0, 2), Vector3(10, 0, 5), Vector3(12, 0, 10), Vector3(15, 0, 20), Vector3(20,0,30), Vector3(35,0,38), Vector3(40,0,45),
-		Vector3(50,0,50),Vector3(80,0,100),Vector3(120,0,150),Vector3(180,0,160),Vector3(200,0,200),Vector3(250,0,300),Vector3(400,0,350),Vector3(500,0,500)
-			});
-	BeizerCurve* curve = new BeizerCurve(positions);
-	this->trackHandler->setActiveCurve(curve);
-	generateProceduralScenery();
 }
 
 ProceduralWorldStage::~ProceduralWorldStage()
 {
 }
 
-void ProceduralWorldStage::update(float deltaTime)
+void ProceduralWorldStage::initStage()
+{
+	stageType = eStageType::PROCEDURAL_WORLD;
+
+	this->trackHandler = TrackHandler::instance;
+
+	//TODO: Generate spline randomly
+	std::vector<Vector3> positions({ Vector3(0, 0, 0), Vector3(5, 0, 2), Vector3(10, 0, 5), Vector3(12, 0, 10), Vector3(15, 0, 20), Vector3(20,0,30), Vector3(35,0,38), Vector3(40,0,45),
+		Vector3(50,0,50),Vector3(80,0,100),Vector3(120,0,150),Vector3(180,0,160),Vector3(200,0,200),Vector3(250,0,300),Vector3(400,0,350),Vector3(500,0,500)
+		});
+	BeizerCurve* curve = new BeizerCurve(positions);
+	this->trackHandler->setActiveCurve(curve);
+	generateProceduralScenery();
+}
+
+void ProceduralWorldStage::update(double deltaTime)
 {
 	this->trackHandler->updatePosition(deltaTime);
+	if (this->trainHandler)
+		this->trainHandler->update(deltaTime);
+	Stage::update(deltaTime);
+
 	
 }
 
