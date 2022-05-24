@@ -36,7 +36,7 @@ float trackPos = 0;
 //Coses Uri
 MeshEntity* ground;
 MeshEntity* playerMesh;
-bool cameraLocked;
+
 
 Player player;
 

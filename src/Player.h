@@ -11,6 +11,7 @@ public:
 	struct sPlayer {
 		Vector3 pos;
 		float yaw;
+		float pitch;
 	};
 
 	sPlayer player;
@@ -18,9 +19,10 @@ public:
 	Vector3 playerVel;
 	Vector3 moveDir;
 	Vector3 rotationYaw;
-
+	double ropeLengthRadius;
 	void InitPlayer();
 	void renderPlayer();
 	void updatePlayer(double seconds_elapsed);
+	
 };
 
