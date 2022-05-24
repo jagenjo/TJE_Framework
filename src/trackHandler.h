@@ -13,6 +13,14 @@ struct trackQuad {
 	trackQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4);
 };
 
+struct trackTieData {
+	double trackLocation;
+	Vector3 center;
+	Vector3 leftCenter;
+	Vector3 rightCenter;
+	std::vector<trackQuad> quads;	
+};
+
 struct trackSectionData {
 	Vector3 startPoint;
 	Vector3 leftRailStart;
@@ -34,6 +42,7 @@ private:
 	double trackPosition = 0.0;
 	Matrix44 posRotMatrix= Matrix44::IDENTITY;
 	std::vector<trackSectionData> sectionDataArray;
+	std::vector<trackTieData> tieDataArray;
 public:
 	static TrackHandler* instance;
 

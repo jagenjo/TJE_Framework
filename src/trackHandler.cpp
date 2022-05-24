@@ -4,6 +4,8 @@
 
 const int trackSeparation = 10;
 float track_size = 1.0f;
+float tie_width = 1.0f;
+float tie_height = .25f;
 bool calculated = false;
 
 TrackHandler* TrackHandler::instance = NULL;
@@ -69,17 +71,32 @@ void TrackHandler::calculateTrack()
 		data.quads.push_back(trackQuad(data.rightRailTopLeft + data.rightVector * track_size, nextData.rightRailTopLeft + nextData.rightVector * track_size, nextData.rightRailTopLeft + nextData.rightVector * track_size - Vector3(0,track_size,0), data.rightRailTopLeft + data.rightVector * track_size-Vector3(0,track_size,0)));
 		data.quads.push_back(trackQuad(data.rightRailTopLeft, nextData.rightRailTopLeft, nextData.rightRailTopLeft + nextData.rightVector * track_size, data.rightRailTopLeft + data.rightVector * track_size));
 		data.quads.push_back(trackQuad(data.rightRailTopLeft - Vector3(0, track_size, 0), nextData.rightRailTopLeft - Vector3(0, track_size, 0), nextData.rightRailTopLeft + nextData.rightVector * track_size - Vector3(0, track_size, 0), data.rightRailTopLeft + data.rightVector * track_size - Vector3(0, track_size, 0)));
-		
-		
+	}
 
-		/*data.quads.push_back(trackQuad(data.leftRailTopLeft, nextData.leftRailTopLeft, nextData.leftRailTopLeft + nextData.rightVector * track_size, data.leftRailTopLeft + data.rightVector * track_size));
-		data.quads.push_back(trackQuad(data.leftRailTopLeft - Vector3(0, track_size, 0), nextData.leftRailTopLeft - Vector3(0, track_size, 0), (nextData.leftRailTopLeft + nextData.rightVector * track_size) - Vector3(0, track_size, 0), (data.leftRailTopLeft + data.rightVector * track_size) - Vector3(0, track_size, 0)));
-		data.quads.push_back(trackQuad(data.leftRailTopLeft, nextData.leftRailTopLeft, (nextData.leftRailTopLeft  - Vector3(0, track_size, 0)), (data.leftRailTopLeft) - Vector3(0, track_size, 0)));
-		data.quads.push_back(trackQuad(data.leftRailTopLeft, nextData.leftRailTopLeft, (nextData.leftRailTopLeft ) - Vector3(0, track_size, 0), (data.leftRailTopLeft + data.rightVector * track_size) - Vector3(0, track_size, 0)));
+	//Calculate ties (tests)
+	float half_width = tie_width / 2.0;
+	float half_separation = trackSeparation / 2.0;
+	
+	Vector3 half_height_vector(0, tie_height / 2.0, 0);
+	for (double i = 0; i < 1.0; i += .08) {
+		trackTieData data;
+		data.trackLocation = i;
+		Vector3 pos = bc->getPosition(i);
+		data.center = pos;
+		int section= bc->getSegmentFromMu(i);
+		if (section == bc->numSegments - 1) continue;
+		Vector3 dir = bc->getSegmentDirection(section);
+		Vector3 right = dir.cross(Vector3(0, 1, 0));
+		Vector3 leftC= pos - right * half_separation;
+		Vector3 rightC= pos + right * half_separation;
+
+		data.leftCenter = leftC;
+		data.rightCenter = rightC;
 		
-		data.quads.push_back(trackQuad(data.rightRailTopLeft, nextData.rightRailTopLeft, nextData.rightRailTopLeft + nextData.rightVector * track_size, data.rightRailTopLeft + data.rightVector * track_size));
-		data.quads.push_back(trackQuad(data.rightRailTopLeft - Vector3(0, track_size, 0), nextData.rightRailTopLeft - Vector3(0, track_size, 0), (nextData.rightRailTopLeft + nextData.rightVector * track_size) - Vector3(0, track_size, 0), (data.rightRailTopLeft + data.rightVector * track_size) - Vector3(0, track_size, 0)));
-		*/
+		data.quads.push_back(trackQuad((leftC - half_width * dir)+ half_height_vector, (leftC + half_width * dir) + half_height_vector, (rightC + half_width * dir) + half_height_vector, (rightC - half_width * dir) + half_height_vector));
+		data.quads.push_back(trackQuad((leftC - half_width * dir) - half_height_vector, (leftC + half_width * dir) - half_height_vector, (rightC + half_width * dir) - half_height_vector, (rightC - half_width * dir) - half_height_vector));
+		
+		tieDataArray.push_back(data);
 		
 	}
 
@@ -114,6 +131,22 @@ void TrackHandler::renderTrack(int maxDistance)
 			std::cout << quad.v3.x << " " << quad.v3.y << " " << quad.v3.z << std::endl;
 			std::cout << quad.v4.x << " " << quad.v4.y << " " << quad.v4.z << std::endl;*/
 			
+		}
+	}
+
+	for (int i = 0; i < tieDataArray.size(); ++i) {
+		trackTieData& data= tieDataArray[i];
+		for (int j = 0; j < data.quads.size(); ++j) {
+			trackQuad& quad = data.quads[j];
+			glColor3f(1, 0, 0);
+
+			glVertex3f(quad.v1.x, quad.v1.y, quad.v1.z);
+			glColor3f(0, 1, 0);
+			glVertex3f(quad.v2.x, quad.v2.y, quad.v2.z);
+			glColor3f(0, 0, 1);
+			glVertex3f(quad.v3.x, quad.v3.y, quad.v3.z);
+			glColor3f(1, 1, 0);
+			glVertex3f(quad.v4.x, quad.v4.y, quad.v4.z);
 		}
 	}
 	
