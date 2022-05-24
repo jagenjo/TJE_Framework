@@ -21,8 +21,9 @@ void Stage::render()
 	this->scene->render();
 }
 
-void Stage::update(double seconds_elapsed)
+ void Stage::update(double seconds_elapsed)
 {
+	
 	if (this->scene)
 		this->scene->update(seconds_elapsed);
 }

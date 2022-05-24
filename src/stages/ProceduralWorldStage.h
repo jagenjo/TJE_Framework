@@ -4,6 +4,7 @@
 
 
 class TrackHandler;
+class TrainHandler;
 class Scene;
 class GroupEntity;
 
@@ -25,7 +26,8 @@ class ProceduralWorldStage :
     public Stage
 {
 	private:
-		TrackHandler* trackHandler;
+		TrackHandler* trackHandler=NULL;
+		TrainHandler* trainHandler=NULL;
 		
 		std::vector<sceneryData> scenery;
 
@@ -34,9 +36,11 @@ class ProceduralWorldStage :
 		void renderScenery();
 	public:
 		ProceduralWorldStage(Scene* scene);
+		ProceduralWorldStage(Scene* scene, TrainHandler* trainHandler);
 		~ProceduralWorldStage();
+		void initStage();
 
-		void update(float deltaTime) ;
+		void update(double deltaTime) ;
 		void render();
 };
 

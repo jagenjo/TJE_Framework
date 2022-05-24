@@ -14,6 +14,7 @@
 #include "stages/StagesInclude.h"
 #include "TrackHandler.h"
 #include "Player.h"
+#include "TrainHandler.h"
 
 
 //some globals
@@ -28,6 +29,7 @@ FBO* fbo = NULL;
 
 Mesh* trolleyMesh = NULL;
 Texture* trolleyTexture = NULL;
+TrainHandler* trainHandler=NULL;
 
 bool playTrack = false;
 BeizerCurve* bc;
@@ -66,7 +68,9 @@ Scene* returnTestScene() {
 }
 
 ProceduralWorldStage* testStage() {
-	ProceduralWorldStage* stage = new ProceduralWorldStage(returnTestScene());
+	ProceduralWorldStage* stage = new ProceduralWorldStage(returnTestScene(),trainHandler);
+
+	
 	
 	
 	return stage;
@@ -77,10 +81,13 @@ void loadTestCar(Game* game) {
 	trolleyMesh = Mesh::Get("data/test_vehicle.obj");
 	trolleyTexture = Texture::Get("data/test_vehicle.png");
 	Stage* stage = game->activeStage;
-	Entity* positionEntity = new Entity();
+	//Entity* positionEntity = new Entity();
+	Entity* positionEntity = new MeshEntity(mesh, texture, shader);
 	Entity* trolleyEntity = new MeshEntity(trolleyMesh,trolleyTexture,shader);
 	positionEntity->addChild(trolleyEntity);
 	stage->getScene()->getRoot()->addChild(positionEntity);
+	trainHandler->addCar(positionEntity);
+	
 }
 
 Game::Game(int window_width, int window_height, SDL_Window* window)
@@ -105,10 +112,13 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	camera = new Camera();
 	camera->lookAt(Vector3(0.f,100.f, 100.f),Vector3(0.f,0.f,0.f), Vector3(0.f,1.f,0.f)); //position the camera and point to 0,0,0
 	camera->setPerspective(70.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
+	
+	new TrackHandler();
 
 	//load one texture without using the Texture Manager (Texture::Get would use the manager)
 	texture = new Texture();
  	texture->load("data/texture.tga");
+	trainHandler = new TrainHandler();
 
 	// example of loading Mesh from Mesh Manager
 	mesh = Mesh::Get("data/sphere.obj");
@@ -117,8 +127,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	// example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
 	//this->setActiveScene(returnTestScene());
-
-
+	
 	
 
 	//Coses Uri																					///////////
@@ -131,11 +140,12 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 	player.InitPlayer();
 	//End coses uri																				//////////
-	new TrackHandler();
 	this->setActiveStage(testStage());
 
 	loadTestCar(this);
+	trainHandler->setActiveCurve(TrackHandler::instance->getActiveCurve());
 	//this->setActiveScene(returnTestScene());
+	
 
 	
 	//hide the cursor
