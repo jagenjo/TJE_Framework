@@ -1,56 +1,118 @@
 #include "Player.h"
 #include "input.h"
+#include "game.h"
 
-void Player::InitPlayer()
+
+
+const float maxSpeed=10;
+const float y_sensitivity = 15;
+const float x_sensitivity = 10;
+
+
+
+Player::Player()
 {
 	Mesh* mesh = Mesh::Get("data/playerTemp.obj");
 	Texture* texture = new Texture();
 	texture->load("data/playerTemp.png");
 	Shader* shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
 	playerMesh = new MeshEntity(mesh, texture, shader);
+	ropeLengthRadius = 30.0f;
+	
+}
+
+void Player::InitPlayer()
+{	
+
+
 
 }
 
 void Player::renderPlayer()
 {
+	std::cout << (this->playerMesh->parent == NULL) << std::endl;
 	playerMesh->render();
+	
 }
 
 void Player::updatePlayer(double seconds_elapsed)
 {
-	float playerSpeed = 5.0f * seconds_elapsed;
-	float rotSpeed = 10.0f * seconds_elapsed;
-	float friction = 1.0f/3.0f;
-
-	Matrix44 playerRotation;
-	Vector3 forward = playerRotation.rotateVector(Vector3(0, 0, -1));
-	Vector3 right = playerRotation.rotateVector(Vector3(1, 0, 0));;
+	Camera* cam = Camera::current;
+	Game* game = Game::instance;
+	if (!game->cameraLocked) return;
 	
-	Vector3 playerAcc(0, 0, 0);
-	Vector3 frictionVec(0, 0, 0);
+	Vector3 front = this->playerMesh->globalModel.frontVector();
+	Vector3 top = this->playerMesh->globalModel.topVector();
+	Vector3 right = front.cross(top);
 
-	if (Input::isKeyPressed(SDL_SCANCODE_Q)) player.yaw = +rotSpeed;
-	if (Input::isKeyPressed(SDL_SCANCODE_E)) player.yaw = -rotSpeed;
-
-
-	if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) playerAcc = (forward * playerSpeed);
-	if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) playerAcc = (forward * -playerSpeed);
-	if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) playerAcc = (right * -playerSpeed);
-	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) playerAcc = (right * playerSpeed);
-
-	frictionVec = playerVel * friction;
-	playerVel += playerAcc;
-	playerVel = playerVel - frictionVec;
-	playerVel.x = clamp(playerVel.x,-20.0, 20.0);
-	playerVel.y = clamp(playerVel.y, -20.0, 20.0);
-	playerVel.z = clamp(playerVel.z, -20.0, 20.0);
-
-	printf("player vel x= %d, player vel y = %d\n", playerVel.x, playerVel.y);
-	printf("friction x= %d, friction y = %d\n", frictionVec.x, frictionVec.y);
+	
+	
+	
+	float y_movement = -Input::mouse_delta.y * seconds_elapsed*y_sensitivity;
+	float x_movement= -Input::mouse_delta.x * seconds_elapsed*x_sensitivity;
 
 
+	this->playerMesh->rotate(y_movement,right);
+	this->playerMesh->rotate(x_movement,top);
+		
+	Matrix44 newGlobal= this->playerMesh->getGlobalMatrix();
+	front= newGlobal.frontVector();
+	top = newGlobal.topVector();
+	right = newGlobal.rightVector();
 
-	player.pos += playerVel;
-	playerMesh->move(playerVel); //modify move function so that the move is smooth
-	playerMesh->rotate(player.yaw);
+	Vector3 newEye = this->playerMesh->getGlobalMatrix().getTranslation();
+		
+	cam->lookAt(newEye, newEye + front , top);
+		
+
+	Input::centerMouse();
+
+	bool wasMoved = false;
+	
+	if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) {
+		wasMoved = true;
+		speedVector+= front*seconds_elapsed*acceleration;
+	}
+	if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) {
+		wasMoved = true;
+		speedVector-= front*seconds_elapsed*acceleration;
+	}
+	if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) {
+		wasMoved = true;
+		speedVector+= right*seconds_elapsed*acceleration;
+	}
+	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) {
+		wasMoved = true;
+		speedVector-= right*seconds_elapsed*acceleration;
+	}
+
+	
+	this->playerMesh->model.translateGlobal(speedVector.x, speedVector.y, speedVector.z);
+
+	//print speedvector to console
+	std::cout << speedVector.x << " " << speedVector.y << " " << speedVector.z <<" - "<<speedVector.length() << std::endl;
+	
+	float distanceFromCar = this->playerMesh->getGlobalMatrix().getTranslation().distance(Vector3()); //For now its from 0,0,0
+
+	if (!wasMoved||distanceFromCar> ropeLengthRadius) {
+		float multiplier = distanceFromCar > ropeLengthRadius ? 3.0 : .8;
+
+		speedVector -= speedVector * multiplier * seconds_elapsed;
+		if (abs(speedVector.length()) <= .000002)
+			speedVector = Vector3(0, 0, 0);
+		
+	}
+	
+
+	
+
+
+
 }
+
+void Player::applyMovementForce(eDirection direction, double seconds_elapsed)
+{
+
+}
+
+

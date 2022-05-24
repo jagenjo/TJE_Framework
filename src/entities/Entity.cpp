@@ -69,10 +69,10 @@ Vector3 Entity::getScale()
 
 Matrix44 Entity::getGlobalMatrix()
 {
-    if (parent)
-		return model*parent->getGlobalMatrix();
+	if (parent == NULL)
+		return model * Matrix44::IDENTITY;
 	else
-		return model;
+		return model*parent->getGlobalMatrix();
 }
 
 void Entity::setPosition(Vector3 pos,bool absolutePosition)

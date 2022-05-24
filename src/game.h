@@ -29,6 +29,7 @@ public:
 	float elapsed_time;
 	int fps;
 	bool must_exit;
+	bool cameraLocked;
 
 	//some vars
 	Camera* camera; //our global camera

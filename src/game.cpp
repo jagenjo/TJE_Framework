@@ -38,9 +38,9 @@ float trackPos = 0;
 //Coses Uri
 MeshEntity* ground;
 MeshEntity* playerMesh;
-bool cameraLocked;
 
-Player player;
+
+Player* player= NULL;
 
 
 
@@ -139,8 +139,8 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 	ground = new MeshEntity(groundMesh,texture, shader);
 
-
-	player.InitPlayer();
+	player = new Player();
+	
 	//End coses uri																				//////////
 	this->setActiveStage(testStage());
 
@@ -206,7 +206,7 @@ void Game::render(void)
 
 	
 
-	player.renderPlayer();
+	player->renderPlayer();
 
 
 	//End coses URI									///
@@ -264,7 +264,7 @@ void Game::update(double seconds_elapsed)
 	if (cameraLocked) {
 		SDL_ShowCursor(false);
 
-		player.updatePlayer(seconds_elapsed);
+		player->updatePlayer(seconds_elapsed);
 
 	}
 	else {
@@ -277,7 +277,11 @@ void Game::update(double seconds_elapsed)
 
 	}
 
-	if (Input::isKeyPressed(SDL_SCANCODE_O)) cameraLocked = !cameraLocked;
+	if (Input::wasKeyPressed(SDL_SCANCODE_O))
+	{
+		cameraLocked = !cameraLocked;
+		Input::centerMouse();
+	};
 
 	// end Coses URI
 	
@@ -285,8 +289,8 @@ void Game::update(double seconds_elapsed)
 	
 	
 	//to navigate with the mouse fixed in the middle
-	if (mouse_locked)
-		Input::centerMouse();
+	/*if (mouse_locked)
+		Input::centerMouse();*/
 }
 
 //Keyboard event handler (sync input)

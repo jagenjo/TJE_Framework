@@ -27,7 +27,7 @@ public:
 	bool visualRender = true;
 	std::vector<Entity*> children;
 	
-	Entity* parent=nullptr;
+	Entity* parent=NULL;
 	
 	Entity(Entity* parent= NULL);
 	Entity(Vector3 pos, bool checkChilds=false,Entity* parent=NULL);

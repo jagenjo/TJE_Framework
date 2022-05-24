@@ -118,7 +118,9 @@ public:
 	float& operator [] (int n) { return v[n]; }
 	void operator *= (float v) { x *= v; y *= v; z *= v; }
 	void operator += (float v) { x += v; y += v; z += v; }
+	void operator -= (float v) { x -= v; y -= v; z -= v; }
 	void operator += (Vector3 v) { x += v.x; y += v.y; z += v.z; }
+	void operator -= (Vector3 v) { x -= v.x; y -= v.y; z -= v.z; }
 	
 };
 
