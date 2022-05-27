@@ -55,7 +55,7 @@ void TrackHandler::calculateTrack()
 	
 	for (int i = 0; i < sectionDataArray.size(); ++i) {
 		trackSectionData& data = sectionDataArray[i];
-		std::cout << data.leftRailTopLeft.x << "," << data.leftRailTopLeft.y << "," << data.leftRailTopLeft.z << std::endl;
+		//std::cout << data.leftRailTopLeft.x << "," << data.leftRailTopLeft.y << "," << data.leftRailTopLeft.z << std::endl;
 			
 		if (i == 0 || i == sectionDataArray.size() - 1) {
 			data.quads.push_back(trackQuad(data.leftRailTopLeft, data.leftRailTopLeft + data.rightVector * track_size, (data.leftRailTopLeft + data.rightVector * track_size) - Vector3(0, track_size, 0), data.leftRailTopLeft - Vector3(0, track_size, 0)));

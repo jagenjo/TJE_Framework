@@ -30,7 +30,7 @@ void Player::InitPlayer()
 
 void Player::renderPlayer()
 {
-	std::cout << (this->playerMesh->parent == NULL) << std::endl;
+	
 	playerMesh->render();
 	
 }
