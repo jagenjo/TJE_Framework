@@ -54,6 +54,11 @@ Matrix44 TrainHandler::getCarDirPos(int carNum) //// (1,2,3) Forward (4,5,6) rig
 	return rotVector;
 }
 
+Vector3 TrainHandler::getCarDisplacement(int carNum)
+{
+	return this->trainCarArray[carNum].displacement;
+}
+
 std::vector<Matrix44> TrainHandler::getTrainDirPos()
 {
 	std::vector<Matrix44> toReturn;
@@ -80,6 +85,7 @@ void TrainHandler::update(double dt)
 	for (int i = 0; i < this->trainCarArray.size(); i++)
 	{
 		trainCarData& data= this->trainCarArray[i];
+		Vector3 oldPos= data.entity->getPosition();
 		data.curvePos += dt*this->speed * (1 / activeCurve->getSegmentDistance(data.segment));
 		if (data.curvePos >= 1.0) data.curvePos = 0;
 		data.segment = activeCurve->getSegmentFromMu(data.curvePos);
@@ -89,6 +95,6 @@ void TrainHandler::update(double dt)
 		data.entity->model.m[1] = rotMatrix._22;
 		data.entity->model.m[2] = rotMatrix._23;
 		data.entity->model.setFrontAndOrthonormalize(Vector3(rotMatrix._11, rotMatrix._12, rotMatrix._13));
-		
+		data.displacement= data.entity->getPosition() - oldPos;
 	}
 }

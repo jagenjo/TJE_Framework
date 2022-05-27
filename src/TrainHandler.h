@@ -7,7 +7,7 @@ struct trainCarData {
 	int carIndex;
 	double curvePos;
 	int segment;
-	
+	Vector3 displacement;
 	
 };
 
@@ -34,6 +34,8 @@ public:
 	Vector3 getCarPosition(int carNum);
 	Matrix44 getCarDirection(int carNum); 
 	Matrix44 getCarDirPos(int carNum);
+
+	Vector3 getCarDisplacement(int carNum);
 	
 	std::vector<Matrix44> getTrainDirPos();
 	

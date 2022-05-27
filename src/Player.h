@@ -5,9 +5,16 @@
 #include "entities/EntityInclude.h"
 #include "extra/commonItems.h"
 
+class TrainHandler;
 
 class Player
 {
+private:
+	TrainHandler* trainHandler;
+	float getDecelerationMultiplier(float distanceFromCar, bool movingAway);
+	Vector3 getVectorWhenPushed();
+
+
 public:
 	MeshEntity* playerMesh;
 	float yaw = 0.0f;

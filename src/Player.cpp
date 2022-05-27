@@ -1,6 +1,7 @@
 #include "Player.h"
 #include "input.h"
 #include "game.h"
+#include "TrainHandler.h"
 
 
 
@@ -18,6 +19,7 @@ Player::Player()
 	Shader* shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
 	playerMesh = new MeshEntity(mesh, texture, shader);
 	ropeLengthRadius = 30.0f;
+	this->trainHandler = TrainHandler::instance;
 	
 }
 
@@ -35,12 +37,36 @@ void Player::renderPlayer()
 	
 }
 
+float Player::getDecelerationMultiplier(float distanceFromCar, bool movingAway) {
+	if (movingAway) {
+		if (distanceFromCar >= this->ropeLengthRadius)
+			return 100.0f;
+		else if (distanceFromCar > this->ropeLengthRadius * .9)
+			return 3.0f;
+	}
+	return .8f;
+}
+
+Vector3 Player::getVectorWhenPushed() {
+	Vector3 plPos = this->playerMesh->getPosition();
+	Vector3 carPos = this->trainHandler->getCarPosition(0);
+
+	Vector3 carToPlayer = (carPos-plPos).normalize();
+	Vector3 carToPlayerXZ = Vector3(carToPlayer.x, 0, carToPlayer.z);
+	return carToPlayerXZ;
+	
+	
+}
+
 void Player::updatePlayer(double seconds_elapsed)
 {
 	Camera* cam = Camera::current;
 	Game* game = Game::instance;
 	if (!game->cameraLocked) return;
 	
+	Vector3 oldPos= playerMesh->getPosition();
+	Vector3 carPos= trainHandler->getCarPosition(0);
+
 	Vector3 front = this->playerMesh->globalModel.frontVector();
 	Vector3 top = this->playerMesh->globalModel.topVector();
 	Vector3 right = front.cross(top);
@@ -60,9 +86,6 @@ void Player::updatePlayer(double seconds_elapsed)
 	top = newGlobal.topVector();
 	right = newGlobal.rightVector();
 
-	Vector3 newEye = this->playerMesh->getGlobalMatrix().getTranslation();
-		
-	cam->lookAt(newEye, newEye + front , top);
 		
 
 	Input::centerMouse();
@@ -89,21 +112,31 @@ void Player::updatePlayer(double seconds_elapsed)
 	
 	this->playerMesh->model.translateGlobal(speedVector.x, speedVector.y, speedVector.z);
 
+	Vector3 newPos= playerMesh->getPosition();
 	//print speedvector to console
-	std::cout << speedVector.x << " " << speedVector.y << " " << speedVector.z <<" - "<<speedVector.length() << std::endl;
+	//std::cout << speedVector.x << " " << speedVector.y << " " << speedVector.z <<" - "<<speedVector.length() << std::endl;
 	
-	float distanceFromCar = this->playerMesh->getGlobalMatrix().getTranslation().distance(Vector3()); //For now its from 0,0,0
-
-	if (!wasMoved||distanceFromCar> ropeLengthRadius) {
-		float multiplier = distanceFromCar > ropeLengthRadius ? 3.0 : .8;
-		if (distanceFromCar > ropeLengthRadius * 1.5f) speedVector = Vector3(0, 0, 0);  
+	float distanceFromCar = this->playerMesh->getGlobalMatrix().getTranslation().distance(carPos); //For now its from 0,0,0
+	bool movingAway = (oldPos.distance(carPos) <= newPos.distance(carPos));  //TODO: Change vec3(0,0,0) to car position;
+	if (!wasMoved||distanceFromCar> ropeLengthRadius*.9&&movingAway) {
+		float multiplier = getDecelerationMultiplier(distanceFromCar, movingAway); //((distanceFromCar > ropeLengthRadius) &&movingAway) ? 3.0 : .8;
+		std::cout <<"distance from car: "<<distanceFromCar << " - multiplier: " << multiplier << std::endl;
+		if (distanceFromCar > ropeLengthRadius) {
+			if(movingAway)
+				speedVector = Vector3(0, 0, 0);  
+			Vector3 carDisplacement = trainHandler->getCarDisplacement(0);
+			this->playerMesh->model.translateGlobal(carDisplacement.x, carDisplacement.y, carDisplacement.z);
+		}
 		else {
 			speedVector += speedVector * (-multiplier) * seconds_elapsed;
-			if (abs(speedVector.length()) <= .000002)
+			if (abs(speedVector.length()) <= .0002)
 				speedVector = Vector3(0, 0, 0);
 		}
 	}
 
+	Vector3 newEye = this->playerMesh->getGlobalMatrix().getTranslation();
+		
+	cam->lookAt(newEye, newEye + front , top);
 
 
 
