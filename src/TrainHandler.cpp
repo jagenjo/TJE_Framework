@@ -34,7 +34,7 @@ void TrainHandler::addCar(Entity* entity)
 
 Vector3 TrainHandler::getCarPosition(int carNum)
 {
-	return this->trainCarArray[carNum].entity->getPosition();
+	return this->trainCarArray[carNum].entity->getPosition()+Vector3(0,5,0); //TODO: Change displacement to real data
 }
 
 Matrix44 TrainHandler::getCarDirection(int carNum) // (1,2,3) Forward (4,5,6) right (7,8,9) up
