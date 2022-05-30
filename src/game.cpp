@@ -82,10 +82,11 @@ void loadTestCar(Game* game) {
 	trolleyTexture = Texture::Get("data/test_vehicle.png");
 	Stage* stage = game->activeStage;
 	//Entity* positionEntity = new Entity();
-	Entity* positionEntity = new MeshEntity(mesh, texture, shader);
+	Entity* positionEntity = new Entity();
 	Entity* trolleyEntity = new MeshEntity(trolleyMesh,trolleyTexture,shader);
 	positionEntity->addChild(trolleyEntity);
 	stage->getScene()->getRoot()->addChild(positionEntity);
+	positionEntity->forceCheckChilds = true;
 	trainHandler->addCar(positionEntity);
 	trolleyEntity->maxRenderDist = 10000000000000;
 	trolleyEntity->modifyScale(10);

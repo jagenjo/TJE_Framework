@@ -21,8 +21,8 @@ public:
 	float pitch = 0.0f;
 
 	Vector3 speedVector = Vector3(0, 0, 0);
-	float acceleration = 2;// 0.05f;
-	float deceleration = 1.5;//.04f;
+	float acceleration = 6;// 0.05f;
+	float deceleration = 4;//.04f;
 	float pullRopeSpeed = 2.0f;
 	
 
