@@ -9,6 +9,8 @@ const float maxSpeed=10;
 const float y_sensitivity = 15;
 const float x_sensitivity = 10;
 const float decel_threshold = .98;
+const float rope_decel = 3;
+const float rope_speed = 10;
 
 
 
@@ -80,6 +82,7 @@ void Player::updatePlayer(double seconds_elapsed)
 
 
 	this->playerMesh->rotate(y_movement,right);
+	
 	this->playerMesh->rotate(x_movement,top);
 		
 	Matrix44 newGlobal= this->playerMesh->getGlobalMatrix();
@@ -109,7 +112,8 @@ void Player::updatePlayer(double seconds_elapsed)
 		wasMoved = true;
 		speedVector += right*seconds_elapsed*(-acceleration);
 	}
-
+	
+	
 	
 	this->playerMesh->model.translateGlobal(speedVector.x* seconds_elapsed, speedVector.y* seconds_elapsed, speedVector.z* seconds_elapsed);
 
@@ -119,6 +123,17 @@ void Player::updatePlayer(double seconds_elapsed)
 	
 	float distanceFromCar = this->playerMesh->getGlobalMatrix().getTranslation().distance(carPos); //For now its from 0,0,0
 	bool movingAway = (oldPos.distance(carPos) <= newPos.distance(carPos));  //TODO: Change vec3(0,0,0) to car position;
+
+	if (Input::isKeyPressed(SDL_SCANCODE_F)) {
+		wasMoved = true;
+		Vector3 vecToCar= carPos - newPos;
+		vecToCar = vecToCar.normalize();
+		this->speedVector += vecToCar * seconds_elapsed*rope_speed;
+		
+		
+	}
+	
+
 	if (!wasMoved||(distanceFromCar> ropeLengthRadius* decel_threshold &&movingAway)||distanceFromCar>ropeLengthRadius) {
 		float multiplier = getDecelerationMultiplier(distanceFromCar, movingAway); //((distanceFromCar > ropeLengthRadius) &&movingAway) ? 3.0 : .8;
 		//std::cout <<"m a "<<movingAway<<" car dist: "<<distanceFromCar << "mult: " << multiplier << std::endl;
@@ -144,12 +159,7 @@ void Player::updatePlayer(double seconds_elapsed)
 
 
 	
-	if (Input::isKeyPressed(SDL_SCANCODE_F)) {
-		Vector3 vecToCar = this->playerMesh->getGlobalMatrix().getTranslation();
-		vecToCar = vecToCar.normalize();
-		vecToCar = vecToCar * (-1/ropeLengthRadius)*pullRopeSpeed;
-		this->playerMesh->model.translateGlobal(vecToCar.x,vecToCar.y,vecToCar.z);
-	}
+	
 	
 
 
