@@ -7,5 +7,6 @@ varying vec4 v_color;
 
 void main()
 {
+
 	gl_FragColor = vec4(abs(normalize(v_normal)),1.0);
 }

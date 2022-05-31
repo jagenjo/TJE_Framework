@@ -11,7 +11,11 @@ class GroupEntity;
 
 
 enum class eSceneryType {
-	TEST
+	ROCK1,
+	ROCK2,
+	ROCK3,
+	ROCK4
+	
 };
 
 struct sceneryData {
@@ -31,7 +35,9 @@ class ProceduralWorldStage :
 		
 		std::vector<sceneryData> scenery;
 
-		void generateProceduralScenery(); 
+		void loadAssets();
+
+		void generateProceduralScenery();
 		
 		void renderScenery();
 	public:

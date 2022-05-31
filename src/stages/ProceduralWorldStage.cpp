@@ -5,19 +5,25 @@
 #include "../entities/EntityInclude.h"
 #include "../trainHandler.h"
 
-
+void ProceduralWorldStage::loadAssets() {
+	Mesh::Get("data/assets/rocks/rock1.obj");
+	Mesh::Get("data/assets/rocks/rock2.obj");
+	Mesh::Get("data/assets/rocks/rock3.obj");
+	Mesh::Get("data/assets/rocks/rock4.obj");
+}
 
 void ProceduralWorldStage::generateProceduralScenery()
 {
+	float scales[4] = { .5,.5, .5,30 };
 	BeizerCurve* trackCurve = this->trackHandler->getActiveCurve();
 	if (trackCurve == nullptr) return;
 	
 	float maxDistance = 10.0f;
 	
-	std::vector<Vector3> positions;
-	
-	for (double i = 0.0; i <= 1; i += .05) {
-		for (int y = 0; y < 4; ++y) {
+	for (int ii=0; ii<4;++ii){
+		eSceneryType scType = (eSceneryType)ii;
+		std::vector<Vector3> positions;
+		for (double i = 0.0; i <= 1; i += .05) {
 			Matrix44 mat = Matrix44::IDENTITY;
 			Vector3 pos = trackCurve->getPosition(i);
 			std::cout << "pos 1: " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
@@ -50,16 +56,15 @@ void ProceduralWorldStage::generateProceduralScenery()
 			//pos = mat.getTranslation()  mat.rightVector() * distance;
 			//print pos to console
 			std::cout << "pos 2: " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
-			
-
-
-
 			positions.push_back(pos);
 		}
+		sceneryData data = sceneryData(positions, scType);
+		this->scenery.push_back(data);
+		data.scenery->groupScale(scales[ii]);
 	}
-	sceneryData data(positions, eSceneryType::TEST);
+	
 	//this->scene->getRoot()->addChild(data.scenery);
-	this->scenery.push_back(data);
+	
 		
 	
 }
@@ -94,6 +99,8 @@ ProceduralWorldStage::~ProceduralWorldStage()
 void ProceduralWorldStage::initStage()
 {
 	stageType = eStageType::PROCEDURAL_WORLD;
+
+	this->loadAssets();
 
 	this->trackHandler = TrackHandler::instance;
 
@@ -134,12 +141,28 @@ sceneryData::sceneryData(std::vector<Vector3>& positions, eSceneryType type)
 	}
 	this->type = type;
 	//TODO: Load Mesh and texture from data
-	Mesh* mesh = new Mesh();
-	mesh->createCube();
+	Mesh* mesh;
+	switch (type)
+	{
+		case eSceneryType::ROCK1:
+			mesh = Mesh::Get("data/assets/rocks/rock1.obj");		
+			break;
+		case eSceneryType::ROCK2:
+			mesh = Mesh::Get("data/assets/rocks/rock2.obj");
+			break;
+		case eSceneryType::ROCK3:
+			mesh = Mesh::Get("data/assets/rocks/rock3.obj");
+			break;
+		case eSceneryType::ROCK4:
+			mesh = Mesh::Get("data/assets/rocks/rock4.obj");
+			break;
+					
+	}
 	
-	Texture* texture = new Texture();
-	texture->load("data/texture.tga");
-	Shader* shader = Shader::getDefaultShader("color");
+	
+	
+	Texture* texture = Texture::Get("data/assets/rocks/texture.png");
+	Shader* shader = Shader::Get("data/shaders/basic.vs", "data/shaders/rockShader.fs");
 	GroupEntity* group = new GroupEntity(mesh, texture, shader, matrices);
 	
 	this->scenery = group;

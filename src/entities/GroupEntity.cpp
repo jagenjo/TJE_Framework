@@ -6,19 +6,19 @@
 
 
 
-GroupEntity::GroupEntity(Mesh* mesh, Texture* Texture, Shader* shader, std::vector<Matrix44>& matrixList)
+GroupEntity::GroupEntity(Mesh* mesh, Texture* texture, Shader* shader, std::vector<Matrix44>& matrixList)
 {
 	this->mesh = mesh;
-	this->texture = Texture;
+	this->texture = texture;
 	this->shader = shader;
 	this->matrixList = matrixList;
 	
 }
 
-GroupEntity::GroupEntity(Mesh* mesh, Mesh* lowPoly, Texture* Texture, Shader* shader, std::vector<Matrix44>& matrixList)
+GroupEntity::GroupEntity(Mesh* mesh, Mesh* lowPoly, Texture* texture, Shader* shader, std::vector<Matrix44>& matrixList)
 {
 	this->mesh = mesh;
-	this->texture = Texture;
+	this->texture = texture;
 	this->shader = shader;
 	this->matrixList = matrixList;
 	this->setLowPoly(lowPoly);
@@ -35,8 +35,8 @@ void GroupEntity::render()
 	shader->enable();
 	
 	shader->setUniform("u_viewprojection", cam->viewprojection_matrix);
-	shader->setUniform("u_texture", texture);
-	shader->setUniform("u_color", Vector3(1, 1, 1));
+	shader->setUniform("u_texture", texture,0);
+	shader->setUniform("u_color", Vector4(1, 1, 1,1)); //todo change to variable
 	
 	for (int i = 0; i < matrixList.size(); i++)
 	{
@@ -54,6 +54,22 @@ void GroupEntity::render()
 void GroupEntity::update(float dt)
 {
 	
+}
+
+void GroupEntity::setGroupScale(float scale)
+{
+	for (int i = 0; i < matrixList.size(); i++)
+	{
+		matrixList[i].setScale(scale,scale,scale);
+	}
+}
+
+void GroupEntity::groupScale(float scale)
+{
+	for (int i = 0; i < matrixList.size(); i++)
+	{
+		matrixList[i].scale(scale, scale, scale);
+	}
 }
 
 bool GroupEntity::getShouldRenderEntity()
