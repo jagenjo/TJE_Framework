@@ -30,6 +30,9 @@ public:
 	void render();
 	void update(float dt);
 
+	void setGroupScale(float scale);
+	void groupScale(float scale);
+
 	bool getShouldRenderEntity();
 
 	void addObject(Matrix44 objMatrix);

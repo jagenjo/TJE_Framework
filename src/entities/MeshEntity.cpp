@@ -86,7 +86,7 @@ bool MeshEntity::getShouldRenderEntity()
 	float sphere_radius = this->mesh->radius;
 
 	//discard objects whose bounding sphere is not inside the camera frustum
-	return cam->testSphereInFrustum(this->getPosition(), this->mesh->radius);
+	return cam->testSphereInFrustum(this->getPosition(), this->mesh->radius*this->getScale().x);
 		
 	
 }
