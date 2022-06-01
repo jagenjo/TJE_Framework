@@ -84,6 +84,7 @@
     </ClCompile>
     <ClCompile Include="..\..\src\TrainHandler.cpp" />
     <ClCompile Include="..\..\src\Player.cpp" />
+    <ClCompile Include="..\..\src\CubeMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -174,6 +175,7 @@
     </ClInclude>
     <ClInclude Include="..\..\src\TrainHandler.h" />
     <ClInclude Include="..\..\src\Player.h" />
+    <ClInclude Include="..\..\src\CubeMap.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">

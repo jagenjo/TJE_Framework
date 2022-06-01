@@ -127,6 +127,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\animation.cpp" />
+    <ClCompile Include="..\..\src\CubeMap.cpp" />
     <ClCompile Include="..\..\src\curves.cpp" />
     <ClCompile Include="..\..\src\camera.cpp" />
     <ClCompile Include="..\..\src\entities\Entity.cpp" />
@@ -162,6 +163,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\animation.h" />
+    <ClInclude Include="..\..\src\CubeMap.h" />
     <ClInclude Include="..\..\src\curves.h" />
     <ClInclude Include="..\..\src\camera.h" />
     <ClInclude Include="..\..\src\entities\Entity.h" />
