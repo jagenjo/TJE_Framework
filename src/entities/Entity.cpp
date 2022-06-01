@@ -159,3 +159,11 @@ void Entity::destroy()
 
 }
 
+bool Entity::testCollision( Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal)
+{
+	
+	return false;
+}
+
+
+

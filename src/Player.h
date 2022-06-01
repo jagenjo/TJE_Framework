@@ -19,6 +19,7 @@ public:
 	MeshEntity* playerMesh;
 	float yaw = 0.0f;
 	float pitch = 0.0f;
+	Vector3 position;
 
 	Vector3 speedVector = Vector3(0, 0, 0);
 	float acceleration = 6;// 0.05f;
@@ -34,6 +35,7 @@ public:
 	void renderPlayer();
 	void updatePlayer(double seconds_elapsed);
 	void applyMovementForce(eDirection direction,double seconds_elapsed);
+	bool testCollisions();
 	
 };
 

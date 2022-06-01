@@ -21,7 +21,7 @@ public:
 	bool hasLowPolyVersion = false;
 	float minDistanceForLowPoly = 200;
 	Mesh* lowPolyMesh;
-
+	float scaled = 1.0f;
 	
 	GroupEntity(Mesh* mesh, Texture* Texture, Shader* shader, std::vector<Matrix44>& matrixList);
 	GroupEntity(Mesh* mesh, Mesh* lowPoly, Texture* Texture, Shader* shader, std::vector<Matrix44>& matrixList);
@@ -42,6 +42,8 @@ public:
 	void setLowPoly(Mesh* mesh);
 	inline void setLowPolyDistance(float dist) { this->minDistanceForLowPoly = dist; }
 	float getLowPolyDistance() { return this->minDistanceForLowPoly; }
+
+	bool testCollision( Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal);
 	
 	
 	

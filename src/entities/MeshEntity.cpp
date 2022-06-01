@@ -101,3 +101,12 @@ void MeshEntity::setLowPoly(Mesh* mesh)
 	this->lowPolyMesh = mesh;
 
 }
+
+bool MeshEntity::testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal)
+{
+	if (this->ingoreCollision) return false;
+	bool res= this->mesh->testSphereCollision(this->getGlobalMatrix(), charCenter, radius, collisionPoint, collisionNormal);
+	if (res)
+		std::cout << "Collided with " << this->mesh->name << std::endl;
+	return res;
+}

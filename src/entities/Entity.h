@@ -26,6 +26,7 @@ public:
 	float maxRenderDist = 300.0f;
 	bool visualRender = true;
 	std::vector<Entity*> children;
+	bool ingoreCollision = false;
 	
 	Entity* parent=NULL;
 	
@@ -64,6 +65,8 @@ public:
 	void setParent(Entity* parentObj);
 	
 	virtual void destroy();
+
+	virtual bool testCollision(Vector3 charCenter,float radius,Vector3& collisionPoint, Vector3& collisionNormal);
 	
 };
 

@@ -54,11 +54,12 @@ Scene* returnTestScene() {
 	
 	Entity* baseEntity = new Entity();
 	testScene->setRoot(baseEntity);
-
+	
 	MeshEntity* testMeshEntity = new MeshEntity(mesh,low_poly_mesh, texture, shader);
-	testMeshEntity->modifyScale(20);
-	//baseEntity->addChild(testMeshEntity);
-
+	testMeshEntity->modifyScale(.5);
+	baseEntity->addChild(testMeshEntity);
+	testMeshEntity->model.translateGlobal(10, 30, 10);
+	
 	
 	
 	glPointSize(2);
@@ -84,6 +85,7 @@ void loadTestCar(Game* game) {
 	//Entity* positionEntity = new Entity();
 	Entity* positionEntity = new Entity();
 	Entity* trolleyEntity = new MeshEntity(trolleyMesh,trolleyTexture,shader);
+	trolleyEntity->ingoreCollision = true;
 	positionEntity->addChild(trolleyEntity);
 	stage->getScene()->getRoot()->addChild(positionEntity);
 	positionEntity->forceCheckChilds = true;
@@ -237,7 +239,7 @@ void Game::update(double seconds_elapsed)
 
 	//this->activeScene->update(seconds_elapsed);
 	this->activeStage->update(seconds_elapsed);
-
+	
 	//mouse input to rotate the cam
 	if ((Input::mouse_state & SDL_BUTTON_LEFT) || mouse_locked ) //is left button pressed?
 	{
@@ -264,7 +266,7 @@ void Game::update(double seconds_elapsed)
 	//Coses URI
 	if (cameraLocked) {
 		SDL_ShowCursor(false);
-
+		player->testCollisions();
 		player->updatePlayer(seconds_elapsed);
 
 	}

@@ -62,6 +62,7 @@ void GroupEntity::setGroupScale(float scale)
 	{
 		matrixList[i].setScale(scale,scale,scale);
 	}
+	this->scaled = scale;
 }
 
 void GroupEntity::groupScale(float scale)
@@ -70,6 +71,7 @@ void GroupEntity::groupScale(float scale)
 	{
 		matrixList[i].scale(scale, scale, scale);
 	}
+	this->scaled *= scale;
 }
 
 bool GroupEntity::getShouldRenderEntity()
@@ -86,4 +88,19 @@ void GroupEntity::setLowPoly(Mesh* mesh)
 {
 	this->hasLowPolyVersion = true;
 	this->lowPolyMesh = mesh;
+}
+
+bool GroupEntity::testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal)
+{
+	if (this->ingoreCollision) return false;
+	Vector3 position = this->model.getTranslation();
+	for (int i=0; i < matrixList.size(); ++i){
+		//TODO: OPtimize and do precheck to see if calc colisions
+		
+		if (this->mesh->testSphereCollision(matrixList[i], charCenter, radius, collisionPoint, collisionNormal)) {
+			std::cout << "collision size " << this->model.m[0] << "-" << this->model.m[5] << "-" << this->model.m[10] << std::endl;
+			return true;
+		}
+	}
+	return false;
 }

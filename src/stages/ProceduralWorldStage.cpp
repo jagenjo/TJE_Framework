@@ -14,7 +14,7 @@ void ProceduralWorldStage::loadAssets() {
 
 void ProceduralWorldStage::generateProceduralScenery()
 {
-	float scales[4] = { .5,.5, .5,30 };
+	float scales[4] = { 1,1,1,1 }; //{ .5,.5, .5,30 };
 	BeizerCurve* trackCurve = this->trackHandler->getActiveCurve();
 	if (trackCurve == nullptr) return;
 	
@@ -60,8 +60,10 @@ void ProceduralWorldStage::generateProceduralScenery()
 		}
 		sceneryData data = sceneryData(positions, scType);
 		this->scenery.push_back(data);
-		data.scenery->groupScale(scales[ii]);
+		//data.scenery->groupScale(scales[ii]);
+		this->scene->getRoot()->addChild(data.scenery);
 	}
+	
 	
 	//this->scene->getRoot()->addChild(data.scenery);
 	

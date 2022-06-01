@@ -2,6 +2,9 @@
 #include "input.h"
 #include "game.h"
 #include "TrainHandler.h"
+#include "stages/StagesInclude.h"
+#include "entities/EntityInclude.h"
+#include "Scene.h"
 
 
 
@@ -23,6 +26,8 @@ Player::Player()
 	playerMesh = new MeshEntity(mesh, texture, shader);
 	ropeLengthRadius = 100.0f;
 	this->trainHandler = TrainHandler::instance;
+	this->position = Vector3(0, 50, 0);
+	this->playerMesh->setPosition(Vector3(0, 50, 0));
 	
 }
 
@@ -73,8 +78,8 @@ void Player::updatePlayer(double seconds_elapsed)
 	Vector3 front = this->playerMesh->globalModel.frontVector();
 	Vector3 top = this->playerMesh->globalModel.topVector();
 	Vector3 right = front.cross(top);
-
 	
+		
 	
 	
 	float y_movement = -Input::mouse_delta.y * seconds_elapsed*y_sensitivity;
@@ -165,7 +170,7 @@ void Player::updatePlayer(double seconds_elapsed)
 	Vector3 newEye = this->playerMesh->getGlobalMatrix().getTranslation();
 		
 	cam->lookAt(newEye, newEye + front , top);
-
+	this->position = newEye;
 
 
 	
@@ -178,7 +183,43 @@ void Player::updatePlayer(double seconds_elapsed)
 
 void Player::applyMovementForce(eDirection direction, double seconds_elapsed)
 {
+	
+}
 
+
+bool testEntityCollision(Entity* entity, Vector3 pos ,float radius, Vector3& colPoint, Vector3& colNormal) {
+	if (entity->testCollision(pos, radius, colPoint, colNormal)) { //Todo change 3 to correct size
+		
+		return true;
+	}
+	else {
+		for (int i=0; i<entity->children.size();++i)
+			if (testEntityCollision(entity->children[i], pos, radius, colPoint, colNormal))
+				return true;
+	}
+	return false;
+}
+
+bool Player::testCollisions()
+{
+	Vector3 colPoint= Vector3();
+	Vector3 colNormal= Vector3();
+	Game* game = Game::instance;
+	Scene* activeScene = game->activeStage->getScene();
+	std::vector<Entity*> entities = activeScene->root->children;
+	bool hadCollision = false;
+	std::cout << "num e: " << entities.size() << std::endl;
+	for (int i = 0; i < entities.size(); ++i) {
+		if (testEntityCollision(entities[i], this->position, 1, colPoint, colNormal)) {
+			hadCollision = true;
+			break;
+		}
+	}
+	
+	if (hadCollision) {
+		this->speedVector *= .5;
+	}
+	return hadCollision;
 }
 
 
