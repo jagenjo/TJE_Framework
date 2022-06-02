@@ -1591,8 +1591,7 @@ Mesh* Mesh::Get(const char* filename)
 		}
 
 		std::cout << "[OK BIN]  Faces: " << (m->interleaved.size() ? m->interleaved.size() : m->vertices.size()) / 3 << " Time: " << (getTime() - time) * 0.001 << "sec" << std::endl;
-		//sMeshesLoaded[filename] = m;
-		m->registerMesh(name);
+		sMeshesLoaded[filename] = m;
 		return m;
 	}
 
