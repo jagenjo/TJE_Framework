@@ -9,12 +9,11 @@ class SceneParser
 
 public:
 	SceneParser(char* path);
-	char* data;
-	int size;
-	int sl;
+	
 
 	
-	std::string strData;
+	std::vector<std::string> lines;
+
 
 
 	

@@ -162,7 +162,6 @@
     <ClCompile Include="..\..\src\TrackHandler.cpp" />
     <ClCompile Include="..\..\src\TrainHandler.cpp" />
     <ClCompile Include="..\..\src\utils.cpp" />
-    <ClCompile Include="DepositionStage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\animation.h" />

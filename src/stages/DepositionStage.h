@@ -37,7 +37,7 @@ class DepositionStage :
 		void update(double deltaTime);
 		void render();
 
-		void generateScenary()
+		void generateScenary();
 
 };
 

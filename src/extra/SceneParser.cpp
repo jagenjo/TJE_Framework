@@ -1,23 +1,18 @@
 #include "SceneParser.h"
-
+#include <fstream>
 
 
 SceneParser::SceneParser(char* path)
 {
-	FILE* f;
-	struct stat stbuffer;
+	std::ifstream file(path);
+	std::string input;
 
-	stat(path, &stbuffer);
-	f = fopen(path, "rb");
-	size = (int)stbuffer.st_size;
-	data = new char[size];
-	sl = 0;
-	fread(data, size, 1, f);
-	fclose(f);
-	for (int i = 0; i < size; i++) {
-		strData.push_back(data[i]);
+	while (file >> input) {
+		lines.push_back(input);
 	}
 }
+
+
 
 
 
