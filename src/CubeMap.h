@@ -3,29 +3,24 @@
 #include "includes.h"
 
 
-class Texture;
 
-struct CubeMapData {
-	Texture* left;
-	Texture* front;
-	Texture* right;
-	Texture* back;
-	Texture* top;
-	Texture* bottom;
-	
-	CubeMapData(std::vector<Texture*> textureArray);
-};
+class Texture;
+class Mesh;
+class Shader;
+
 
 
 class CubeMap
 {
 public:
 	static CubeMap* instance;
-	CubeMapData* activeCubeMap = NULL;
+	Mesh* sphere;
+	Shader* shader;
+	Texture* texture;
 	
 	CubeMap();
 
-	void setCubeMap(CubeMapData data);
+	void setCubeMap(Texture* texture);
 	void Render();
 	
 };
