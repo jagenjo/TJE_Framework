@@ -16,6 +16,7 @@
 #include "Player.h"
 #include "TrainHandler.h"
 #include "CubeMap.h"
+#include "extra/SceneParser.h"
 
 
 //some globals
@@ -137,13 +138,13 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	
 
 	//Coses Uri																					///////////
-	Mesh* groundMesh = new Mesh();
-	groundMesh->createPlane(10000);
 	cameraLocked = FALSE;
 
-	ground = new MeshEntity(groundMesh,texture, shader);
-
+	SceneParser* SP = new SceneParser("data/testScene.scene");
+	SP->LoadScene();
 	player = new Player();
+
+
 	
 	//End coses uri																				//////////
 	this->setActiveStage(testStage());

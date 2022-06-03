@@ -12,7 +12,9 @@ public:
 	
 
 	
-	std::vector<std::string> lines;
+	std::vector<std::string> data;
+
+	void LoadScene();
 
 
 
