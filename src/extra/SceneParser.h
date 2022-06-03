@@ -13,7 +13,7 @@ public:
 
 	
 	std::vector<std::string> data;
-
+	
 	void LoadScene();
 
 
