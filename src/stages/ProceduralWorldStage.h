@@ -7,7 +7,7 @@ class TrackHandler;
 class TrainHandler;
 class Scene;
 class GroupEntity;
-
+class CubeMap;
 
 
 enum class eSceneryType {
@@ -34,6 +34,7 @@ class ProceduralWorldStage :
 		TrainHandler* trainHandler=NULL;
 		
 		std::vector<sceneryData> scenery;
+		CubeMap* cubeMap = NULL;
 
 		void loadAssets();
 

@@ -208,7 +208,7 @@ bool Player::testCollisions()
 	Scene* activeScene = game->activeStage->getScene();
 	std::vector<Entity*> entities = activeScene->root->children;
 	bool hadCollision = false;
-	std::cout << "num e: " << entities.size() << std::endl;
+	//std::cout << "num e: " << entities.size() << std::endl;
 	for (int i = 0; i < entities.size(); ++i) {
 		if (testEntityCollision(entities[i], this->position, 1, colPoint, colNormal)) {
 			hadCollision = true;
