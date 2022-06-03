@@ -143,6 +143,7 @@
     <ClCompile Include="..\..\src\extra\coldet\tritri.cpp" />
     <ClCompile Include="..\..\src\extra\jpgd.cpp" />
     <ClCompile Include="..\..\src\extra\picopng.cpp" />
+    <ClCompile Include="..\..\src\extra\SceneParser.cpp" />
     <ClCompile Include="..\..\src\extra\textparser.cpp" />
     <ClCompile Include="..\..\src\fbo.cpp" />
     <ClCompile Include="..\..\src\framework.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="..\..\src\extra\commonItems.h" />
     <ClInclude Include="..\..\src\extra\jpgd.h" />
     <ClInclude Include="..\..\src\extra\picopng.h" />
+    <ClInclude Include="..\..\src\extra\SceneParser.h" />
     <ClInclude Include="..\..\src\extra\textparser.h" />
     <ClInclude Include="..\..\src\fbo.h" />
     <ClInclude Include="..\..\src\framework.h" />

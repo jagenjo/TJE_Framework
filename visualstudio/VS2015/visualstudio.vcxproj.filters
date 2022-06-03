@@ -87,6 +87,7 @@
     <ClCompile Include="..\..\src\CubeMap.cpp" />
     <ClCompile Include="DepositionStage.cpp" />
     <ClCompile Include="..\..\src\stages\DepositionStage.cpp" />
+    <ClCompile Include="..\..\src\extra\SceneParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -179,6 +180,7 @@
     <ClInclude Include="..\..\src\Player.h" />
     <ClInclude Include="..\..\src\CubeMap.h" />
     <ClInclude Include="..\..\src\stages\DepositionStage.h" />
+    <ClInclude Include="..\..\src\extra\SceneParser.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">

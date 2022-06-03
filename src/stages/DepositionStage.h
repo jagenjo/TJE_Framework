@@ -12,11 +12,22 @@ enum class eBlockType {
 	Ramp
 };
 
+
+struct sceneryData {
+	GroupEntity* scenery;
+	eBlockType type;
+
+	sceneryData(std::vector<Vector3>& positions, eBlockType type);
+
+};
+
 class DepositionStage :
 	public Stage
 {	
 	private:
 		void loadAssets();
+
+		std::vector<sceneryData> scenery;
 		
 	public:
 
@@ -25,6 +36,8 @@ class DepositionStage :
 
 		void update(double deltaTime);
 		void render();
+
+		void generateScenary()
 
 };
 
