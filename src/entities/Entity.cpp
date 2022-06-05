@@ -1,5 +1,6 @@
 #include "Entity.h"
 #include "../game.h"
+#include "../mesh.h"
 
 Entity::Entity(Entity* parent)
 {
@@ -159,7 +160,7 @@ void Entity::destroy()
 
 }
 
-bool Entity::testCollision( Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal)
+bool Entity::testCollision( Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal,Matrix44 otherModel, Mesh * otherMesh = NULL)
 {
 	
 	return false;

@@ -66,6 +66,10 @@ Vector3 Player::getVectorWhenPushed() {
 	
 }
 
+bool Player::isPlayerOnTrain() {
+	
+}
+
 void Player::updatePlayer(double seconds_elapsed)
 {
 	Camera* cam = Camera::current;
@@ -187,14 +191,16 @@ void Player::applyMovementForce(eDirection direction, double seconds_elapsed)
 }
 
 
-bool testEntityCollision(Entity* entity, Vector3 pos ,float radius, Vector3& colPoint, Vector3& colNormal) {
-	if (entity->testCollision(pos, radius, colPoint, colNormal)) { //Todo change 3 to correct size
+bool testEntityCollision(MeshEntity* playerEntity,Entity* entity, Vector3 pos ,float radius, Vector3& colPoint, Vector3& colNormal) {
+	
+	
+	if (entity->testCollision(pos, radius, colPoint, colNormal, playerEntity->getGlobalMatrix(),playerEntity->getMesh())) { //Todo change 3 to correct size
 		
 		return true;
 	}
 	else {
 		for (int i=0; i<entity->children.size();++i)
-			if (testEntityCollision(entity->children[i], pos, radius, colPoint, colNormal))
+			if (testEntityCollision(playerEntity,entity->children[i], pos, radius, colPoint, colNormal))
 				return true;
 	}
 	return false;
@@ -210,7 +216,7 @@ bool Player::testCollisions()
 	bool hadCollision = false;
 	//std::cout << "num e: " << entities.size() << std::endl;
 	for (int i = 0; i < entities.size(); ++i) {
-		if (testEntityCollision(entities[i], this->position, 1, colPoint, colNormal)) {
+		if (testEntityCollision(playerMesh,entities[i], this->position, 1, colPoint, colNormal)) {
 			hadCollision = true;
 			break;
 		}
