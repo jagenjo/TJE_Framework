@@ -78,7 +78,7 @@ void MeshEntity::update(float dt)
 	
 	//this->bounding = transformBoundingBox(this->getGlobalMatrix(),this->mesh->box);
 	
-	
+	this->didCollide = false;
 
 	Entity::update(dt);
 	
@@ -125,6 +125,8 @@ bool MeshEntity::testCollision(Vector3 charCenter, float radius, Vector3& collis
 		res= this->mesh->testSphereCollision(this->getGlobalMatrix(), charCenter, radius, collisionPoint, collisionNormal);
 	if (res)
 		std::cout << "Collided with " << this->mesh->name << std::endl;
+	if (res)
+		this->didCollide = true;
 	return res;
 }
 

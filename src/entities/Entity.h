@@ -34,6 +34,7 @@ public:
 	bool visualRender = true;
 	std::vector<Entity*> children;
 	bool ingoreCollision = false;
+	bool didCollide = false;
 	eCollisionCheckType collisionCheckType = eCollisionCheckType::SPHERE;
 	
 	Entity* parent=NULL;
