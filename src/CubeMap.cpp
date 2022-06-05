@@ -35,7 +35,7 @@ void CubeMap::Render() {
 	sphere->render(GL_TRIANGLES);
 	
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	
 	glDepthMask(true);
 }
 
