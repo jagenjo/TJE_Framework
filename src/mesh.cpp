@@ -651,6 +651,38 @@ bool Mesh::testRayCollision(Matrix44 model, Vector3 start, Vector3 front, Vector
 	return true;
 }
 
+bool Mesh::testModelCollision(Matrix44 model, Vector3 center, void* collisionModel, Matrix44 otherModel, Vector3& collision, Vector3& normal)
+{
+	if (!this->collision_model)
+		if (!createCollisionModel())
+			return false;
+	CollisionModel3D* collision_model = (CollisionModel3D*)this->collision_model;
+	CollisionModel3D* other_col_model = (CollisionModel3D*)collisionModel;
+	assert(collision_model && "CollisionModel3D must be created before using it, call createCollisionModel");
+
+	collision_model->setTransform(model.m);
+	other_col_model->setTransform(otherModel.m);
+	if (!collision_model->collision(other_col_model))
+		return false;
+	collision_model->getCollisionPoint(collision.v, false);
+
+	float t1[9], t2[9];
+	collision_model->getCollidingTriangles(t1, t2, false);
+
+	Vector3 v1;
+	Vector3 v2;
+	v1 = Vector3(t1[3] - t1[0], t1[4] - t1[1], t1[5] - t1[2]);
+	v2 = Vector3(t1[6] - t1[0], t1[7] - t1[1], t1[8] - t1[2]);
+	v1.normalize();
+	v2.normalize();
+	normal = v1.cross(v2);
+
+	return true;
+	
+}
+
+
+
 bool Mesh::testSphereCollision(Matrix44 model, Vector3 center, float radius, Vector3& collision, Vector3& normal)
 {
 	if (!this->collision_model)

@@ -12,6 +12,7 @@ GroupEntity::GroupEntity(Mesh* mesh, Texture* texture, Shader* shader, std::vect
 	this->texture = texture;
 	this->shader = shader;
 	this->matrixList = matrixList;
+	this->type = EntityType::GROUP;
 	
 }
 
@@ -22,6 +23,7 @@ GroupEntity::GroupEntity(Mesh* mesh, Mesh* lowPoly, Texture* texture, Shader* sh
 	this->shader = shader;
 	this->matrixList = matrixList;
 	this->setLowPoly(lowPoly);
+	this->type = EntityType::GROUP;
 }
 
 GroupEntity::~GroupEntity()
@@ -90,7 +92,7 @@ void GroupEntity::setLowPoly(Mesh* mesh)
 	this->lowPolyMesh = mesh;
 }
 
-bool GroupEntity::testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal)
+bool GroupEntity::testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal, Matrix44 otherModel, Mesh* otherMesh = NULL)
 {
 	if (this->ingoreCollision) return false;
 	Vector3 position = this->model.getTranslation();

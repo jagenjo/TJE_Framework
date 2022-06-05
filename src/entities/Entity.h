@@ -5,10 +5,17 @@
 
 class Scene;
 class Game;
+class Mesh;
 
 enum class EntityType {
 	BASE,
-	MESH
+	MESH,
+	GROUP
+};
+
+enum class eCollisionCheckType {
+	SPHERE,
+	MODEL
 };
 
 class Entity
@@ -27,6 +34,7 @@ public:
 	bool visualRender = true;
 	std::vector<Entity*> children;
 	bool ingoreCollision = false;
+	eCollisionCheckType collisionCheckType = eCollisionCheckType::SPHERE;
 	
 	Entity* parent=NULL;
 	
@@ -66,7 +74,9 @@ public:
 	
 	virtual void destroy();
 
-	virtual bool testCollision(Vector3 charCenter,float radius,Vector3& collisionPoint, Vector3& collisionNormal);
+	virtual bool testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal, Matrix44 otherModel, Mesh* otherMesh);
+
+	
 	
 };
 

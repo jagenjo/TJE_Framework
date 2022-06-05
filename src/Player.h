@@ -14,6 +14,8 @@ private:
 	float getDecelerationMultiplier(float distanceFromCar, bool movingAway);
 	Vector3 getVectorWhenPushed();
 
+	bool isPlayerOnTrain();
+
 
 public:
 	MeshEntity* playerMesh;
