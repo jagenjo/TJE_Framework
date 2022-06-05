@@ -1,4 +1,5 @@
 #include "TrainHandler.h"
+#include "mesh.h"
 
 
 TrainHandler* TrainHandler::instance = NULL;
@@ -19,13 +20,14 @@ void TrainHandler::setActiveCurve(BeizerCurve* curve)
 	this->activeCurve = curve;
 }
 
-void TrainHandler::addCar(Entity* entity)
+void TrainHandler::addCar(Entity* entity,MeshEntity* trainEntity)
 {
 	trainCarData data;
 	data.entity = entity;
 	data.carIndex = this->numCars;
 	data.segment = 0; //TODO: get segment from front position
 	data.curvePos = 0;
+	data.trainMesh = trainEntity;
 
 	this->trainCarArray.push_back(data);
 
@@ -81,10 +83,12 @@ double TrainHandler::getSpeed()
 
 void TrainHandler::update(double dt)
 {
+	collidedWithPlayer = false;
 	
 	for (int i = 0; i < this->trainCarArray.size(); i++)
 	{
 		trainCarData& data= this->trainCarArray[i];
+		
 		Vector3 oldPos= data.entity->getPosition();
 		data.curvePos += dt*this->speed * (1 / activeCurve->getSegmentDistance(data.segment));
 		if (data.curvePos >= 1.0) data.curvePos = 0;
@@ -96,5 +100,22 @@ void TrainHandler::update(double dt)
 		data.entity->model.m[2] = rotMatrix._23;
 		data.entity->model.setFrontAndOrthonormalize(Vector3(rotMatrix._11, rotMatrix._12, rotMatrix._13));
 		data.displacement= data.entity->getPosition() - oldPos;
+		
+		if (data.trainMesh->didCollide)
+			this->collidedWithPlayer = true;
 	}
+	
+	
 }
+
+trainCarData TrainHandler::getCarData(int carNum)
+{
+	return this->trainCarArray[carNum];
+}
+
+bool TrainHandler::getCollidedWithPlayer()
+{
+	return this->collidedWithPlayer;
+}
+
+

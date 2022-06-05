@@ -2,8 +2,12 @@
 #include "entities/EntityInclude.h"
 #include "curves.h"
 
+class BoundingBox;
+
+
 struct trainCarData {
 	Entity* entity;
+	MeshEntity* trainMesh;
 	int carIndex;
 	double curvePos;
 	int segment;
@@ -19,7 +23,9 @@ private:
 	int numCars = 0;
 	double frontCarPos = 0.0;
 	BeizerCurve* activeCurve=NULL;
-	double speed = .5;
+	double speed = .05;
+	bool collidedWithPlayer = false;
+	
 public:
 
 	static TrainHandler* instance;
@@ -29,7 +35,7 @@ public:
 
 	
 	void setActiveCurve(BeizerCurve* curve);
-	void addCar(Entity* entity);
+	void addCar(Entity* entity, MeshEntity* trainMesh= NULL);
 	
 	Vector3 getCarPosition(int carNum);
 	Matrix44 getCarDirection(int carNum); 
@@ -44,11 +50,20 @@ public:
 	double getSpeed();
 	
 	void update(double dt);
+
+	trainCarData getCarData(int carNum);
+
+	bool getCollidedWithPlayer();
+
+	
+
+	
 	
 	
 	int getCarNum() {
 		return numCars;
 	}
+	
 	
 	
 	

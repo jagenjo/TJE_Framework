@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "entities/EntityInclude.h"
 #include "extra/commonItems.h"
+#include "framework.h"
 
 class TrainHandler;
 
@@ -25,8 +26,10 @@ public:
 
 	Vector3 speedVector = Vector3(0, 0, 0);
 	float acceleration = 6;// 0.05f;
-	float deceleration = 4;//.04f;
+	float deceleration = .8;//.04f;
 	float pullRopeSpeed = 2.0f;
+	bool dontDecelY = false;
+	
 	
 
 	Player();

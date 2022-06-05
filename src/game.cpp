@@ -92,7 +92,7 @@ void loadTestCar(Game* game) {
 	positionEntity->addChild(trolleyEntity);
 	stage->getScene()->getRoot()->addChild(positionEntity);
 	positionEntity->forceCheckChilds = true;
-	trainHandler->addCar(positionEntity);
+	trainHandler->addCar(positionEntity,trolleyEntity);
 	trolleyEntity->maxRenderDist = 10000000000000;
 	trolleyEntity->modifyScale(10);
 	
@@ -212,13 +212,13 @@ void Game::render(void)
 
 	
 
-	player->renderPlayer();
 
 
 	//End coses URI									///
 
 
 	this->activeStage->render();
+	player->renderPlayer();
 	
 
 	//Draw the floor grid
