@@ -155,13 +155,13 @@ void Player::updatePlayer(double seconds_elapsed)
 			std::cout << "Falling";
 			acceleration = 1;
 			deceleration = 10;
-			speedVector += Vector3(0, -10, 0) * seconds_elapsed;
+			speedVector += Vector3(0, -15, 0) * seconds_elapsed;
 			dontDecelY = true;
 		}
 		else {
 			std::cout << "Not falling";
-			acceleration = 10;
-			deceleration = 10;
+			acceleration = 13;
+			deceleration = 40;
 			moveWithTrain = true;
 			canJump = true;
 			if (speedVector.y > .1)
@@ -252,6 +252,9 @@ void Player::updatePlayer(double seconds_elapsed)
 				speedVector = Vector3(0, 0, 0);
 		}
 	}
+
+
+	
 	/*else
 		std::cout <<"m a "<<movingAway<<" car dist: "<<distanceFromCar << "mult: N/A"<< std::endl;
 		*/
