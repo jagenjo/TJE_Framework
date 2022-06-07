@@ -17,6 +17,7 @@
 #include "TrainHandler.h"
 #include "CubeMap.h"
 #include "extra/SceneParser.h"
+#include "stages/DepositionStage.h"
 
 
 //some globals
@@ -73,11 +74,16 @@ Scene* returnTestScene() {
 ProceduralWorldStage* testStage() {
 	ProceduralWorldStage* stage = new ProceduralWorldStage(returnTestScene(),trainHandler);
 
-	
-	
-	
 	return stage;
 }
+
+DepositionStage* testDepo() {
+	DepositionStage* stage = new DepositionStage();
+	stage->initStage();
+	return stage;
+
+}
+
 
 
 void loadTestCar(Game* game) {
@@ -142,17 +148,17 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	//Coses Uri																					///////////
 	cameraLocked = FALSE;
 
-	SceneParser* SP = new SceneParser("data/testScene.scene");
-	SP->LoadScene();
+	
 	player = new Player();
 
 
 	
 	//End coses uri																				//////////
-	this->setActiveStage(testStage());
+	this->setActiveStage(testDepo());
 
-	loadTestCar(this);
-	trainHandler->setActiveCurve(TrackHandler::instance->getActiveCurve());
+	//loadTestCar(this);
+	//trainHandler->setActiveCurve(TrackHandler::instance->getActiveCurve());
+	
 	//this->setActiveScene(returnTestScene());
 	
 

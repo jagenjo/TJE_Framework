@@ -27,6 +27,7 @@ class DepositionStage :
 
 		void update(double deltaTime);
 		void render();
+		std::vector<MeshEntity*> entities;
 
 		
 
