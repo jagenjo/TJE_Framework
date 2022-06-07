@@ -16,6 +16,7 @@
 #include "Player.h"
 #include "TrainHandler.h"
 #include "CubeMap.h"
+#include "SpaceShark.h"
 
 
 //some globals
@@ -154,7 +155,8 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	trainHandler->setActiveCurve(TrackHandler::instance->getActiveCurve());
 	//this->setActiveScene(returnTestScene());
 	
-
+	ProceduralWorldStage* st = (ProceduralWorldStage*)this->activeStage;
+	st->initSpaceShark();
 	
 	//hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse

@@ -141,6 +141,7 @@
     <ClCompile Include="..\..\src\extra\coldet\mytritri.cpp" />
     <ClCompile Include="..\..\src\extra\coldet\sysdep.cpp" />
     <ClCompile Include="..\..\src\extra\coldet\tritri.cpp" />
+    <ClCompile Include="..\..\src\extra\easing.cpp" />
     <ClCompile Include="..\..\src\extra\jpgd.cpp" />
     <ClCompile Include="..\..\src\extra\picopng.cpp" />
     <ClCompile Include="..\..\src\extra\textparser.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="..\..\src\rendertotexture.cpp" />
     <ClCompile Include="..\..\src\Scene.cpp" />
     <ClCompile Include="..\..\src\shader.cpp" />
+    <ClCompile Include="..\..\src\SpaceShark.cpp" />
     <ClCompile Include="..\..\src\stages\ProceduralWorldStage.cpp" />
     <ClCompile Include="..\..\src\stages\Stage.cpp" />
     <ClCompile Include="..\..\src\texture.cpp" />
@@ -177,6 +179,7 @@
     <ClInclude Include="..\..\src\extra\coldet\mytritri.h" />
     <ClInclude Include="..\..\src\extra\coldet\sysdep.h" />
     <ClInclude Include="..\..\src\extra\commonItems.h" />
+    <ClInclude Include="..\..\src\extra\easing.h" />
     <ClInclude Include="..\..\src\extra\jpgd.h" />
     <ClInclude Include="..\..\src\extra\picopng.h" />
     <ClInclude Include="..\..\src\extra\textparser.h" />
@@ -190,6 +193,7 @@
     <ClInclude Include="..\..\src\rendertotexture.h" />
     <ClInclude Include="..\..\src\Scene.h" />
     <ClInclude Include="..\..\src\shader.h" />
+    <ClInclude Include="..\..\src\SpaceShark.h" />
     <ClInclude Include="..\..\src\stages\ProceduralWorldStage.h" />
     <ClInclude Include="..\..\src\stages\Stage.h" />
     <ClInclude Include="..\..\src\stages\StagesInclude.h" />

@@ -85,6 +85,10 @@
     <ClCompile Include="..\..\src\TrainHandler.cpp" />
     <ClCompile Include="..\..\src\Player.cpp" />
     <ClCompile Include="..\..\src\CubeMap.cpp" />
+    <ClCompile Include="..\..\src\SpaceShark.cpp" />
+    <ClCompile Include="..\..\src\extra\easing.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\camera.h" />
@@ -176,6 +180,10 @@
     <ClInclude Include="..\..\src\TrainHandler.h" />
     <ClInclude Include="..\..\src\Player.h" />
     <ClInclude Include="..\..\src\CubeMap.h" />
+    <ClInclude Include="..\..\src\SpaceShark.h" />
+    <ClInclude Include="..\..\src\extra\easing.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="extra">

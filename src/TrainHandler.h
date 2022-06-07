@@ -23,7 +23,7 @@ private:
 	int numCars = 0;
 	double frontCarPos = 0.0;
 	BeizerCurve* activeCurve=NULL;
-	double speed = .05;
+	double speed = .8;
 	bool collidedWithPlayer = false;
 	
 public:
