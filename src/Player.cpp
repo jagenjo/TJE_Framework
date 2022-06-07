@@ -5,6 +5,9 @@
 #include "stages/StagesInclude.h"
 #include "entities/EntityInclude.h"
 #include "Scene.h"
+#include "extra/coldet/coldet.h"
+#include "framework.h"
+
 
 
 
@@ -15,7 +18,7 @@ const float decel_threshold = .98;
 const float rope_decel = 3;
 const float rope_speed = 10;
 
-
+float y_pos = 0;
 
 Player::Player()
 {
@@ -52,7 +55,7 @@ float Player::getDecelerationMultiplier(float distanceFromCar, bool movingAway) 
 		else if (distanceFromCar > this->ropeLengthRadius * decel_threshold)
 			return 3.0f;
 	}
-	return .8f;
+	return deceleration;
 }
 
 Vector3 Player::getVectorWhenPushed() {
@@ -66,8 +69,38 @@ Vector3 Player::getVectorWhenPushed() {
 	
 }
 
+bool isPointInRect(Vector2 a, Vector2 b, Vector2 d, Vector2 m) { //https://math.stackexchange.com/a/190373
+	
+	float AM = a.dot(m);
+	float AB = a.dot(b);
+	float AD= a.dot(d);
+	float AMAB = AM * AB;
+	float ABAB = AB * AB;
+	float AMAD = AM * AD;
+	float ADAD = AD * AD;
+	return ((AMAB>0 && ABAB>AMAB) && (AMAD>0 && ADAD>AMAD));
+	
+}
+
+
+
+
+bool Player::isPlayerOnTrain() {
+	
+	trainCarData& data= trainHandler->getCarData(0);
+	Vector3 playerPos = this->playerMesh->getPosition();
+	CollisionModel3D* collision_model = (CollisionModel3D*)data.trainMesh->collisionMesh->collision_model;
+	BoundingBox box = data.trainMesh->collisionMesh->box;
+	float yHeight= box.center.y + box.halfsize.y;
+	y_pos = yHeight;
+	if (yHeight > playerPos.y) return false;
+	return (collision_model->rayCollision(playerPos.v, Vector3(0, -1, 0).v));
+	
+}
+
 void Player::updatePlayer(double seconds_elapsed)
 {
+	dontDecelY = false;
 	Camera* cam = Camera::current;
 	Game* game = Game::instance;
 	if (!game->cameraLocked) return;
@@ -79,7 +112,7 @@ void Player::updatePlayer(double seconds_elapsed)
 	Vector3 top = this->playerMesh->globalModel.topVector();
 	Vector3 right = front.cross(top);
 	
-		
+	bool moveWithTrain = false;
 	
 	
 	float y_movement = -Input::mouse_delta.y * seconds_elapsed*y_sensitivity;
@@ -105,6 +138,44 @@ void Player::updatePlayer(double seconds_elapsed)
 	top = newGlobal.topVector();
 	right = newGlobal.rightVector();
 
+	Vector3 moveFront = front;
+	
+	Vector3 moveRight = right;
+	
+	bool isOnTrain = isPlayerOnTrain();
+	bool canJump = false;
+
+	if (isOnTrain/* && !trainHandler->getCollidedWithPlayer()*/) {
+		
+		
+		std::cout << "In train ";
+		moveFront = Vector3(front.x, 0, front.z);
+		moveRight = Vector3(right.x, 0, right.z);
+		if ((oldPos.y - 15) > y_pos) {
+			std::cout << "Falling";
+			acceleration = 1;
+			deceleration = 10;
+			speedVector += Vector3(0, -15, 0) * seconds_elapsed;
+			dontDecelY = true;
+		}
+		else {
+			std::cout << "Not falling";
+			acceleration = 13;
+			deceleration = 40;
+			moveWithTrain = true;
+			canJump = true;
+			if (speedVector.y > .1)
+				speedVector = Vector3(speedVector.x, speedVector.y - (speedVector.y * .2 * seconds_elapsed), speedVector.z);
+			else
+				speedVector = Vector3(speedVector.x, 0, speedVector.z);
+			
+		}
+		std::cout << std::endl;
+	}
+	else {
+		acceleration = 10;// 0.05f;
+		deceleration = 1.2;//.04f;
+	}
 		
 
 	Input::centerMouse();
@@ -113,24 +184,38 @@ void Player::updatePlayer(double seconds_elapsed)
 	
 	if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) {
 		wasMoved = true;
-		speedVector+= front*(acceleration* seconds_elapsed);
+		speedVector+= moveFront *(acceleration* seconds_elapsed);
 	}
 	if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) {
 		wasMoved = true;
-		speedVector+= front* (-acceleration* seconds_elapsed);
+		speedVector+= moveFront * (-acceleration* seconds_elapsed);
 	}
 	if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) {
 		wasMoved = true;
-		speedVector+= right*seconds_elapsed*acceleration;
+		speedVector+= moveRight *seconds_elapsed*acceleration;
 	}
 	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) {
 		wasMoved = true;
-		speedVector += right*seconds_elapsed*(-acceleration);
+		speedVector += moveRight *seconds_elapsed*(-acceleration);
+	}
+	if (Input::isKeyPressed(SDL_SCANCODE_SPACE) && canJump) {
+		wasMoved = true;
+		speedVector = Vector3(speedVector.x, 9, speedVector.z);
+		dontDecelY = false;
+		canJump = false;
 	}
 	
 	
 	
+	
+	if (moveWithTrain) {
+		Vector3 displ = trainHandler->getCarDisplacement(0);
+		this->playerMesh->model.translateGlobal(displ.x, 0, displ.z);
+		
+	}
+	
 	this->playerMesh->model.translateGlobal(speedVector.x* seconds_elapsed, speedVector.y* seconds_elapsed, speedVector.z* seconds_elapsed);
+	
 
 	Vector3 newPos= playerMesh->getPosition();
 	//print speedvector to console
@@ -159,11 +244,17 @@ void Player::updatePlayer(double seconds_elapsed)
 			this->playerMesh->model.translateGlobal(carDisplacement.x, carDisplacement.y, carDisplacement.z);
 		}
 		else {
-			speedVector += speedVector * (-multiplier) * seconds_elapsed;
+			if (dontDecelY)
+				speedVector += Vector3(speedVector.x,0,speedVector.z) * (-multiplier) * seconds_elapsed;
+			else
+				speedVector += speedVector * (-multiplier) * seconds_elapsed;
 			if (abs(speedVector.length()) <= .002)
 				speedVector = Vector3(0, 0, 0);
 		}
 	}
+
+
+	
 	/*else
 		std::cout <<"m a "<<movingAway<<" car dist: "<<distanceFromCar << "mult: N/A"<< std::endl;
 		*/
@@ -173,7 +264,6 @@ void Player::updatePlayer(double seconds_elapsed)
 	this->position = newEye;
 
 
-	
 	
 	
 
@@ -187,14 +277,16 @@ void Player::applyMovementForce(eDirection direction, double seconds_elapsed)
 }
 
 
-bool testEntityCollision(Entity* entity, Vector3 pos ,float radius, Vector3& colPoint, Vector3& colNormal) {
-	if (entity->testCollision(pos, radius, colPoint, colNormal)) { //Todo change 3 to correct size
+bool testEntityCollision(MeshEntity* playerEntity,Entity* entity, Vector3 pos ,float radius, Vector3& colPoint, Vector3& colNormal) {
+	
+	
+	if (entity->testCollision(pos, radius, colPoint, colNormal, playerEntity->getGlobalMatrix(),playerEntity->getMesh())) { //Todo change 3 to correct size
 		
 		return true;
 	}
 	else {
 		for (int i=0; i<entity->children.size();++i)
-			if (testEntityCollision(entity->children[i], pos, radius, colPoint, colNormal))
+			if (testEntityCollision(playerEntity,entity->children[i], pos, radius, colPoint, colNormal))
 				return true;
 	}
 	return false;
@@ -210,7 +302,7 @@ bool Player::testCollisions()
 	bool hadCollision = false;
 	//std::cout << "num e: " << entities.size() << std::endl;
 	for (int i = 0; i < entities.size(); ++i) {
-		if (testEntityCollision(entities[i], this->position, 1, colPoint, colNormal)) {
+		if (testEntityCollision(playerMesh,entities[i], this->position, 1, colPoint, colNormal)) {
 			hadCollision = true;
 			break;
 		}
@@ -221,5 +313,6 @@ bool Player::testCollisions()
 	}
 	return hadCollision;
 }
+
 
 

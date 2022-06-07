@@ -65,6 +65,10 @@ void MeshEntity::render()
 
 	//disable the shader after finishing rendering
 	shader->disable();
+	
+	if (this->hasCollisionMesh) {
+		this->collisionMesh->renderBounding(globalModel,false);
+	}
 
 	Entity::render();
 }
@@ -73,6 +77,9 @@ void MeshEntity::update(float dt)
 {
 	
 	//this->bounding = transformBoundingBox(this->getGlobalMatrix(),this->mesh->box);
+	
+	this->didCollide = false;
+
 	Entity::update(dt);
 	
 }
@@ -93,6 +100,12 @@ bool MeshEntity::getShouldRenderEntity()
 	
 }
 
+void MeshEntity::setCollisionMesh(Mesh* mesh)
+{
+	hasCollisionMesh = true;
+	this->collisionMesh = mesh;
+}
+
 
 
 void MeshEntity::setLowPoly(Mesh* mesh)
@@ -102,11 +115,22 @@ void MeshEntity::setLowPoly(Mesh* mesh)
 
 }
 
-bool MeshEntity::testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal)
+bool MeshEntity::testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal, Matrix44 otherModel, Mesh* otherMesh = NULL)
 {
 	if (this->ingoreCollision) return false;
-	bool res= this->mesh->testSphereCollision(this->getGlobalMatrix(), charCenter, radius, collisionPoint, collisionNormal);
+	bool res;
+	if (hasCollisionMesh && otherMesh)
+		res = this->collisionMesh->testModelCollision(this->getGlobalMatrix(), charCenter, otherMesh->collision_model,otherModel, collisionPoint, collisionNormal);
+	else
+		res= this->mesh->testSphereCollision(this->getGlobalMatrix(), charCenter, radius, collisionPoint, collisionNormal);
 	if (res)
 		std::cout << "Collided with " << this->mesh->name << std::endl;
+	if (res)
+		this->didCollide = true;
 	return res;
+}
+
+Mesh* MeshEntity::getMesh()
+{
+	return this->mesh;
 }

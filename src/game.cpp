@@ -81,17 +81,19 @@ ProceduralWorldStage* testStage() {
 
 
 void loadTestCar(Game* game) {
-	trolleyMesh = Mesh::Get("data/test_vehicle.obj");
-	trolleyTexture = Texture::Get("data/test_vehicle.png");
+	trolleyMesh = Mesh::Get("data/assets/train/test_vehicle.obj");
+	trolleyTexture = Texture::Get("data/assets/train/test_vehicle.png");
 	Stage* stage = game->activeStage;
 	//Entity* positionEntity = new Entity();
 	Entity* positionEntity = new Entity();
-	Entity* trolleyEntity = new MeshEntity(trolleyMesh,trolleyTexture,shader);
-	trolleyEntity->ingoreCollision = true;
+	MeshEntity* trolleyEntity = new MeshEntity(trolleyMesh,trolleyTexture,shader);
+	
+	//trolleyEntity->ingoreCollision = true;
+	trolleyEntity->setCollisionMesh(Mesh::Get("data/assets/train/collisionMesh.obj"));
 	positionEntity->addChild(trolleyEntity);
 	stage->getScene()->getRoot()->addChild(positionEntity);
 	positionEntity->forceCheckChilds = true;
-	trainHandler->addCar(positionEntity);
+	trainHandler->addCar(positionEntity,trolleyEntity);
 	trolleyEntity->maxRenderDist = 10000000000000;
 	trolleyEntity->modifyScale(10);
 	
@@ -211,13 +213,13 @@ void Game::render(void)
 
 	
 
-	player->renderPlayer();
 
 
 	//End coses URI									///
 
 
 	this->activeStage->render();
+	player->renderPlayer();
 	
 
 	//Draw the floor grid

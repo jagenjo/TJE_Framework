@@ -7,6 +7,7 @@
 class Camera;
 
 
+
 class MeshEntity :
     public Entity
 {
@@ -29,7 +30,10 @@ public:
 
 	bool hasLowPolyVersion = false;
 	float minDistanceForLowPoly = 200;
-	Mesh* lowPolyMesh= nullptr;
+	Mesh* lowPolyMesh= NULL;
+	
+	bool hasCollisionMesh = false;
+	Mesh* collisionMesh = NULL;
 
 	
 
@@ -38,11 +42,16 @@ public:
 	void update(float dt);
 
 	bool getShouldRenderEntity();
+
+	void setCollisionMesh(Mesh* mesh);
 	
 	void setLowPoly(Mesh* mesh);
 	inline void setLowPolyDistance(float dist) { this->minDistanceForLowPoly= dist; }
 	float getLowPolyDistance() { return this->minDistanceForLowPoly; }
-	bool testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal);
+
+	bool testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal, Matrix44 otherModel, Mesh* otherMesh);
+	
+	Mesh* getMesh();
 	
 };
 

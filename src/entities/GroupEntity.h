@@ -43,7 +43,7 @@ public:
 	inline void setLowPolyDistance(float dist) { this->minDistanceForLowPoly = dist; }
 	float getLowPolyDistance() { return this->minDistanceForLowPoly; }
 
-	bool testCollision( Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal);
+	bool testCollision(Vector3 charCenter, float radius, Vector3& collisionPoint, Vector3& collisionNormal, Matrix44 otherModel, Mesh* otherMesh);
 	
 	
 	
