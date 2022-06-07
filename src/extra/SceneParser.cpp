@@ -13,12 +13,12 @@ SceneParser::SceneParser(char* path)
 	}
 }
 
-void SceneParser::LoadScene() {
-	std::vector<Matrix44> matrices;
+std::vector<MeshEntity*> SceneParser::LoadScene() {
+	//std::vector<Matrix44> matrices;
+	std::vector<MeshEntity*> entities;
 	std::string cur;
 	int LineNum = 0;
 	Mesh* mesh;
-	const char* temp;
 	int vectInput = 0;
 	std::string numString;
 	Vector3 pos;
@@ -26,71 +26,37 @@ void SceneParser::LoadScene() {
 	Vector3 scale;
 	int bit;
 	int info;
+	std::string lastMeshInfo = data[0];
 
 	for (int i = 0; i < data.size(); i++) {
-		int res = i % 6;
+		int res = i % 12; //Each line defines a mesh entity and has 12 elements which we store in the correspondant variable to create its mesh entity
 		switch (res)
 		{
 		case 0:
 			mesh = Mesh::Get(data[i].c_str());
 			break;
 		case 1:
-			temp = data[i].c_str();
-			
-			for (int j = 0; i < strlen(temp); j++) {
-				char curChar=temp[j];
-				if (curChar != ',') {
-					numString.push_back(curChar);
-				}
-				else {
-					pos[vectInput] = std::stod(numString);
-					vectInput++;
-				}
-				
-			}
-			vectInput = 0;
-			
-			break;
+			pos.x = std::stof(data[i]);
 		case 2:
-			temp = data[i].c_str();
-
-			for (int j = 0; i < strlen(temp); j++) {
-				char curChar = temp[j];
-				if (curChar != ',') {
-					numString.push_back(curChar);
-				}
-				else {
-					euc[vectInput] = std::stod(numString);
-					vectInput++;
-				}
-
-			}
-			vectInput = 0;
-
-			break;
+			pos.y = std::stof(data[i]);
 		case 3:
-			temp = data[i].c_str();
-
-			for (int j = 0; i < strlen(temp); j++) {
-				char curChar = temp[j];
-				if (curChar != ',') {
-					numString.push_back(curChar);
-				}
-				else {
-					scale[vectInput] = std::stod(numString);
-					vectInput++;
-				}
-
-			}
-			vectInput = 0;
-
-			break;
+			pos.z = std::stof(data[i]);
 		case 4:
-			bit = std::stoi(data[i]);
-			break;
+			euc.x = std::stof(data[i]);
 		case 5:
-			info = bit = std::stoi(data[i]);
-			break;
+			euc.y = std::stof(data[i]);
+		case 6:
+			euc.z = std::stof(data[i]);
+		case 7:
+			scale.x = std::stof(data[i]);
+		case 8:
+			scale.y = std::stof(data[i]);
+		case 9:
+			scale.z = std::stof(data[i]);
+		case 10:
+			bit = std::stoi(data[i]);
+		case 11:
+			info = std::stoi(data[i]);
 
 		default:
 			printf("Something is wrong when parsing");
@@ -104,11 +70,14 @@ void SceneParser::LoadScene() {
 		mat.rotate(euc.y, Vector3(0, 1, 0));
 		mat.rotate(euc.z, Vector3(0, 0, 1));
 
-		matrices.push_back(mat);
+		//matrices.push_back(mat);
+		Texture* texture = Texture::Get("data/assets/rocks/texture.png"); //Get wall texture
+		Shader* shader = Shader::Get("data/shaders/basic.vs", "data/shaders/rockShader.fs"); //Get shader
+		MeshEntity* temp = new MeshEntity(mesh, texture, shader);
+		temp->globalModel = mat;
+		entities.push_back(temp);
 	}
-	Texture* texture = Texture::Get("data/assets/rocks/texture.png");
-	Shader* shader = Shader::Get("data/shaders/basic.vs", "data/shaders/rockShader.fs");
-	GroupEntity* group = new GroupEntity(mesh, texture, shader, matrices);
+	
 	
 }
 

@@ -14,9 +14,10 @@ public:
 	
 	std::vector<std::string> data;
 	
-	void LoadScene();
+	std::vector<MeshEntity*> LoadScene();
 
-
+	
+	
 
 	
 
