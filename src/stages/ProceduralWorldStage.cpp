@@ -5,6 +5,7 @@
 #include "../entities/EntityInclude.h"
 #include "../trainHandler.h"
 #include "../CubeMap.h"
+#include "../SpaceShark.h"
 
 void ProceduralWorldStage::loadAssets() {
 	Mesh::Get("data/assets/rocks/rock1.obj");
@@ -116,11 +117,19 @@ void ProceduralWorldStage::initStage()
 	generateProceduralScenery();
 }
 
+void ProceduralWorldStage::initSpaceShark() {
+	if (!SpaceShark::instance)
+		new SpaceShark();
+	this->spaceShark = SpaceShark::instance;
+	
+}
+
 void ProceduralWorldStage::update(double deltaTime)
 {
 	this->trackHandler->updatePosition(deltaTime);
 	if (this->trainHandler)
 		this->trainHandler->update(deltaTime);
+	spaceShark->Update(deltaTime);
 	Stage::update(deltaTime);
 
 	
@@ -131,6 +140,7 @@ void ProceduralWorldStage::render()
 	cubeMap->Render();
 	renderScenery();
 	trackHandler->renderTrack();
+	spaceShark->Render();
 	Stage::render();
 
 }
