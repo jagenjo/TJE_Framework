@@ -146,10 +146,11 @@ Scene* SceneParser::parseFile(char* path) {
 			case EntityType::MESH:
 			if (mesh && texture && position && euler && scale) {
 				MeshEntity* temp = new MeshEntity(mesh, texture, shader);
-				temp->setPosition(*position);
-				temp->rotate(euler->x * DEG2RAD, Vector3(1, 0, 0));
-				temp->rotate(euler->y * DEG2RAD, Vector3(0, 1, 0));
-				temp->rotate(euler->z * DEG2RAD, Vector3(0, 0, 1));
+				temp->model.setTranslation(position->x, position->y, position->z);
+				
+				temp->model.rotateGlobal(euler->x * DEG2RAD, Vector3(1, 0, 0));
+				temp->model.rotate(euler->y * DEG2RAD, Vector3(0, 1, 0));
+				temp->model.rotate(euler->z * DEG2RAD, Vector3(0, 0, 1));
 				temp->model.scale(scale->x, scale->y, scale->z);
 				scene->getRoot()->addChild(temp);
 			}
