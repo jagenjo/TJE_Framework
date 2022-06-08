@@ -9,6 +9,8 @@ class Scene;
 class GroupEntity;
 class CubeMap;
 
+class SpaceShark;
+
 
 enum class eSceneryType {
 	ROCK1,
@@ -32,6 +34,7 @@ class ProceduralWorldStage :
 	private:
 		TrackHandler* trackHandler=NULL;
 		TrainHandler* trainHandler=NULL;
+		SpaceShark* spaceShark=NULL;
 		
 		std::vector<sceneryData> scenery;
 		CubeMap* cubeMap = NULL;
@@ -47,7 +50,9 @@ class ProceduralWorldStage :
 		~ProceduralWorldStage();
 		void initStage();
 
-		void update(double deltaTime);
+		void initSpaceShark();
+
+		void update(double deltaTime) ;
 		void render();
 };
 

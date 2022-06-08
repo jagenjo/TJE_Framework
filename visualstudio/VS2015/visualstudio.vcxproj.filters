@@ -88,6 +88,9 @@
     <ClCompile Include="..\..\src\extra\SceneParser.cpp" />
     <ClCompile Include="..\..\src\stages\DepositionStage.cpp">
       <Filter>stages</Filter>
+    <ClCompile Include="..\..\src\SpaceShark.cpp" />
+    <ClCompile Include="..\..\src\extra\easing.cpp">
+      <Filter>utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -183,6 +186,9 @@
     <ClInclude Include="..\..\src\extra\SceneParser.h" />
     <ClInclude Include="..\..\src\stages\DepositionStage.h">
       <Filter>stages</Filter>
+    <ClInclude Include="..\..\src\SpaceShark.h" />
+    <ClInclude Include="..\..\src\extra\easing.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
