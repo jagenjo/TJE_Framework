@@ -10,6 +10,9 @@ enum class eParseArguments {
 	MESH,
 	MODEL,
 	TYPE,
+	POSITION,
+	EULER,
+	SCALE
 	
 };
 

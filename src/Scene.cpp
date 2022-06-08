@@ -14,7 +14,7 @@ Scene::Scene()
 
 void Scene::render()
 {
-	if (this->root == nullptr) return;
+	if (!this || !this->root) return;
 	this->root->render();
 }
 

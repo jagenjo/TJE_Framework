@@ -62,6 +62,17 @@ Matrix44* parseModel(std::string str) {
 	return toReturn;
 }
 
+Vector3* parseVector3(std::string str) {
+	Vector3* toReturn = new Vector3();
+	std::vector<std::string> data = separateStringBy(str, ",");
+	for (int i = 0; i < data.size(); ++i) {
+		toReturn->v[i] = std::stof(data[i]);
+	}
+	data.clear();
+	
+	return toReturn;
+}
+
 Scene* SceneParser::parseFile(char* path) {
 	std::vector<std::string> data = getFileLines(path);
 	if (data.size() <=1) {
@@ -80,14 +91,24 @@ Scene* SceneParser::parseFile(char* path) {
 			args.push_back(eParseArguments::MODEL);
 		else if (arg == "TYPE")
 			args.push_back(eParseArguments::TYPE);
+		else if (arg == "POSITION")
+			args.push_back(eParseArguments::POSITION);
+		else if (arg == "EULER")
+			args.push_back(eParseArguments::EULER);
+		else if (arg == "SCALE")
+			args.push_back(eParseArguments::SCALE);
 		else
 			args.push_back(eParseArguments::NA);
 	}
 	
 	for (int i=1; i < data.size(); ++i) {
 		Mesh* mesh = NULL;
+		Matrix44* model= NULL;
 		Texture* texture = NULL;
-		Matrix44* model = NULL;
+		Vector3* scale = NULL;
+		Vector3* position = NULL;
+		Vector3* euler = NULL;
+		
 		EntityType type = EntityType::BASE;
 		std::vector<std::string> lineData= separateStringBy(data[i]," ");
 		for (int j = 0; j < args.size(); ++j) {
@@ -107,17 +128,29 @@ Scene* SceneParser::parseFile(char* path) {
 				if (lineData[j] == "MESH")
 					type = EntityType::MESH;
 			}
+			else if (args[j] == eParseArguments::POSITION) {
+				position = parseVector3(lineData[j]);
+			}
+			else if (args[j] == eParseArguments::EULER) {
+				euler = parseVector3(lineData[j]);
+			}
+			else if (args[j] == eParseArguments::SCALE) {
+				scale = parseVector3(lineData[j]);
+			}
 			else if (args[j] == eParseArguments::NA) {
 				std::cout<<"Error: Invalid argument\n";
-				
 			}
 		
 		}
 		switch (type) {
 			case EntityType::MESH:
-			if (mesh && texture) {
+			if (mesh && texture && position && euler && scale) {
 				MeshEntity* temp = new MeshEntity(mesh, texture, shader);
-				temp->model = *model;
+				temp->setPosition(*position);
+				temp->rotate(euler->x * DEG2RAD, Vector3(1, 0, 0));
+				temp->rotate(euler->y * DEG2RAD, Vector3(0, 1, 0));
+				temp->rotate(euler->z * DEG2RAD, Vector3(0, 0, 1));
+				temp->model.scale(scale->x, scale->y, scale->z);
 				scene->getRoot()->addChild(temp);
 			}
 			break;

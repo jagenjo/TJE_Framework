@@ -113,7 +113,7 @@ void TrainHandler::render()
 	for (int i = 0; i < this->trainCarArray.size(); i++)
 	{
 		trainCarData& data= this->trainCarArray[i];
-		data.entity->render();
+		data.trainMesh->render();
 	}
 }
 

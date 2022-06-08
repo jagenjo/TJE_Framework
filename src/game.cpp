@@ -89,7 +89,7 @@ void loadTestCar(Game* game) {
 	Stage* stage = game->activeStage;
 	//Entity* positionEntity = new Entity();
 	Entity* positionEntity = new Entity();
-	MeshEntity* trolleyEntity = new MeshEntity(trolleyMesh,trolleyTexture,shader);
+	MeshEntity* trolleyEntity = new MeshEntity(trolleyMesh,trolleyTexture,Shader::Get("data/shaders/basic.vs","data/shaders/rockShader.fs"));
 	
 	//trolleyEntity->ingoreCollision = true;
 	trolleyEntity->setCollisionMesh(Mesh::Get("data/assets/train/collisionMesh.obj"));
@@ -105,7 +105,7 @@ void loadTestCar(Game* game) {
 DepositionStage* loadTestDepo() {
 	SceneParser* parser = SceneParser::instance;
 	Scene* sc= parser->parseFile("data/export.scene");
-	DepositionStage* stage = new DepositionStage();
+	DepositionStage* stage = new DepositionStage(sc);
 	return stage;
 }
 
