@@ -47,7 +47,7 @@ class ProceduralWorldStage :
 		~ProceduralWorldStage();
 		void initStage();
 
-		void update(double deltaTime) ;
+		void update(double deltaTime);
 		void render();
 };
 

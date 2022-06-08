@@ -20,6 +20,7 @@ void DepositionStage::update(double seconds_elapsed) {
 }
 
 void DepositionStage::render() {
+	
 	for (int i = 0; i < entities.size(); i++) {
 		entities[i]->render();
 	}
