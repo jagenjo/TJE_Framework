@@ -14,5 +14,5 @@ enum class eDirection {
 enum class eStageType {
 	BASE,
 	PROCEDURAL_WORLD,
-	FPS,
+	DEPO,
 };

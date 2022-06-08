@@ -50,6 +50,7 @@ public:
 	double getSpeed();
 	
 	void update(double dt);
+	void render();
 
 	trainCarData getCarData(int carNum);
 

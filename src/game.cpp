@@ -21,6 +21,7 @@
 #include "SpaceShark.h"
 
 
+
 //some globals
 Mesh* mesh = NULL;
 Mesh* low_poly_mesh = NULL;
@@ -78,12 +79,7 @@ ProceduralWorldStage* testStage() {
 	return stage;
 }
 
-DepositionStage* testDepo() {
-	DepositionStage* stage = new DepositionStage();
-	stage->initStage();
-	return stage;
 
-}
 
 
 
@@ -98,12 +94,19 @@ void loadTestCar(Game* game) {
 	//trolleyEntity->ingoreCollision = true;
 	trolleyEntity->setCollisionMesh(Mesh::Get("data/assets/train/collisionMesh.obj"));
 	positionEntity->addChild(trolleyEntity);
-	stage->getScene()->getRoot()->addChild(positionEntity);
+	//stage->getScene()->getRoot()->addChild(positionEntity);
 	positionEntity->forceCheckChilds = true;
 	trainHandler->addCar(positionEntity,trolleyEntity);
 	trolleyEntity->maxRenderDist = 10000000000000;
 	trolleyEntity->modifyScale(10);
 	
+}
+
+DepositionStage* loadTestDepo() {
+	SceneParser* parser = SceneParser::instance;
+	Scene* sc= parser->loadScene("data/testScene.scene");
+	DepositionStage* stage = new DepositionStage(sc);
+	return stage;
 }
 
 Game::Game(int window_width, int window_height, SDL_Window* window)
@@ -131,6 +134,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	
 	new TrackHandler();
 	new CubeMap();
+	new SceneParser();
 	//load one texture without using the Texture Manager (Texture::Get would use the manager)
 	texture = new Texture();
  	texture->load("data/texture.tga");
@@ -155,15 +159,16 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 	
 	//End coses uri																				//////////
-	this->setActiveStage(testDepo());
 
-	//loadTestCar(this);
-	//trainHandler->setActiveCurve(TrackHandler::instance->getActiveCurve());
+	this->setActiveStage(loadTestDepo());
+
+	loadTestCar(this);
+	trainHandler->setActiveCurve(TrackHandler::instance->getActiveCurve());
 	
 	//this->setActiveScene(returnTestScene());
 	
-	ProceduralWorldStage* st = (ProceduralWorldStage*)this->activeStage;
-	st->initSpaceShark();
+	//ProceduralWorldStage* st = (ProceduralWorldStage*)this->activeStage;
+	//st->initSpaceShark();
 	
 	//hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse

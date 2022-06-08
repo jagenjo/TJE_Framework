@@ -9,7 +9,7 @@ class Entity;
 class Scene
 {
 public:
-	static Scene* instance;
+	
 
 	Vector3 background_color;
 	Vector3 ambient_light;

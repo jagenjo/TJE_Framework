@@ -108,6 +108,15 @@ void TrainHandler::update(double dt)
 	
 }
 
+void TrainHandler::render()
+{
+	for (int i = 0; i < this->trainCarArray.size(); i++)
+	{
+		trainCarData& data= this->trainCarArray[i];
+		data.entity->render();
+	}
+}
+
 trainCarData TrainHandler::getCarData(int carNum)
 {
 	return this->trainCarArray[carNum];

@@ -1,20 +1,18 @@
 #pragma once
-#include "../Scene.h"
-#include "../game.h"
-#include "../entities/EntityInclude.h"
+#include "../framework.h"
 
+
+class Scene;
 
 class SceneParser
 {
 
 public:
-	SceneParser(char* path);
-	
 
+	static SceneParser* instance;
+	SceneParser();
 	
-	std::vector<std::string> data;
-	
-	std::vector<MeshEntity*> LoadScene();
+	Scene* loadScene(char* path);
 
 	
 	

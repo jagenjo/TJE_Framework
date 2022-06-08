@@ -43,9 +43,7 @@ class BeizerCurve
 			return (getPosition(i*segmentSize) - getPosition((i*segmentSize) + .0001)).normalize();
 		}
 
-		inline float getSegmentDistance(int i) {
-			return segmentDistances[i];
-		}
+		float getSegmentDistance(int i);
 		
 		inline int getSegmentFromMu(float mu) {
 			float segmentSize= 1.0f / (float)numSegments;

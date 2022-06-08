@@ -85,15 +85,21 @@ Matrix44 BeizerCurve::getRotationMatrix(float mu)  // (1,2,3) Forward (4,5,6) ri
 
 void BeizerCurve::cacheSegments(float increments)
 {
-	this->numSegments = ceil(1.0 / increments);
+	this->numSegments = floor(1.0 / increments);
 	
 	this->cachedSegments.reserve(this->numSegments);
 	for (float i = 0.0f; i <= 1.0f; i += increments)
 		this->cachedSegments.push_back(this->getPosition(i));
-	for (int i = 0; i < this->cachedSegments.size() - 1; i++) {
+	for (int i = 0; i < this->cachedSegments.size()-1; i++) {
 		this->segmentDistances.push_back(this->cachedSegments[i].distance(this->cachedSegments[i + 1]));
 		std::cout << this->segmentDistances[i] << std::endl;
 	}
 	
+}
+
+float BeizerCurve::getSegmentDistance(int i)
+{
+	std::cout << i << std::endl;
+	return segmentDistances[i];
 }
 

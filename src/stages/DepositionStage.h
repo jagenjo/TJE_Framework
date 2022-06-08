@@ -1,7 +1,12 @@
 #pragma once
 #include "../framework.h"
 #include "Stage.h"
-#include "../Player.h"
+
+
+
+
+class TrainHandler;
+class TrackHandler;
 
 
 enum class eBlockType {
@@ -17,17 +22,23 @@ class DepositionStage :
 	public Stage
 {	
 	private:
+		TrainHandler* trainHandler = NULL;
+		TrackHandler* trackHandler = NULL;
+		
+		
 		void loadAssets();
-
 		
 	public:
+
+		DepositionStage();
+		DepositionStage(Scene* scene);
 
 
 		void initStage();
 
 		void update(double deltaTime);
 		void render();
-		std::vector<MeshEntity*> entities;
+		
 
 		
 

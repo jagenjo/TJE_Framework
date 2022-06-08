@@ -139,6 +139,7 @@ void ProceduralWorldStage::render()
 {
 	cubeMap->Render();
 	renderScenery();
+	trainHandler->render();
 	trackHandler->renderTrack();
 	spaceShark->Render();
 	Stage::render();
