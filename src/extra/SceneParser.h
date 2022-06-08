@@ -1,8 +1,27 @@
 #pragma once
 #include "../framework.h"
 
-
 class Scene;
+class Mesh;
+class Texture;
+
+enum class eParseArguments {
+	NA,
+	MESH,
+	MODEL,
+	TYPE,
+	
+};
+
+
+struct parseMeshData{
+	Mesh* mesh;
+	Texture* texture;
+
+	
+};
+
+
 
 class SceneParser
 {
@@ -12,7 +31,9 @@ public:
 	static SceneParser* instance;
 	SceneParser();
 	
-	Scene* loadScene(char* path);
+	
+
+	Scene* parseFile(char* path);
 
 	
 	

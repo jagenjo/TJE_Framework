@@ -53,7 +53,7 @@ void MeshEntity::render()
 		Entity::render();
 		return;
 	}
-
+	std::cout << "Name: " << mesh->name<<std::endl;
 	shader->enable();
 	shader->setUniform("u_model", parent==NULL?model:globalModel);
 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);

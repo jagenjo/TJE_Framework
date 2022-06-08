@@ -443,7 +443,7 @@ void Shader::enable()
 		return;
 
 	current = this;
-
+	
 	glUseProgram(program);
     GLuint err = glGetError();
 	assert (err == GL_NO_ERROR);
