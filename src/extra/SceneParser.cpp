@@ -8,7 +8,7 @@
 
 SceneParser* SceneParser::instance = NULL;
 
-std::string meshDirectory = "data/";
+std::string meshDirectory = "data/assets/";
 
 std::vector<std::string> getFileLines(char* path) {
 	std::ifstream file(path);
@@ -36,6 +36,7 @@ SceneParser::SceneParser()
 }
 
 
+
 parseMeshData* parseMesh(std::string str) {
 	
 	parseMeshData* toReturn= new parseMeshData();
@@ -53,7 +54,7 @@ parseMeshData* parseMesh(std::string str) {
 
 Matrix44* parseModel(std::string str) {
 	Matrix44* toReturn= new Matrix44();
-	std::vector<std::string> data = separateStringBy(str, " ");
+	std::vector<std::string> data = separateStringBy(str, ",");
 	for (int i = 0; i < data.size(); ++i) {
 		toReturn->m[i]= std::stof(data[i]);
 		std::cout << toReturn->m[i] << " - " << data[i] << std::endl;
@@ -144,14 +145,26 @@ Scene* SceneParser::parseFile(char* path) {
 		}
 		switch (type) {
 			case EntityType::MESH:
-			if (mesh && texture && position && euler && scale) {
+			if (mesh && texture && position) {
 				MeshEntity* temp = new MeshEntity(mesh, texture, shader);
-				temp->model.setTranslation(position->x, position->y, position->z);
 				
-				temp->model.rotateGlobal(euler->x * DEG2RAD, Vector3(1, 0, 0));
-				temp->model.rotate(euler->y * DEG2RAD, Vector3(0, 1, 0));
-				temp->model.rotate(euler->z * DEG2RAD, Vector3(0, 0, 1));
-				temp->model.scale(scale->x, scale->y, scale->z);
+				temp->model.setTranslation(position->x, position->y, position->z);
+				if (euler) {
+					Quaternion q;
+					q.setAxisAngle(Vector3(1, 0, 0), euler->x * DEG2RAD);
+					q.setAxisAngle(Vector3(0, 1, 0), euler->y * DEG2RAD);
+					q.setAxisAngle(Vector3(0, 0, 1), euler->z * DEG2RAD);
+					Matrix44 rot;
+					q.toMatrix(rot);
+					
+					temp->model.setFrontAndOrthonormalize(rot.frontVector());
+					temp->model.setUpAndOrthonormalize(rot.topVector());
+					temp->model.m[0] = rot._11;
+					temp->model.m[1] = rot._12;
+					temp->model.m[2] = rot._13;
+				}
+				if (scale)
+					temp->model.scale(scale->x, scale->y, scale->z);
 				scene->getRoot()->addChild(temp);
 			}
 			break;
