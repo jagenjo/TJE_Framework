@@ -166,17 +166,6 @@ void Vector3::parseFromText(const char* text, const char separator)
 	}
 };
 
-float dot(const Vector3& a, const Vector3& b)
-{
-	return a.x*b.x + a.y*b.y + a.z*b.z;
-}
-
-Vector3 cross(const Vector3& a, const Vector3& b)
-{
-	return Vector3(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x);
-}
-
-
 //*********************************
 const Matrix44 Matrix44::IDENTITY;
 
@@ -1225,11 +1214,6 @@ bool RaySphereCollision(const Vector3& center, const float& radius, const Vector
 	coll = ray_origin + t * ray_dir;
 
 	return true;
-}
-
-Vector3 normalize(Vector3 n)
-{
-	return n.normalize();
 }
 
 int planeBoxOverlap( const Vector4& plane, const Vector3& center, const Vector3& halfsize )
