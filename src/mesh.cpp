@@ -266,7 +266,7 @@ void Mesh::drawCall(unsigned int primitive, int submesh_id, int num_instances)
 		{
 			assert(indices_vbo_id && "indices must be uploaded to the GPU");
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo_id);
-			glDrawElementsInstanced(primitive, size * 3, GL_UNSIGNED_INT, (void*)(start + sizeof(Vector3)), num_instances);
+			glDrawElementsInstanced(primitive, size * 3, GL_UNSIGNED_INT, (void*)(start * sizeof(Vector3)), num_instances);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
 		else
